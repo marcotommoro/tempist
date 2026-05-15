@@ -1,0 +1,83 @@
+"use client";
+
+import { useTransition, useState } from "react";
+import { Trash2 } from "lucide-react";
+import { format } from "date-fns";
+
+import { cn } from "@/lib/utils";
+import { deleteTaskAction, toggleTaskAction } from "@/lib/actions/tasks";
+import type { Task } from "@/lib/db/schema";
+
+const PRIORITY_COLOR: Record<Task["priority"], string> = {
+  P1: "text-red-500",
+  P2: "text-orange-500",
+  P3: "text-blue-500",
+  P4: "text-muted-foreground",
+};
+
+export function TaskItem({ task }: { task: Task }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const isDone = !!task.completedAt;
+
+  function toggle() {
+    setError(null);
+    startTransition(async () => {
+      const res = await toggleTaskAction(task.id);
+      if (!res.ok) setError(res.error);
+    });
+  }
+
+  function del() {
+    setError(null);
+    startTransition(async () => {
+      const res = await deleteTaskAction(task.id);
+      if (!res.ok) setError(res.error);
+    });
+  }
+
+  return (
+    <li
+      className={cn(
+        "group flex items-start gap-3 px-3 py-2.5",
+        pending && "opacity-50",
+      )}
+    >
+      <input
+        type="checkbox"
+        checked={isDone}
+        disabled={pending}
+        onChange={toggle}
+        aria-label={isDone ? "Segna come da fare" : "Segna come completato"}
+        className="mt-1 size-4 cursor-pointer accent-primary disabled:cursor-not-allowed"
+      />
+      <div className="flex-1 min-w-0">
+        <p
+          className={cn(
+            "text-sm leading-tight break-words",
+            isDone && "line-through text-muted-foreground",
+          )}
+        >
+          {task.title}
+        </p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <span className={cn("font-medium", PRIORITY_COLOR[task.priority])}>{task.priority}</span>
+          {task.scheduledAt && (
+            <span>{format(task.scheduledAt, "d MMM HH:mm")}</span>
+          )}
+          {task.dueDate && <span>due {format(task.dueDate, "d MMM")}</span>}
+          {error && <span className="text-red-500">{error}</span>}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={del}
+        disabled={pending}
+        aria-label="Cancella task"
+        className="opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed text-muted-foreground hover:text-destructive"
+      >
+        <Trash2 className="size-4" />
+      </button>
+    </li>
+  );
+}

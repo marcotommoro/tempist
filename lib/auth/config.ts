@@ -21,10 +21,47 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "noreply@example.com";
 
+// ANSI escape codes — funzionano in tutti i terminali moderni (iTerm, VS Code, Warp, Ghostty).
+// In ambiente non-TTY (CI, container senza terminale) sono semplicemente ignorati: nessun danno.
+const C = {
+  cyan: "\x1b[36m",
+  yellow: "\x1b[33m",
+  red: "\x1b[31m",
+  dim: "\x1b[2m",
+  bold: "\x1b[1m",
+  reset: "\x1b[0m",
+};
+
+function printMagicLinkBanner(email: string, url: string) {
+  const bar = "━".repeat(70);
+  console.log(
+    [
+      "",
+      `${C.cyan}${bar}`,
+      `${C.bold}🔗 MAGIC LINK (dev mode — RESEND_API_KEY non configurata)${C.reset}${C.cyan}`,
+      bar,
+      `${C.reset}To: ${C.bold}${email}${C.reset}`,
+      "",
+      // URL su riga propria → Cmd+click nei terminali moderni
+      url,
+      "",
+      `${C.dim}(il link scade tra 5 minuti)${C.reset}`,
+      `${C.cyan}${bar}${C.reset}`,
+      "",
+    ].join("\n"),
+  );
+}
+
 async function sendEmail(to: string, subject: string, text: string) {
   if (!resend) {
-    // Dev: stampa su console se Resend non configurato
-    console.log(`\n[email mock] To: ${to}\nSubject: ${subject}\n\n${text}\n`);
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        `${C.red}[auth] CRITICAL: NODE_ENV=production ma RESEND_API_KEY mancante — email NON spedita a ${to}${C.reset}`,
+      );
+    }
+    console.log(
+      `\n${C.yellow}[email mock]${C.reset} To: ${to}\nSubject: ${subject}\n\n${text}\n`,
+    );
     return;
   }
   await resend.emails.send({ from: FROM_EMAIL, to, subject, text });
@@ -62,6 +99,16 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
+        if (!resend) {
+          // Dev fallback: banner colorato con URL cliccabile direttamente nel terminale.
+          if (process.env.NODE_ENV === "production") {
+            console.error(
+              `${C.red}[auth] CRITICAL: NODE_ENV=production ma RESEND_API_KEY mancante — magic link NON spedito a ${email}${C.reset}`,
+            );
+          }
+          printMagicLinkBanner(email, url);
+          return;
+        }
         await sendEmail(
           email,
           "Accedi a Todoist+Tracker",
