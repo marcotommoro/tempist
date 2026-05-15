@@ -1,0 +1,38 @@
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/playwright-report
+**/test-results
+**/.turbo
+**/.cache
+
+.git
+.gitignore
+.github
+
+# Env (settati su Coolify, mai dal repo)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Dev / docs
+*.md
+!README.md
+docs
+
+# Test
+tests
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+vitest.config.ts
+vitest.setup.ts
+playwright.config.ts
+
+# Editor
+.vscode
+.idea
+*.tsbuildinfo
