@@ -6,6 +6,7 @@ import { listAccountsForUser } from "@/lib/domain/calendar-accounts";
 import { IcalSection } from "@/components/features/settings/ical-section";
 import { DigestSection } from "@/components/features/settings/digest-section";
 import { CalendarSection } from "@/components/features/settings/calendar-section";
+import { WeeklyReportSection } from "@/components/features/settings/weekly-report-section";
 
 type Search = { gcal_connected?: string; gcal_error?: string };
 
@@ -44,6 +45,7 @@ export default async function SettingsPage({
       </header>
       <IcalSection tokens={tokens} baseUrl={baseUrl} />
       <DigestSection userEmail={user.email} />
+      <WeeklyReportSection />
       <CalendarSection
         accounts={accounts}
         googleConfigured={googleConfigured}

@@ -48,6 +48,55 @@
 
 → **Fase 3 — Integrazione Task ↔ Timer + UI dei collegamenti.**
 
+## Fase 5 — Report & Analytics ✅
+
+**Data:** 2026-05-18
+
+### Iterazioni eseguite
+
+- **5.1** Analytics domain
+  * `getHoursByDay` (TO_CHAR group by giorno)
+  * `getProjectBreakdown` (ore + entries + billable per project)
+  * `getCompletedTasksByDay` (count completed)
+  * `getTasksByPriority` (open vs completed per P1..P4)
+  * `getOpenTasksByLabel` (count open task con label)
+- **5.2** Charts dashboard `/reports` con Recharts 3.8.1
+  * `HoursByDayChart` (BarChart) + `ClientPieChart` (PieChart)
+  * `computeReportRange` (settimana/scorsa/mese, tz-aware) + `fillDailyGaps` puri
+  * RangeToggle 3-opzioni
+- **5.3** Export CSV time entries
+  * `lib/utils/csv.ts` builder RFC 4180 (BOM UTF-8 per Excel-on-Windows, CRLF, escape)
+  * GET `/api/reports/time-entries.csv?range=...` (13 colonne, opzionali clientId/projectId)
+- **5.4** Print-friendly report page
+  * Route group `app/(print)/` con layout senza sidebar
+  * `/reports/print?range=...` ottimizzata Cmd+P → Save as PDF
+  * `print:hidden` + `break-inside-avoid` per layout puliti
+- **5.5** Report settimanale schedulato
+  * `lib/domain/weekly-report.ts` + `lib/utils/weekly-report-render.ts` (puri)
+  * Cron `weekly.report` hourly globale, filtra internamente per lunedì 08:00 tz utente
+  * Dedupe via notification `Weekly:` creata oggi local-tz
+  * `/settings` WeeklyReportSection con "Invia report di prova ora"
+
+### Test coverage Fase 5
+
+- **94 unit tests** verdi (era 79 a fine Fase 4) — +15 tests
+  * 5 csv (escape, BOM, Date, boolean)
+  * 5 report-range (week/month/last-week + tz, fillDailyGaps)
+  * 5 weekly-report-render (text + html, escape XSS)
+- `pnpm typecheck` zero errori, `pnpm lint` zero warning, `pnpm build` 19 routes
+  (4 nuove: `/reports/print`, `/api/reports/time-entries.csv`, route group `(print)`)
+
+### Decisioni in corso d'opera
+
+- **Recharts 3.x** invece di Tremor: bundle più piccolo, API più stabile, scelta
+  sostituibile dopo design senza grosso refactor (component API simile).
+- **PDF via "HTML print"** invece di server-side generator: zero dep, copre 80%
+  del valore. Server PDF (puppeteer / @react-pdf) entra in fase futura se servirà
+  PDF schedulato in email.
+- **Route group `(print)`** invece di `print:hidden` sulla sidebar: pulizia
+  architetturale, evita di "spegnere" elementi che gli screen reader vedono
+  comunque su versioni stampabili.
+
 ## Fase 4 — Calendar & Notifications ✅ (parziale: 4.6 Web Push skipped su richiesta utente)
 
 **Data:** 2026-05-18

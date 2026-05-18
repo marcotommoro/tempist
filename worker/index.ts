@@ -14,6 +14,7 @@ import { registerHealthCheck } from "../lib/jobs/definitions/health-check";
 import { registerReminderScan } from "../lib/jobs/definitions/reminder-scan";
 import { registerDigestDaily } from "../lib/jobs/definitions/digest-daily";
 import { registerCalendarSync } from "../lib/jobs/definitions/calendar-sync";
+import { registerWeeklyReport } from "../lib/jobs/definitions/weekly-report";
 
 async function main() {
   const boss = await getBoss();
@@ -23,6 +24,7 @@ async function main() {
   await registerReminderScan(boss);
   await registerDigestDaily(boss);
   await registerCalendarSync(boss);
+  await registerWeeklyReport(boss);
 
   console.log("[worker] ready. listening for jobs.");
 }
