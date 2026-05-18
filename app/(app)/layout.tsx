@@ -16,6 +16,7 @@ import { listProjects } from "@/lib/domain/projects";
 import { TimerWidget } from "@/components/features/timer/timer-widget";
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
 import { ThemeSwitcher } from "@/components/features/topbar/theme-switcher";
+import { CommandPalette } from "@/components/features/command-palette/command-palette";
 
 const mainNav = [
   { href: "/today", label: "Today", icon: Calendar },
@@ -121,6 +122,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Content */}
       <main className="p-6 overflow-auto">{children}</main>
+
+      {/* Command palette globale (Cmd+K) */}
+      <CommandPalette />
     </div>
   );
 }
