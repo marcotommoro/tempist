@@ -14,7 +14,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import type { TimeEntry } from "@/lib/db/schema";
-import { getClient } from "./clients";
+import { resolveRate } from "./billing";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -65,30 +65,29 @@ export async function listTimeEntriesForUser(opts: {
 }
 
 // ---------------------------------------------------------------------------
-// Rate resolver (MVP — cascade completo in iter 2.4)
+// Rate snapshot (cascade gerarchico via lib/domain/billing.ts)
 // ---------------------------------------------------------------------------
 
 /**
- * Resolve rate snapshot al momento del tracking.
+ * Resolve rate snapshot al momento del tracking, con cascade completo:
+ *   TASK → PROJECT → CLIENT (+ fallback hourlyRateDefault) → USER → null
  *
- * MVP (Fase 2.2): cliente.hourlyRateDefault → null
- * Cascade completo (task → project → client → user → workspace) in Fase 2.4
- * via lib/domain/billing.ts (TODO).
+ * Restituisce rate=null se nessuna sorgente lo definisce; in tal caso
+ * la voce di tracking non e' fatturabile a tariffa (può comunque essere
+ * billable senza importo).
  */
 export async function resolveRateSnapshot(opts: {
   organizationId: string;
+  taskId?: string | null;
+  projectId?: string | null;
   clientId?: string | null;
+  userId?: string | null;
 }): Promise<{ rate: string | null; currency: string | null }> {
-  if (opts.clientId) {
-    const client = await getClient({
-      clientId: opts.clientId,
-      organizationId: opts.organizationId,
-    });
-    if (client?.hourlyRateDefault) {
-      return { rate: client.hourlyRateDefault, currency: client.currency };
-    }
-  }
-  return { rate: null, currency: null };
+  const resolved = await resolveRate(opts);
+  return {
+    rate: resolved.rate,
+    currency: resolved.rate ? resolved.currency : null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -116,7 +115,10 @@ export async function startTimer(input: StartTimerInput): Promise<
 > {
   const { rate, currency } = await resolveRateSnapshot({
     organizationId: input.organizationId,
+    taskId: input.taskId,
+    projectId: input.projectId,
     clientId: input.clientId,
+    userId: input.userId,
   });
 
   try {
@@ -189,7 +191,10 @@ export async function createManualEntry(input: CreateManualEntryInput): Promise<
   const duration = Math.floor((input.endedAt.getTime() - input.startedAt.getTime()) / 1000);
   const { rate, currency } = await resolveRateSnapshot({
     organizationId: input.organizationId,
+    taskId: input.taskId,
+    projectId: input.projectId,
     clientId: input.clientId,
+    userId: input.userId,
   });
 
   const [created] = await db
