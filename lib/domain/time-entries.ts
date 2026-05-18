@@ -10,7 +10,7 @@
  * ricalcolano retroattivamente.
  */
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import type { Task, TimeEntry } from "@/lib/db/schema";
@@ -97,6 +97,91 @@ export async function listTimeEntriesForUser(opts: {
     orderBy: [desc(schema.timeEntry.startedAt)],
     limit: opts.limit ?? 100,
   });
+}
+
+/**
+ * Aggrega le ore tracciate per ogni taskId.
+ * Include solo entries chiuse (durationSeconds non-null).
+ * Ritorna una Map per O(1) lookup nelle viste.
+ */
+export async function getTrackedSecondsByTask(opts: {
+  organizationId: string;
+  taskIds: string[];
+}): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (opts.taskIds.length === 0) return map;
+
+  const rows = await db
+    .select({
+      taskId: schema.timeEntry.taskId,
+      total: sql<number>`COALESCE(SUM(${schema.timeEntry.durationSeconds}), 0)::int`,
+    })
+    .from(schema.timeEntry)
+    .where(
+      and(
+        eq(schema.timeEntry.organizationId, opts.organizationId),
+        inArray(schema.timeEntry.taskId, opts.taskIds),
+        eq(schema.timeEntry.isRunning, false),
+      ),
+    )
+    .groupBy(schema.timeEntry.taskId);
+
+  for (const r of rows) {
+    if (r.taskId) map.set(r.taskId, Number(r.total));
+  }
+  return map;
+}
+
+/**
+ * Aggregato per cliente (per i report): per ogni clientId nella org, ritorna
+ * { totalSeconds, billableAmount } su un range di date opzionale.
+ */
+export async function getClientAggregates(opts: {
+  organizationId: string;
+  from?: Date;
+  to?: Date;
+}): Promise<
+  Map<
+    string,
+    { totalSeconds: number; billableAmount: number; entryCount: number }
+  >
+> {
+  const conds = [
+    eq(schema.timeEntry.organizationId, opts.organizationId),
+    eq(schema.timeEntry.isRunning, false),
+  ];
+  if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
+  if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
+
+  const rows = await db
+    .select({
+      clientId: schema.timeEntry.clientId,
+      totalSeconds: sql<number>`COALESCE(SUM(${schema.timeEntry.durationSeconds}), 0)::int`,
+      billableAmount: sql<string>`COALESCE(SUM(
+        CASE WHEN ${schema.timeEntry.isBillable} = true AND ${schema.timeEntry.hourlyRateSnapshot} IS NOT NULL
+          THEN ${schema.timeEntry.hourlyRateSnapshot} * (${schema.timeEntry.durationSeconds}::numeric / 3600)
+          ELSE 0
+        END
+      ), 0)::numeric`,
+      entryCount: sql<number>`COUNT(*)::int`,
+    })
+    .from(schema.timeEntry)
+    .where(and(...conds))
+    .groupBy(schema.timeEntry.clientId);
+
+  const out = new Map<
+    string,
+    { totalSeconds: number; billableAmount: number; entryCount: number }
+  >();
+  for (const r of rows) {
+    if (!r.clientId) continue;
+    out.set(r.clientId, {
+      totalSeconds: Number(r.totalSeconds),
+      billableAmount: Number(r.billableAmount),
+      entryCount: Number(r.entryCount),
+    });
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------

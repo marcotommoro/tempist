@@ -4,6 +4,7 @@ import { LayoutGrid, List as ListIcon } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getProject, getProjectBoard } from "@/lib/domain/projects";
+import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { TaskItem } from "@/components/features/tasks/task-item";
 import { AddTaskToProject } from "@/components/features/tasks/add-task-to-project";
 import { CreateSectionForm } from "@/components/features/projects/create-section-form";
@@ -28,6 +29,16 @@ export default async function ProjectDetailPage({
   const { sections, tasksBySection } = await getProjectBoard({
     projectId: id,
     organizationId,
+  });
+
+  // Flat list di taskIds da tutte le sezioni (incluso "null" = senza sezione)
+  const allTaskIds: string[] = [];
+  for (const arr of tasksBySection.values()) {
+    for (const t of arr) allTaskIds.push(t.id);
+  }
+  const trackedByTask = await getTrackedSecondsByTask({
+    organizationId,
+    taskIds: allTaskIds,
   });
 
   const isBoard = view === "board";
@@ -57,6 +68,7 @@ export default async function ProjectDetailPage({
           projectId={id}
           sections={sections}
           tasksBySection={tasksBySection}
+          trackedByTask={trackedByTask}
         />
       )}
     </div>
@@ -92,10 +104,12 @@ function ListView({
   projectId,
   sections,
   tasksBySection,
+  trackedByTask,
 }: {
   projectId: string;
   sections: import("@/lib/db/schema").Section[];
   tasksBySection: Map<string | null, import("@/lib/db/schema").Task[]>;
+  trackedByTask: Map<string, number>;
 }) {
   const tasksNoSection = tasksBySection.get(null) ?? [];
 
@@ -107,6 +121,7 @@ function ListView({
           projectId={projectId}
           sectionId={null}
           tasks={tasksNoSection}
+          trackedByTask={trackedByTask}
         />
       )}
       {sections.map((s) => (
@@ -116,6 +131,7 @@ function ListView({
           projectId={projectId}
           sectionId={s.id}
           tasks={tasksBySection.get(s.id) ?? []}
+          trackedByTask={trackedByTask}
         />
       ))}
       <div>
@@ -130,11 +146,13 @@ function SectionBlock({
   projectId,
   sectionId,
   tasks,
+  trackedByTask,
 }: {
   name: string;
   projectId: string;
   sectionId: string | null;
   tasks: import("@/lib/db/schema").Task[];
+  trackedByTask: Map<string, number>;
 }) {
   return (
     <section className="space-y-2">
@@ -145,7 +163,11 @@ function SectionBlock({
         {tasks.length > 0 ? (
           <ul className="divide-y divide-border">
             {tasks.map((t) => (
-              <TaskItem key={t.id} task={t} />
+              <TaskItem
+                key={t.id}
+                task={t}
+                trackedSeconds={trackedByTask.get(t.id) ?? 0}
+              />
             ))}
           </ul>
         ) : (

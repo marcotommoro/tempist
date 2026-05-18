@@ -1,11 +1,16 @@
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getInboxTasks } from "@/lib/domain/tasks";
+import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
 
 export default async function InboxPage() {
   const { organizationId } = await requireActiveOrganization();
   const tasks = await getInboxTasks({ organizationId });
+  const trackedByTask = await getTrackedSecondsByTask({
+    organizationId,
+    taskIds: tasks.map((t) => t.id),
+  });
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -18,7 +23,11 @@ export default async function InboxPage() {
 
       <QuickAdd />
 
-      <TaskList tasks={tasks} emptyMessage="Inbox vuota." />
+      <TaskList
+        tasks={tasks}
+        trackedByTask={trackedByTask}
+        emptyMessage="Inbox vuota."
+      />
     </div>
   );
 }

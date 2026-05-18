@@ -1,5 +1,6 @@
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getTodayTasks } from "@/lib/domain/tasks";
+import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
 
@@ -9,6 +10,10 @@ export default async function TodayPage() {
     (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
 
   const tasks = await getTodayTasks({ organizationId, timezone });
+  const trackedByTask = await getTrackedSecondsByTask({
+    organizationId,
+    taskIds: tasks.map((t) => t.id),
+  });
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -23,7 +28,11 @@ export default async function TodayPage() {
 
       <QuickAdd defaultScheduledAt={new Date()} />
 
-      <TaskList tasks={tasks} emptyMessage="Tutto pulito per oggi. ✨" />
+      <TaskList
+        tasks={tasks}
+        trackedByTask={trackedByTask}
+        emptyMessage="Tutto pulito per oggi. ✨"
+      />
     </div>
   );
 }

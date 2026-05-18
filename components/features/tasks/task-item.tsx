@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { deleteTaskAction, toggleTaskAction } from "@/lib/actions/tasks";
 import { startTimerFromTaskAction } from "@/lib/actions/timer";
 import type { Task } from "@/lib/db/schema";
+import { TaskProgress } from "./task-progress";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
   P1: "text-red-500",
@@ -16,7 +17,13 @@ const PRIORITY_COLOR: Record<Task["priority"], string> = {
   P4: "text-muted-foreground",
 };
 
-export function TaskItem({ task }: { task: Task }) {
+export function TaskItem({
+  task,
+  trackedSeconds = 0,
+}: {
+  task: Task;
+  trackedSeconds?: number;
+}) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const isDone = !!task.completedAt;
@@ -78,6 +85,10 @@ export function TaskItem({ task }: { task: Task }) {
           {task.recurrenceRule && (
             <span title={task.recurrenceRule}>🔁</span>
           )}
+          <TaskProgress
+            trackedSeconds={trackedSeconds}
+            estimatedMinutes={task.estimatedMinutes}
+          />
           {error && <span className="text-red-500">{error}</span>}
         </div>
       </div>
