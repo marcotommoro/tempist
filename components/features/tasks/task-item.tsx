@@ -16,6 +16,7 @@ import {
   CompleteWithDurationDialog,
   type CompleteDecision,
 } from "./complete-with-duration-dialog";
+import { TaskReminderButton } from "./task-reminder-button";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
   P1: "text-red-500",
@@ -27,9 +28,11 @@ const PRIORITY_COLOR: Record<Task["priority"], string> = {
 export function TaskItem({
   task,
   trackedSeconds = 0,
+  reminderCount = 0,
 }: {
   task: Task;
   trackedSeconds?: number;
+  reminderCount?: number;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +145,14 @@ export function TaskItem({
           {error && <span className="text-red-500">{error}</span>}
         </div>
       </div>
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!isDone && (
+          <TaskReminderButton
+            taskId={task.id}
+            hasScheduledAt={!!task.scheduledAt}
+            reminderCount={reminderCount}
+          />
+        )}
         {!isDone && (
           <button
             type="button"

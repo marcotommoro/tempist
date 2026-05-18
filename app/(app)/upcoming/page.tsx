@@ -1,6 +1,7 @@
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getUpcomingTasks } from "@/lib/domain/tasks";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
+import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { TaskList } from "@/components/features/tasks/task-list";
 
 export default async function UpcomingPage() {
@@ -9,10 +10,11 @@ export default async function UpcomingPage() {
     (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
 
   const tasks = await getUpcomingTasks({ organizationId, timezone, horizonDays: 30 });
-  const trackedByTask = await getTrackedSecondsByTask({
-    organizationId,
-    taskIds: tasks.map((t) => t.id),
-  });
+  const taskIds = tasks.map((t) => t.id);
+  const [trackedByTask, remindersByTask] = await Promise.all([
+    getTrackedSecondsByTask({ organizationId, taskIds }),
+    getPendingReminderCountByTask(taskIds),
+  ]);
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -26,6 +28,7 @@ export default async function UpcomingPage() {
       <TaskList
         tasks={tasks}
         trackedByTask={trackedByTask}
+        remindersByTask={remindersByTask}
         emptyMessage="Nessun task programmato."
       />
     </div>

@@ -5,6 +5,7 @@ import { LayoutGrid, List as ListIcon } from "lucide-react";
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getProject, getProjectBoard } from "@/lib/domain/projects";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
+import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { TaskItem } from "@/components/features/tasks/task-item";
 import { AddTaskToProject } from "@/components/features/tasks/add-task-to-project";
 import { CreateSectionForm } from "@/components/features/projects/create-section-form";
@@ -36,10 +37,10 @@ export default async function ProjectDetailPage({
   for (const arr of tasksBySection.values()) {
     for (const t of arr) allTaskIds.push(t.id);
   }
-  const trackedByTask = await getTrackedSecondsByTask({
-    organizationId,
-    taskIds: allTaskIds,
-  });
+  const [trackedByTask, remindersByTask] = await Promise.all([
+    getTrackedSecondsByTask({ organizationId, taskIds: allTaskIds }),
+    getPendingReminderCountByTask(allTaskIds),
+  ]);
 
   const isBoard = view === "board";
 
@@ -69,6 +70,7 @@ export default async function ProjectDetailPage({
           sections={sections}
           tasksBySection={tasksBySection}
           trackedByTask={trackedByTask}
+          remindersByTask={remindersByTask}
         />
       )}
     </div>
@@ -105,11 +107,13 @@ function ListView({
   sections,
   tasksBySection,
   trackedByTask,
+  remindersByTask,
 }: {
   projectId: string;
   sections: import("@/lib/db/schema").Section[];
   tasksBySection: Map<string | null, import("@/lib/db/schema").Task[]>;
   trackedByTask: Map<string, number>;
+  remindersByTask: Map<string, number>;
 }) {
   const tasksNoSection = tasksBySection.get(null) ?? [];
 
@@ -122,6 +126,7 @@ function ListView({
           sectionId={null}
           tasks={tasksNoSection}
           trackedByTask={trackedByTask}
+          remindersByTask={remindersByTask}
         />
       )}
       {sections.map((s) => (
@@ -132,6 +137,7 @@ function ListView({
           sectionId={s.id}
           tasks={tasksBySection.get(s.id) ?? []}
           trackedByTask={trackedByTask}
+          remindersByTask={remindersByTask}
         />
       ))}
       <div>
@@ -147,12 +153,14 @@ function SectionBlock({
   sectionId,
   tasks,
   trackedByTask,
+  remindersByTask,
 }: {
   name: string;
   projectId: string;
   sectionId: string | null;
   tasks: import("@/lib/db/schema").Task[];
   trackedByTask: Map<string, number>;
+  remindersByTask: Map<string, number>;
 }) {
   return (
     <section className="space-y-2">
@@ -167,6 +175,7 @@ function SectionBlock({
                 key={t.id}
                 task={t}
                 trackedSeconds={trackedByTask.get(t.id) ?? 0}
+                reminderCount={remindersByTask.get(t.id) ?? 0}
               />
             ))}
           </ul>

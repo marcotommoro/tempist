@@ -11,12 +11,14 @@
 import "dotenv/config";
 import { getBoss, stopBoss } from "../lib/jobs/boss";
 import { registerHealthCheck } from "../lib/jobs/definitions/health-check";
+import { registerReminderScan } from "../lib/jobs/definitions/reminder-scan";
 
 async function main() {
   const boss = await getBoss();
   console.log("[worker] pg-boss started, registering jobs...");
 
   await registerHealthCheck(boss);
+  await registerReminderScan(boss);
 
   console.log("[worker] ready. listening for jobs.");
 }

@@ -5,6 +5,7 @@ import { getSavedFilter } from "@/lib/domain/saved-filters";
 import { parseFilter } from "@/lib/parsers/filter-dsl";
 import { executeFilter } from "@/lib/domain/filters";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
+import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { TaskList } from "@/components/features/tasks/task-list";
 
 type Params = { id: string };
@@ -22,10 +23,11 @@ export default async function FilterDetailPage({
   const timezone = (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
   const parsed = parseFilter(filter.queryDsl);
   const tasks = await executeFilter(parsed, { organizationId, timezone });
-  const trackedByTask = await getTrackedSecondsByTask({
-    organizationId,
-    taskIds: tasks.map((t) => t.id),
-  });
+  const taskIds = tasks.map((t) => t.id);
+  const [trackedByTask, remindersByTask] = await Promise.all([
+    getTrackedSecondsByTask({ organizationId, taskIds }),
+    getPendingReminderCountByTask(taskIds),
+  ]);
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -37,6 +39,7 @@ export default async function FilterDetailPage({
       <TaskList
         tasks={tasks}
         trackedByTask={trackedByTask}
+        remindersByTask={remindersByTask}
         emptyMessage="Nessun task matcha questo filtro."
       />
     </div>

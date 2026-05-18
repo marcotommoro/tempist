@@ -7,6 +7,7 @@ import {
   listTimeEntriesForClient,
 } from "@/lib/domain/time-entries";
 import { getTasksForClient } from "@/lib/domain/tasks";
+import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { TaskList } from "@/components/features/tasks/task-list";
@@ -36,10 +37,11 @@ export default async function ClientDetailPage({
     includeCompleted: true,
     limit: 50,
   });
-  const trackedByTask = await getTrackedSecondsByTask({
-    organizationId,
-    taskIds: tasks.map((t) => t.id),
-  });
+  const taskIds = tasks.map((t) => t.id);
+  const [trackedByTask, remindersByTask] = await Promise.all([
+    getTrackedSecondsByTask({ organizationId, taskIds }),
+    getPendingReminderCountByTask(taskIds),
+  ]);
 
   // Totali per il cliente
   const totals = entries.reduce(
@@ -95,6 +97,7 @@ export default async function ClientDetailPage({
         <TaskList
           tasks={tasks}
           trackedByTask={trackedByTask}
+          remindersByTask={remindersByTask}
           emptyMessage="Nessun task legato a questo cliente."
         />
       </section>

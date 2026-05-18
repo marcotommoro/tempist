@@ -4,11 +4,14 @@ import type { Task } from "@/lib/db/schema";
 export function TaskList({
   tasks,
   trackedByTask,
+  remindersByTask,
   emptyMessage = "Nessun task.",
 }: {
   tasks: Task[];
   /** Map<taskId, trackedSeconds> per arricchire ogni item con la sua progress bar */
   trackedByTask?: Map<string, number>;
+  /** Map<taskId, count> reminder pending */
+  remindersByTask?: Map<string, number>;
   emptyMessage?: string;
 }) {
   if (tasks.length === 0) {
@@ -25,6 +28,7 @@ export function TaskList({
           key={t.id}
           task={t}
           trackedSeconds={trackedByTask?.get(t.id) ?? 0}
+          reminderCount={remindersByTask?.get(t.id) ?? 0}
         />
       ))}
     </ul>
