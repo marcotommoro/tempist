@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
+  CalendarDays,
   CheckSquare,
   FolderKanban,
   Inbox,
@@ -20,6 +21,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
+  CommandShortcut,
 } from "@/components/ui/command";
 import { searchAction } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/domain/search";
@@ -27,7 +29,7 @@ import type { SearchResult } from "@/lib/domain/search";
 const QUICK_NAV = [
   { label: "Today", href: "/today", icon: Calendar },
   { label: "Inbox", href: "/inbox", icon: Inbox },
-  { label: "Upcoming", href: "/upcoming", icon: Calendar },
+  { label: "Upcoming", href: "/upcoming", icon: CalendarDays },
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Reports", href: "/reports", icon: CheckSquare },
@@ -41,7 +43,6 @@ export function CommandPalette() {
   const [, startTransition] = useTransition();
   const router = useRouter();
 
-  // Cmd+K / Ctrl+K listener
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -53,9 +54,6 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Debounce ricerca. Lo state setting avviene dentro startTransition o setTimeout
-  // (entrambi async rispetto al render attuale, quindi non triggerano la regola
-  // react-hooks/set-state-in-effect).
   useEffect(() => {
     if (!open) return;
     if (query.trim().length === 0) {
@@ -85,21 +83,21 @@ export function CommandPalette() {
       description="Cerca task, progetti, clienti o naviga"
     >
       <CommandInput
-        placeholder="Cerca o digita un comando…"
+        placeholder="Search anything…"
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
         <CommandEmpty>
           {query.length === 0
-            ? "Digita per cercare task / progetti / clienti."
-            : "Nessun risultato."}
+            ? "Type to search across tasks, projects, clients."
+            : "No results."}
         </CommandEmpty>
 
         {/* Risultati ricerca */}
         {results.length > 0 && (
           <>
-            <CommandGroup heading="Risultati">
+            <CommandGroup heading="Results">
               {results.map((r) => {
                 if (r.kind === "task") {
                   return (
@@ -110,8 +108,11 @@ export function CommandPalette() {
                         go(r.projectId ? `/projects/${r.projectId}` : "/inbox")
                       }
                     >
-                      <CheckSquare className="size-4 mr-2 shrink-0" />
+                      <CheckSquare className="size-4 shrink-0 text-muted-foreground" />
                       <span className="truncate">{r.title}</span>
+                      <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Task
+                      </span>
                     </CommandItem>
                   );
                 }
@@ -123,13 +124,13 @@ export function CommandPalette() {
                       onSelect={() => go(`/projects/${r.id}`)}
                     >
                       <span
-                        className="size-3 rounded-full mr-2 shrink-0"
+                        className="size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
                         style={{ backgroundColor: r.color }}
                         aria-hidden
                       />
                       <span className="truncate">{r.name}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        Progetto
+                      <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Project
                       </span>
                     </CommandItem>
                   );
@@ -141,13 +142,13 @@ export function CommandPalette() {
                     onSelect={() => go(`/clients/${r.id}`)}
                   >
                     <span
-                      className="size-3 rounded-full mr-2 shrink-0"
+                      className="size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
                       style={{ backgroundColor: r.color }}
                       aria-hidden
                     />
                     <span className="truncate">{r.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Cliente
+                    <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Client
                     </span>
                   </CommandItem>
                 );
@@ -158,29 +159,25 @@ export function CommandPalette() {
         )}
 
         {/* Quick navigation */}
-        <CommandGroup heading="Vai a">
+        <CommandGroup heading="Navigate">
           {QUICK_NAV.map(({ label, href, icon: Icon }) => (
             <CommandItem
               key={href}
               value={`go ${label}`}
               onSelect={() => go(href)}
             >
-              <Icon className="size-4 mr-2 shrink-0" />
-              {label}
+              <Icon className="size-4 shrink-0 text-muted-foreground" />
+              <span>{label}</span>
             </CommandItem>
           ))}
         </CommandGroup>
 
-        <CommandGroup heading="Suggerimento">
+        <CommandGroup heading="Tip">
           <CommandItem disabled value="hint">
-            <Search className="size-4 mr-2 opacity-50" />
-            Apri con{" "}
-            <kbd className="ml-1 px-1.5 py-0.5 rounded border text-[10px] bg-muted">
-              ⌘K
-            </kbd>
-            <kbd className="ml-1 px-1.5 py-0.5 rounded border text-[10px] bg-muted">
-              Ctrl+K
-            </kbd>
+            <Search className="size-4 shrink-0 opacity-50" />
+            <span className="text-muted-foreground">Open from anywhere with</span>
+            <CommandShortcut>⌘K</CommandShortcut>
+            <CommandShortcut>Ctrl+K</CommandShortcut>
           </CommandItem>
         </CommandGroup>
       </CommandList>

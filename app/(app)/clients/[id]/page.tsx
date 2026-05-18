@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Mail, Receipt } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getClient } from "@/lib/domain/clients";
@@ -12,6 +13,7 @@ import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { formatDuration } from "@/lib/utils/format-duration";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Params = { id: string };
 
@@ -57,43 +59,72 @@ export default async function ClientDetailPage({
   );
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <header className="space-y-2">
-        <div className="flex items-center gap-3">
-          <span
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: client.color }}
-            aria-hidden
-          />
-          <h1 className="text-2xl font-semibold tracking-tight">{client.name}</h1>
-        </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          {client.email && <span>📧 {client.email}</span>}
-          {client.vatNumber && <span>P.IVA {client.vatNumber}</span>}
-          {client.hourlyRateDefault && (
-            <span>
-              💶 {client.hourlyRateDefault} {client.currency}/h
-            </span>
-          )}
-        </div>
-      </header>
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow={
+          <span className="inline-flex items-center gap-2">
+            <span
+              className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
+              style={{ backgroundColor: client.color }}
+              aria-hidden
+            />
+            Client
+          </span>
+        }
+        title={client.name}
+        meta={
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 normal-case tracking-normal">
+            {client.email && (
+              <span className="inline-flex items-center gap-1.5 normal-case">
+                <Mail className="h-3 w-3" />
+                <span className="text-foreground">{client.email}</span>
+              </span>
+            )}
+            {client.vatNumber && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="font-mono uppercase tracking-wider">
+                  P.IVA <span className="text-foreground">{client.vatNumber}</span>
+                </span>
+              </>
+            )}
+            {client.hourlyRateDefault && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1.5 normal-case">
+                  <Receipt className="h-3 w-3" />
+                  <span className="font-mono tabular-nums text-foreground">
+                    {client.hourlyRateDefault} {client.currency}/h
+                  </span>
+                </span>
+              </>
+            )}
+          </div>
+        }
+      />
 
-      {/* Totali */}
-      <section className="grid grid-cols-3 gap-3">
-        <Stat label="Ore totali" value={formatDuration(totals.totalSeconds)} />
+      {/* Totali — editorial KPI grid */}
+      <section className="grid grid-cols-3 gap-px overflow-hidden rounded-md border border-border bg-border">
+        <Stat label="Hours" value={formatDuration(totals.totalSeconds)} />
         <Stat
-          label="Fatturabile"
-          value={`${totals.billable.toFixed(2)} ${client.currency}`}
+          label={`Billable (${client.currency})`}
+          value={totals.billable.toFixed(2)}
+          accent
         />
-        <Stat label="Voci" value={String(entries.length)} />
+        <Stat label="Entries" value={String(entries.length)} />
       </section>
 
       <ManualEntryForm clientId={id} />
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Tasks <span className="ml-1 text-xs">({tasks.length})</span>
-        </h2>
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between border-b border-border pb-1.5">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            Tasks
+          </h2>
+          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            {String(tasks.length).padStart(2, "0")}
+          </span>
+        </div>
         <TaskList
           tasks={tasks}
           trackedByTask={trackedByTask}
@@ -102,11 +133,16 @@ export default async function ClientDetailPage({
         />
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Time entries
-        </h2>
-        <div className="rounded-md border bg-card">
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between border-b border-border pb-1.5">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            Time entries
+          </h2>
+          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            {String(entries.length).padStart(2, "0")}
+          </span>
+        </div>
+        <div className="overflow-hidden rounded-md border border-border bg-card">
           {entries.length > 0 ? (
             <ul className="divide-y divide-border">
               {entries.map((e) => (
@@ -114,7 +150,7 @@ export default async function ClientDetailPage({
               ))}
             </ul>
           ) : (
-            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            <p className="px-4 py-8 text-center font-display text-base italic text-muted-foreground">
               Nessuna voce di tracking ancora.
             </p>
           )}
@@ -124,11 +160,29 @@ export default async function ClientDetailPage({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
-    <div className="rounded-md border bg-card p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold tabular-nums mt-0.5">{value}</div>
+    <div className="bg-card p-4">
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </div>
+      <div
+        className={
+          accent
+            ? "mt-1.5 font-display text-3xl leading-none tabular-nums text-coral"
+            : "mt-1.5 font-display text-3xl leading-none tabular-nums text-foreground"
+        }
+      >
+        {value}
+      </div>
     </div>
   );
 }

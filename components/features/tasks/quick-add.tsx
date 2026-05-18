@@ -1,20 +1,25 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition, type FormEvent } from "react";
-import { Plus } from "lucide-react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
+import { Calendar, Hash, Plus, Repeat, Tag, Timer, User } from "lucide-react";
 import { format } from "date-fns";
 
 import { createTaskFromQuickAddAction } from "@/lib/actions/quick-add";
 import { parseQuickAdd } from "@/lib/parsers/quick-add";
+import { cn } from "@/lib/utils";
 
 /**
- * QuickAdd v2 — con NLP parsing + live preview chips.
+ * QuickAdd v2 — NLP parsing + live preview chips.
  *
  * Token supportati (vedi lib/parsers/quick-add.ts):
  *   #project   @label   p1..p4   !cliente:Nome   60min / 1h / 1h30m
  *   chrono-node: "tomorrow at 3pm", "domani 15:00", "next monday", ecc.
- *
- * defaultScheduledAt e' applicato solo se il parser non trova date nel testo.
  */
 export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) {
   const [input, setInput] = useState("");
@@ -34,8 +39,6 @@ export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) 
     setError(null);
     startTransition(async () => {
       const fd = new FormData();
-      // Se l'utente non ha messo una data esplicita e c'e' un defaultScheduledAt,
-      // appendiamo l'ISO al testo cosi' il parser lo pesca come date.
       let finalInput = trimmed;
       if (!parsed?.scheduledAt && defaultScheduledAt) {
         finalInput = `${trimmed} ${defaultScheduledAt.toISOString()}`;
@@ -53,24 +56,24 @@ export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) 
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <div className="flex gap-2">
+      <div className="group flex items-center gap-2 rounded-md border border-input bg-card/40 px-2 py-1 transition-colors focus-within:border-coral/40 focus-within:bg-card focus-within:ring-2 focus-within:ring-ring/30">
+        <Plus className="ml-1 size-4 shrink-0 text-muted-foreground transition-colors group-focus-within:text-coral" />
         <input
           ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={pending}
-          placeholder='Es: "Chiamare Mario domani 15:00 #Acme @urgent p1 60min"'
+          placeholder='Aggiungi un task…  "Chiamare Mario domani 15:00 #Acme p1 60min"'
           autoComplete="off"
-          className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          className="flex-1 bg-transparent py-1.5 text-[14px] outline-none placeholder:text-muted-foreground disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={pending || !input.trim()}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          className="inline-flex h-7 items-center gap-1.5 rounded bg-foreground px-2.5 font-mono text-[10px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-40"
         >
-          <Plus className="size-4" />
-          Aggiungi
+          Add
         </button>
       </div>
 
@@ -87,23 +90,35 @@ export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) 
         />
       )}
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
     </form>
   );
 }
 
 const PRIORITY_CHIP: Record<string, string> = {
-  P1: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-  P2: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
-  P3: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-  P4: "bg-muted text-muted-foreground",
+  P1: "border-p1/30 bg-p1/10 text-p1",
+  P2: "border-p2/30 bg-p2/10 text-p2",
+  P3: "border-p3/30 bg-p3/10 text-p3",
+  P4: "border-border bg-muted text-muted-foreground",
 };
 
-function Chip({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Chip({
+  icon,
+  children,
+  className = "",
+}: {
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${className}`}
+      className={cn(
+        "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10px] tabular-nums",
+        className,
+      )}
     >
+      {icon ? <span className="opacity-70">{icon}</span> : null}
       {children}
     </span>
   );
@@ -131,41 +146,47 @@ function ParsedPreview(props: {
   if (!hasAnyToken) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 px-1 text-xs">
+    <div className="flex flex-wrap items-center gap-1 px-1">
       {props.scheduledAt && (
-        <Chip className="bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300">
-          📅 {format(props.scheduledAt, "EEE d MMM, HH:mm")}
+        <Chip
+          icon={<Calendar className="size-2.5" />}
+          className="border-coral/30 bg-coral/10 text-coral"
+        >
+          {format(props.scheduledAt, "EEE d LLL HH:mm")}
         </Chip>
       )}
       {props.priority !== "P4" && (
-        <Chip className={PRIORITY_CHIP[props.priority] ?? ""}>{props.priority}</Chip>
+        <Chip className={PRIORITY_CHIP[props.priority] ?? ""}>
+          {props.priority}
+        </Chip>
       )}
       {props.projectName && (
-        <Chip className="bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">
-          #{props.projectName}
+        <Chip icon={<Hash className="size-2.5" />} className="border-border bg-secondary text-foreground">
+          {props.projectName}
         </Chip>
       )}
       {props.labelNames.map((l) => (
         <Chip
           key={l}
-          className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+          icon={<Tag className="size-2.5" />}
+          className="border-sage/30 bg-sage/10 text-sage"
         >
-          @{l}
+          {l}
         </Chip>
       ))}
       {props.clientName && (
-        <Chip className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-          !cliente:{props.clientName}
+        <Chip icon={<User className="size-2.5" />} className="border-border bg-secondary text-foreground">
+          {props.clientName}
         </Chip>
       )}
       {props.estimatedMinutes != null && (
-        <Chip className="bg-muted text-muted-foreground">
-          ⏱ {props.estimatedMinutes}m
+        <Chip icon={<Timer className="size-2.5" />} className="border-border bg-muted text-muted-foreground">
+          {props.estimatedMinutes}m
         </Chip>
       )}
       {props.recurrenceRule && (
-        <Chip className="bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300">
-          🔁 {props.recurrenceRule}
+        <Chip icon={<Repeat className="size-2.5" />} className="border-border bg-muted text-muted-foreground normal-case">
+          {props.recurrenceRule}
         </Chip>
       )}
     </div>

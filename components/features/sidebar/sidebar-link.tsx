@@ -24,14 +24,28 @@ export function SidebarLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
+        "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[13px] transition-colors duration-[var(--dur-fast)]",
         active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          ? "bg-sidebar-accent/70 text-foreground font-medium"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
       )}
     >
-      {icon}
-      {children}
+      <span
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r-sm bg-coral transition-opacity duration-[var(--dur-fast)]",
+          active ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <span
+        className={cn(
+          "shrink-0 transition-colors",
+          active ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
+        )}
+      >
+        {icon}
+      </span>
+      <span className="truncate">{children}</span>
     </Link>
   );
 }
@@ -53,14 +67,21 @@ export function ProjectLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
+        "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[13px] transition-colors duration-[var(--dur-fast)]",
         active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+          ? "bg-sidebar-accent/70 text-foreground font-medium"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
       )}
     >
       <span
-        className="w-2 h-2 rounded-full shrink-0"
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-r-sm bg-coral transition-opacity duration-[var(--dur-fast)]",
+          active ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <span
+        className="h-2 w-2 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
         style={{ backgroundColor: color }}
         aria-hidden
       />

@@ -17,11 +17,12 @@ import {
 } from "@/lib/actions/reminders";
 import type { Reminder } from "@/lib/db/schema";
 import { formatRelativeOffset } from "@/lib/utils/reminder-time";
+import { cn } from "@/lib/utils";
 
 const RELATIVE_PRESETS = [
-  { value: "-10m", label: "10 min prima" },
-  { value: "-1h", label: "1 ora prima" },
-  { value: "-1d", label: "1 giorno prima" },
+  { value: "-10m", label: "10 min" },
+  { value: "-1h", label: "1 h" },
+  { value: "-1d", label: "1 d" },
 ];
 
 export function TaskReminderButton({
@@ -102,11 +103,14 @@ export function TaskReminderButton({
           type="button"
           aria-label="Gestisci promemoria"
           title="Promemoria"
-          className="relative text-muted-foreground hover:text-foreground disabled:cursor-not-allowed"
+          className={cn(
+            "relative inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+            reminderCount > 0 && "text-coral",
+          )}
         >
-          <Bell className="size-4" />
+          <Bell className="size-3.5" />
           {reminderCount > 0 && (
-            <span className="absolute -top-1 -right-1 size-3 inline-flex items-center justify-center rounded-full bg-blue-500 text-[8px] font-semibold text-white tabular-nums">
+            <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 min-w-3 items-center justify-center rounded-full bg-coral px-1 font-mono text-[8px] font-medium tabular-nums text-coral-foreground">
               {reminderCount}
             </span>
           )}
@@ -115,21 +119,29 @@ export function TaskReminderButton({
       <PopoverContent align="end" className="w-72 p-3">
         <div className="space-y-3">
           <div>
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-              Promemoria attivi
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              Attivi
             </div>
             {reminders === null ? (
-              <div className="text-xs text-muted-foreground">Caricamento…</div>
+              <div className="font-display text-[12px] italic text-muted-foreground">
+                Caricamento…
+              </div>
             ) : reminders.length === 0 ? (
-              <div className="text-xs text-muted-foreground">Nessuno.</div>
+              <div className="font-display text-[12px] italic text-muted-foreground">
+                Nessuno.
+              </div>
             ) : (
               <ul className="space-y-1">
                 {reminders.map((r) => (
                   <li
                     key={r.id}
-                    className="flex items-center justify-between text-xs"
+                    className="flex items-center justify-between text-[12px]"
                   >
-                    <span className={r.sentAt ? "text-muted-foreground line-through" : ""}>
+                    <span
+                      className={cn(
+                        r.sentAt && "text-muted-foreground line-through",
+                      )}
+                    >
                       {r.triggerType === "RELATIVE"
                         ? formatRelativeOffset(r.triggerValue)
                         : new Date(r.triggerValue).toLocaleString()}
@@ -139,7 +151,7 @@ export function TaskReminderButton({
                       onClick={() => del(r.id)}
                       disabled={pending}
                       aria-label="Rimuovi"
-                      className="text-muted-foreground hover:text-destructive disabled:cursor-not-allowed"
+                      className="text-muted-foreground transition-colors hover:text-destructive disabled:cursor-not-allowed"
                     >
                       <Trash2 className="size-3" />
                     </button>
@@ -151,8 +163,8 @@ export function TaskReminderButton({
 
           {hasScheduledAt && (
             <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Preset (relativi a scheduledAt)
+              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                Preset · prima della data
               </div>
               <div className="flex flex-wrap gap-1">
                 {RELATIVE_PRESETS.map((p) => (
@@ -161,9 +173,9 @@ export function TaskReminderButton({
                     type="button"
                     onClick={() => addPreset(p.value)}
                     disabled={pending}
-                    className="text-xs px-2 py-1 rounded border bg-card hover:bg-muted disabled:cursor-not-allowed"
+                    className="inline-flex h-7 items-center rounded border border-border bg-card/40 px-2 font-mono text-[11px] tabular-nums transition-colors hover:bg-accent disabled:cursor-not-allowed"
                   >
-                    {p.label}
+                    −{p.label}
                   </button>
                 ))}
               </div>
@@ -171,10 +183,10 @@ export function TaskReminderButton({
           )}
 
           <div>
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
               Data/ora specifica
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <Input
                 type="datetime-local"
                 value={customDateTime}
@@ -184,7 +196,7 @@ export function TaskReminderButton({
               />
               <Button
                 type="button"
-                size="sm"
+                size="icon-sm"
                 onClick={addCustom}
                 disabled={pending || !customDateTime}
               >
@@ -194,7 +206,7 @@ export function TaskReminderButton({
           </div>
 
           {error && (
-            <p className="text-xs text-red-500">{error}</p>
+            <p className="font-mono text-[11px] text-destructive">{error}</p>
           )}
         </div>
       </PopoverContent>

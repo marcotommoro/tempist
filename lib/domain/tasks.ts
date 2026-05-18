@@ -390,3 +390,27 @@ export async function updateTaskTitle(opts: {
       ),
     );
 }
+
+export async function updateTaskEstimatedMinutes(opts: {
+  taskId: string;
+  organizationId: string;
+  estimatedMinutes: number | null;
+}): Promise<void> {
+  if (
+    opts.estimatedMinutes !== null &&
+    (!Number.isFinite(opts.estimatedMinutes) ||
+      opts.estimatedMinutes < 0 ||
+      opts.estimatedMinutes > 60 * 24 * 30)
+  ) {
+    throw new Error("Stima non valida");
+  }
+  await db
+    .update(schema.task)
+    .set({ estimatedMinutes: opts.estimatedMinutes })
+    .where(
+      and(
+        eq(schema.task.id, opts.taskId),
+        eq(schema.task.organizationId, opts.organizationId),
+      ),
+    );
+}

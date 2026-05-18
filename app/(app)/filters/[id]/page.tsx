@@ -7,6 +7,7 @@ import { executeFilter } from "@/lib/domain/filters";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { TaskList } from "@/components/features/tasks/task-list";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Params = { id: string };
 
@@ -30,11 +31,28 @@ export default async function FilterDetailPage({
   ]);
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{filter.name}</h1>
-        <code className="text-xs text-muted-foreground">{filter.queryDsl}</code>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Saved filter"
+        title={filter.name}
+        meta={
+          <>
+            <span>
+              <span className="text-foreground tabular-nums">{tasks.length}</span>{" "}
+              {tasks.length === 1 ? "match" : "matches"}
+            </span>
+          </>
+        }
+      />
+
+      <div className="overflow-hidden rounded-md border border-border bg-muted/30 px-3.5 py-2.5">
+        <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+          Query
+        </div>
+        <code className="block font-mono text-[12px] leading-relaxed text-foreground">
+          {filter.queryDsl}
+        </code>
+      </div>
 
       <TaskList
         tasks={tasks}

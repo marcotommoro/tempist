@@ -23,6 +23,7 @@ import {
   softDeleteTask,
   toggleTaskComplete,
   updateTaskDescription,
+  updateTaskEstimatedMinutes,
   updateTaskPriority,
   updateTaskSchedule,
   updateTaskTitle,
@@ -250,6 +251,23 @@ export async function setTaskTitleAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Errore aggiornamento titolo",
+    };
+  }
+}
+
+export async function setTaskEstimatedMinutesAction(
+  taskId: string,
+  estimatedMinutes: number | null,
+): Promise<ActionResult> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    await updateTaskEstimatedMinutes({ taskId, organizationId, estimatedMinutes });
+    revalidateTaskViews();
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento stima",
     };
   }
 }

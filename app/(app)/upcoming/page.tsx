@@ -18,6 +18,7 @@ import {
 } from "@/components/features/upcoming/week-strip";
 import { AddTaskForDay } from "@/components/features/upcoming/add-task-for-day";
 import { groupByDay } from "@/lib/utils/group-by-day";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 const WEEKDAY_IT = [
   "domenica",
@@ -92,13 +93,37 @@ export default async function UpcomingPage({
   const days: Date[] = [];
   for (let i = 0; i < 14; i++) days.push(addDays(rangeStartLocal, i));
 
+  const totalUpcoming = rangeTasks.length;
+  const overdueCount = overdueTasks.length;
+
   return (
-    <div className="space-y-4 max-w-3xl">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Prossime</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Upcoming"
+        meta={
+          <>
+            <span>
+              <span className="text-foreground tabular-nums">{totalUpcoming}</span>{" "}
+              scheduled
+            </span>
+            {overdueCount > 0 ? (
+              <>
+                <span aria-hidden>·</span>
+                <span className="text-destructive">
+                  <span className="tabular-nums">{overdueCount}</span> overdue
+                </span>
+              </>
+            ) : null}
+            <span aria-hidden>·</span>
+            <span>{format(rangeStartLocal, "d LLL")} → {format(addDays(rangeStartLocal, 13), "d LLL")}</span>
+          </>
+        }
+      />
+
+      <div className="space-y-2">
         <WeekStrip cursorDate={cursorLocal} todayLocal={todayLocal} />
         <WeekDays cursorDate={cursorLocal} todayLocal={todayLocal} />
-      </header>
+      </div>
 
       <OverdueSection
         tasks={overdueTasks}
@@ -116,12 +141,12 @@ export default async function UpcomingPage({
           const label = dayLabel(day, todayLocal);
           return (
             <section key={key} id={`day-${key}`} className="space-y-2">
-              <div className="flex items-baseline gap-2 border-b pb-1.5">
-                <h2 className="text-sm font-semibold">
+              <div className="flex items-baseline gap-3 border-b border-border pb-1.5">
+                <h2 className="font-display text-xl leading-none text-foreground">
                   {format(day, "d MMM")}
                 </h2>
-                <span className="text-sm text-muted-foreground">
-                  · {isToday(day) ? "Oggi · " : isTomorrow(day) ? "Domani · " : ""}
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  {isToday(day) ? "Oggi · " : isTomorrow(day) ? "Domani · " : ""}
                   {label}
                 </span>
               </div>
@@ -135,7 +160,7 @@ export default async function UpcomingPage({
                   currentUserId={user.id}
                 />
               ) : (
-                <p className="text-xs text-muted-foreground px-1">
+                <p className="px-1 font-display text-sm italic text-muted-foreground">
                   Nessuna attività.
                 </p>
               )}

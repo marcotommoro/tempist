@@ -37,31 +37,31 @@ export function OverdueSection({
   if (tasks.length === 0) return null;
 
   return (
-    <section className="space-y-2">
-      <div className="flex items-center justify-between border-b pb-2">
+    <section className="space-y-3">
+      <div className="flex items-center justify-between border-b border-border pb-1.5">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold hover:opacity-80"
+          className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-destructive hover:opacity-80"
           aria-expanded={open}
         >
           {open ? (
-            <ChevronDown className="size-4" />
+            <ChevronDown className="size-3" />
           ) : (
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-3" />
           )}
-          Scadute
-          <span className="ml-1 text-xs text-muted-foreground tabular-nums">
-            ({tasks.length})
+          Overdue
+          <span className="ml-1 font-mono text-[10px] tabular-nums text-destructive/70">
+            {String(tasks.length).padStart(2, "0")}
           </span>
         </button>
         <button
           type="button"
           onClick={reschedule}
           disabled={pending}
-          className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+          className="font-mono text-[10px] uppercase tracking-wider text-destructive transition-colors hover:underline disabled:opacity-50"
         >
-          {pending ? "…" : "Ripianifica"}
+          {pending ? "…" : "Reschedule all"}
         </button>
       </div>
       {open && (
@@ -75,7 +75,9 @@ export function OverdueSection({
             currentUserId={currentUserId}
             emptyMessage="Nessuna scadenza in arretrato."
           />
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && (
+            <p className="font-mono text-[11px] text-destructive">{error}</p>
+          )}
         </>
       )}
     </section>

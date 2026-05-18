@@ -14,6 +14,7 @@ import { AddTaskToProject } from "@/components/features/tasks/add-task-to-projec
 import { CreateSectionForm } from "@/components/features/projects/create-section-form";
 import { ProjectBoard } from "@/components/features/projects/board/board";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Params = { id: string };
 type Search = { view?: string };
@@ -47,27 +48,45 @@ export default async function ProjectDetailPage({
   ]);
 
   const isBoard = view === "board";
+  const taskCount = allTaskIds.length;
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <header className="space-y-3">
-        <div className="flex items-center gap-3">
-          <span
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: project.color }}
-            aria-hidden
-          />
-          <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <ViewToggle isBoard={isBoard} projectId={id} />
-          <ProjectClientSelect
-            projectId={id}
-            currentClientId={project.clientId}
-            clients={clients}
-          />
-        </div>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow={
+          <span className="inline-flex items-center gap-2">
+            <span
+              className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
+              style={{ backgroundColor: project.color }}
+              aria-hidden
+            />
+            Project
+          </span>
+        }
+        title={project.name}
+        meta={
+          <>
+            <span>
+              <span className="text-foreground tabular-nums">{taskCount}</span>{" "}
+              {taskCount === 1 ? "task" : "tasks"}
+            </span>
+            <span aria-hidden>·</span>
+            <span>
+              <span className="text-foreground tabular-nums">{sections.length}</span>{" "}
+              {sections.length === 1 ? "section" : "sections"}
+            </span>
+          </>
+        }
+        actions={<ViewToggle isBoard={isBoard} projectId={id} />}
+      />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <ProjectClientSelect
+          projectId={id}
+          currentClientId={project.clientId}
+          clients={clients}
+        />
+      </div>
 
       {isBoard ? (
         <ProjectBoard
@@ -94,24 +113,28 @@ export default async function ProjectDetailPage({
 
 function ViewToggle({ isBoard, projectId }: { isBoard: boolean; projectId: string }) {
   return (
-    <div className="inline-flex rounded-md border bg-card p-0.5 text-xs">
+    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[10px] uppercase tracking-wider">
       <Link
         href={`/projects/${projectId}`}
         className={cn(
-          "inline-flex items-center gap-1 px-2 py-1 rounded",
-          !isBoard ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+          "inline-flex items-center gap-1 rounded px-2 py-1 transition-colors",
+          !isBoard
+            ? "bg-foreground text-background"
+            : "text-muted-foreground hover:text-foreground",
         )}
       >
-        <ListIcon className="size-3.5" /> List
+        <ListIcon className="size-3" /> List
       </Link>
       <Link
         href={`/projects/${projectId}?view=board`}
         className={cn(
-          "inline-flex items-center gap-1 px-2 py-1 rounded",
-          isBoard ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+          "inline-flex items-center gap-1 rounded px-2 py-1 transition-colors",
+          isBoard
+            ? "bg-foreground text-background"
+            : "text-muted-foreground hover:text-foreground",
         )}
       >
-        <LayoutGrid className="size-3.5" /> Board
+        <LayoutGrid className="size-3" /> Board
       </Link>
     </div>
   );
@@ -202,11 +225,16 @@ function SectionBlock({
   commentsByTask: Map<string, number>;
 }) {
   return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-        {name} <span className="ml-1 text-xs">({tasks.length})</span>
-      </h2>
-      <div className="rounded-md border bg-card">
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between border-b border-border pb-1.5">
+        <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          {name}
+        </h2>
+        <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+          {String(tasks.length).padStart(2, "0")}
+        </span>
+      </div>
+      <div className="overflow-hidden rounded-md border border-border bg-card">
         {tasks.length > 0 ? (
           <ul className="divide-y divide-border">
             {tasks.map((t) => (
@@ -223,7 +251,9 @@ function SectionBlock({
             ))}
           </ul>
         ) : (
-          <p className="px-3 py-3 text-xs text-muted-foreground">Nessun task.</p>
+          <p className="px-3 py-3 font-display text-sm italic text-muted-foreground">
+            Nessun task.
+          </p>
         )}
         <div className="border-t border-border">
           <AddTaskToProject projectId={projectId} sectionId={sectionId} />

@@ -41,9 +41,9 @@ export function AddTaskForDay({ day }: { day: Date }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 hover:underline px-3 py-1"
+        className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
       >
-        <Plus className="size-3.5" /> Aggiungi attività
+        <Plus className="size-3" /> Aggiungi attività
       </button>
     );
   }
@@ -56,15 +56,15 @@ export function AddTaskForDay({ day }: { day: Date }) {
         onChange={(e) => setTitle(e.target.value)}
         autoFocus
         disabled={pending}
-        placeholder="Titolo attività..."
-        className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+        placeholder="Titolo attività…"
+        className="flex-1 rounded-md border border-input bg-background px-2 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
       />
       <button
         type="submit"
         disabled={pending || !title.trim()}
-        className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+        className="inline-flex h-7 items-center rounded bg-foreground px-2.5 font-mono text-[10px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        Aggiungi
+        Add
       </button>
       <button
         type="button"
@@ -73,11 +73,13 @@ export function AddTaskForDay({ day }: { day: Date }) {
           setTitle("");
         }}
         disabled={pending}
-        className="text-xs text-muted-foreground hover:text-foreground"
+        className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
       >
-        Annulla
+        Cancel
       </button>
-      {error && <span className="text-xs text-destructive">{error}</span>}
+      {error && (
+        <span className="font-mono text-[10px] text-destructive">{error}</span>
+      )}
     </form>
   );
 }

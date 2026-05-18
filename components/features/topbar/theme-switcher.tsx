@@ -1,8 +1,8 @@
 "use client";
 
 import { Laptop, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
 
+import { useTheme } from "@/components/theme/theme-provider";
 import { useIsClient } from "@/lib/hooks/use-is-client";
 
 export function ThemeSwitcher() {
@@ -12,7 +12,7 @@ export function ThemeSwitcher() {
   if (!isClient) {
     return (
       <span
-        className="inline-flex items-center justify-center size-9 rounded-md text-muted-foreground"
+        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground"
         aria-hidden
       />
     );
@@ -33,7 +33,7 @@ export function ThemeSwitcher() {
       onClick={cycle}
       aria-label={`Tema: ${theme}. Click per cambiare.`}
       title={`Tema: ${theme}`}
-      className="inline-flex items-center justify-center size-9 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+      className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors duration-[var(--dur-fast)] hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
     >
       <Icon className="size-4" />
     </button>

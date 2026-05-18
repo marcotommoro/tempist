@@ -9,6 +9,7 @@ import { CalendarSection } from "@/components/features/settings/calendar-section
 import { WeeklyReportSection } from "@/components/features/settings/weekly-report-section";
 import { ThemeSection } from "@/components/features/settings/theme-section";
 import { ImportSection } from "@/components/features/settings/import-section";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Search = { gcal_connected?: string; gcal_error?: string };
 
@@ -41,10 +42,11 @@ export default async function SettingsPage({
   );
 
   return (
-    <div className="space-y-8 max-w-3xl">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-      </header>
+    <div className="space-y-8">
+      <PageHeader
+        title="Settings"
+        meta={<span>{user.email}</span>}
+      />
       <ThemeSection />
       <IcalSection tokens={tokens} baseUrl={baseUrl} />
       <DigestSection userEmail={user.email} />

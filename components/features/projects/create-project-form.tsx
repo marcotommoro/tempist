@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 
 import { createProjectAction } from "@/lib/actions/projects";
 import type { Client } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
 
 const COLOR_OPTIONS = [
   "#ef4444",
@@ -52,7 +53,7 @@ export function CreateProjectForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-2">
+    <form onSubmit={onSubmit} className="space-y-3 rounded-md border border-border bg-card/40 p-4">
       <div className="flex gap-2">
         <input
           ref={inputRef}
@@ -60,46 +61,53 @@ export function CreateProjectForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={pending}
-          placeholder="Nome nuovo progetto..."
+          placeholder="Nome nuovo progetto…"
           autoComplete="off"
           maxLength={80}
-          className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors hover:border-foreground/20 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={pending || !name.trim()}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          <Plus className="size-4" />
-          Crea
+          <Plus className="size-3.5" />
+          Create
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Colore:</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            Color
+          </span>
           {COLOR_OPTIONS.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setColor(c)}
               aria-label={`Colore ${c}`}
-              className={`w-5 h-5 rounded-full border-2 ${
-                color === c ? "border-foreground" : "border-transparent"
-              }`}
+              className={cn(
+                "h-5 w-5 rounded-full ring-2 ring-offset-1 ring-offset-card transition-all",
+                color === c
+                  ? "ring-foreground"
+                  : "ring-transparent hover:ring-foreground/30",
+              )}
               style={{ backgroundColor: c }}
             />
           ))}
         </div>
         {clients.length > 0 && (
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            Cliente:
+          <label className="flex items-center gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              Client
+            </span>
             <select
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
               disabled={pending}
               className="rounded-md border border-input bg-background px-2 py-1 text-xs disabled:opacity-50"
             >
-              <option value="">— nessuno —</option>
+              <option value="">— none —</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -109,7 +117,9 @@ export function CreateProjectForm({
           </label>
         )}
       </div>
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && (
+        <p className="font-mono text-[11px] text-destructive">{error}</p>
+      )}
     </form>
   );
 }

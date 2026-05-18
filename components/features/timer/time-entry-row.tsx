@@ -23,7 +23,10 @@ export function TimeEntryRow({ entry }: { entry: TimeEntry }) {
 
   const duration =
     entry.durationSeconds ??
-    Math.max(0, Math.floor((new Date().getTime() - entry.startedAt.getTime()) / 1000));
+    Math.max(
+      0,
+      Math.floor((new Date().getTime() - entry.startedAt.getTime()) / 1000),
+    );
 
   const billableValue =
     entry.hourlyRateSnapshot && duration > 0
@@ -33,45 +36,67 @@ export function TimeEntryRow({ entry }: { entry: TimeEntry }) {
   return (
     <li
       className={cn(
-        "group grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-3 py-2 text-sm",
+        "group grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-4 py-3 text-sm transition-colors hover:bg-accent/40",
         pending && "opacity-50",
-        entry.isRunning && "bg-green-50 dark:bg-green-950/30",
+        entry.isRunning && "bg-sage/5",
       )}
     >
       <div className="min-w-0">
-        <p className="truncate">
-          {entry.description ?? <span className="text-muted-foreground">— senza descrizione —</span>}
+        <p className="truncate text-[13px] text-foreground">
+          {entry.description ?? (
+            <span className="font-display italic text-muted-foreground">
+              — senza descrizione —
+            </span>
+          )}
         </p>
-        <p className="text-xs text-muted-foreground">
-          {format(entry.startedAt, "EEE d MMM, HH:mm")}
-          {entry.endedAt && ` → ${format(entry.endedAt, "HH:mm")}`}
-          {entry.isRunning && " · in corso"}
+        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+          {format(entry.startedAt, "EEE d LLL · HH:mm")}
+          {entry.endedAt && (
+            <span> → {format(entry.endedAt, "HH:mm")}</span>
+          )}
+          {entry.isRunning && (
+            <span className="ml-2 inline-flex items-center gap-1 text-coral">
+              <span
+                aria-hidden
+                className="inline-block size-[5px] rounded-full bg-coral animate-coral-pulse"
+              />
+              live
+            </span>
+          )}
         </p>
       </div>
-      <span className="text-xs tabular-nums font-mono">
+      <span className="font-display text-base leading-none tabular-nums text-foreground">
         {formatDuration(duration)}
       </span>
-      <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">
+      <span className="w-24 text-right font-mono text-[12px] tabular-nums text-muted-foreground">
         {billableValue ? `${billableValue} ${entry.currencySnapshot}` : "—"}
       </span>
       <div className="flex items-center gap-2">
         {entry.isBillable ? (
-          <span className="text-xs text-green-600">€</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider text-sage">
+            billable
+          </span>
         ) : (
-          <span className="text-xs text-muted-foreground">non bill.</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            internal
+          </span>
         )}
         <button
           type="button"
           onClick={onDelete}
           disabled={pending || entry.isRunning}
           aria-label="Elimina voce"
-          className="opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed text-muted-foreground hover:text-destructive"
+          className="inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
           title={entry.isRunning ? "Ferma il timer prima di eliminare" : "Elimina"}
         >
-          <Trash2 className="size-4" />
+          <Trash2 className="size-3.5" />
         </button>
       </div>
-      {error && <span className="col-span-4 text-xs text-destructive">{error}</span>}
+      {error && (
+        <span className="col-span-4 font-mono text-[11px] text-destructive">
+          {error}
+        </span>
+      )}
     </li>
   );
 }

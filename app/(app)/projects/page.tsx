@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Star } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listProjects } from "@/lib/domain/projects";
 import { listClients } from "@/lib/domain/clients";
 import { CreateProjectForm } from "@/components/features/projects/create-project-form";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 export default async function ProjectsPage() {
   const { organizationId } = await requireActiveOrganization();
@@ -15,41 +17,58 @@ export default async function ProjectsPage() {
   const clientById = new Map(clients.map((c) => [c.id, c]));
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-        <p className="text-sm text-muted-foreground">
-          {projects.length === 0
+    <div className="space-y-6">
+      <PageHeader
+        title="Projects"
+        meta={
+          <>
+            <span>
+              <span className="text-foreground tabular-nums">{projects.length}</span>{" "}
+              total
+            </span>
+            {clients.length > 0 ? (
+              <>
+                <span aria-hidden>·</span>
+                <span>
+                  <span className="text-foreground tabular-nums">{clients.length}</span>{" "}
+                  {clients.length === 1 ? "client" : "clients"}
+                </span>
+              </>
+            ) : null}
+          </>
+        }
+        description={
+          projects.length === 0
             ? "Nessun progetto. Creane uno qui sotto."
-            : `${projects.length} progett${projects.length === 1 ? "o" : "i"}.`}
-        </p>
-      </header>
+            : undefined
+        }
+      />
 
       <CreateProjectForm clients={clients} />
 
       {projects.length > 0 && (
-        <ul className="divide-y divide-border rounded-md border bg-card">
+        <ul className="divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
           {projects.map((p) => {
             const cli = p.clientId ? clientById.get(p.clientId) : null;
             return (
               <li key={p.id}>
                 <Link
                   href={`/projects/${p.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors duration-[var(--dur-fast)] hover:bg-accent/40"
                 >
                   <span
-                    className="w-3 h-3 rounded-full shrink-0"
+                    className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
                     style={{ backgroundColor: p.color }}
                     aria-hidden
                   />
-                  <span className="font-medium text-sm">{p.name}</span>
+                  <span className="text-[14px] font-medium text-foreground">{p.name}</span>
                   {p.isFavorite && (
-                    <span className="text-xs text-amber-500">★</span>
+                    <Star className="h-3 w-3 fill-coral text-coral" aria-hidden />
                   )}
                   {cli && (
-                    <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       <span
-                        className="w-2 h-2 rounded-full"
+                        className="h-1.5 w-1.5 rounded-full"
                         style={{ backgroundColor: cli.color }}
                         aria-hidden
                       />

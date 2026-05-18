@@ -5,6 +5,7 @@ import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 export default async function InboxPage() {
   const { user, organizationId } = await requireActiveOrganization();
@@ -17,13 +18,21 @@ export default async function InboxPage() {
   ]);
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Inbox</h1>
-        <p className="text-sm text-muted-foreground">
-          Task non assegnati a nessun progetto. Aggiungi qui le idee veloci.
-        </p>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="Inbox"
+        meta={
+          <>
+            <span>
+              <span className="text-foreground tabular-nums">{tasks.length}</span>{" "}
+              {tasks.length === 1 ? "task" : "tasks"}
+            </span>
+            <span aria-hidden>·</span>
+            <span>unsorted</span>
+          </>
+        }
+        description="Task non assegnati a nessun progetto. Aggiungi qui le idee veloci."
+      />
 
       <QuickAdd />
 

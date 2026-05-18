@@ -4,11 +4,9 @@ import { cn } from "@/lib/utils";
  * Progress bar stima vs tracciato.
  *
  * Logica colori:
- *   - tracked == 0           → grigio (placeholder)
- *   - 0 < tracked < estimate → verde
- *   - tracked >= estimate    → arancione (over budget)
- *
- * Se nessuna stima → mostra solo i minuti tracked se >0, altrimenti niente.
+ *   - tracked == 0           → no render (estimate exists but nothing tracked)
+ *   - 0 < tracked < estimate → sage
+ *   - tracked >= estimate    → amber (over budget)
  */
 export function TaskProgress({
   trackedSeconds,
@@ -23,40 +21,45 @@ export function TaskProgress({
   if (estimatedMinutes == null || estimatedMinutes <= 0) {
     if (trackedSeconds === 0) return null;
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
-        ⏱ {trackedMin}m
+      <span className="inline-flex items-center gap-1 text-muted-foreground">
+        <span className="font-mono text-[9px] uppercase tracking-[0.16em]">
+          done
+        </span>
+        <span className="tabular-nums">{trackedMin}m</span>
+      </span>
+    );
+  }
+
+  if (trackedSeconds === 0) {
+    return (
+      <span className="inline-flex items-center gap-1 text-muted-foreground">
+        <span className="font-mono text-[9px] uppercase tracking-[0.16em]">
+          est
+        </span>
+        <span className="tabular-nums">{estimatedMinutes}m</span>
       </span>
     );
   }
 
   const ratio = trackedSeconds / (estimatedMinutes * 60);
-  const cap = Math.min(1, ratio); // bar non oltre il 100%
+  const cap = Math.min(1, ratio);
   const over = ratio > 1;
 
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs tabular-nums">
-      <span
-        className={cn(
-          "h-1 w-12 rounded-full overflow-hidden",
-          trackedSeconds === 0 ? "bg-muted" : "bg-muted",
-        )}
-      >
+    <span className="inline-flex items-center gap-2">
+      <span className="block h-[3px] w-14 overflow-hidden rounded-full bg-border">
         <span
           className={cn(
-            "block h-full transition-[width]",
-            trackedSeconds === 0
-              ? "bg-transparent"
-              : over
-                ? "bg-orange-500"
-                : "bg-green-500",
+            "block h-full rounded-full transition-[width] duration-[var(--dur-slow)]",
+            over ? "bg-p2" : "bg-sage",
           )}
           style={{ width: `${cap * 100}%` }}
         />
       </span>
       <span
         className={cn(
-          "text-muted-foreground",
-          over && "text-orange-600 font-medium",
+          "tabular-nums",
+          over ? "text-p2 font-medium" : "text-muted-foreground",
         )}
       >
         {trackedMin}/{estimatedMinutes}m

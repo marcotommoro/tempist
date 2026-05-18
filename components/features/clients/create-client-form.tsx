@@ -4,8 +4,19 @@ import { useState, useTransition, type FormEvent } from "react";
 import { Plus } from "lucide-react";
 
 import { createClientAction } from "@/lib/actions/clients";
+import { cn } from "@/lib/utils";
 
-const COLOR_OPTIONS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899", "#64748b"];
+const COLOR_OPTIONS = [
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#06b6d4",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+  "#64748b",
+];
 
 export function CreateClientForm() {
   const [name, setName] = useState("");
@@ -39,16 +50,19 @@ export function CreateClientForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded-md border bg-card p-4">
+    <form
+      onSubmit={onSubmit}
+      className="space-y-4 rounded-md border border-border bg-card/40 p-5"
+    >
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Nome *">
+        <Field label="Name *">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={pending}
             maxLength={120}
-            className="input"
+            className="editorial-input"
           />
         </Field>
         <Field label="Email">
@@ -57,11 +71,11 @@ export function CreateClientForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={pending}
-            placeholder="billing@..."
-            className="input"
+            placeholder="billing@…"
+            className="editorial-input"
           />
         </Field>
-        <Field label="Tariffa oraria default">
+        <Field label="Default rate (per hour)">
           <input
             type="text"
             inputMode="decimal"
@@ -69,15 +83,15 @@ export function CreateClientForm() {
             onChange={(e) => setRate(e.target.value)}
             disabled={pending}
             placeholder="80.00"
-            className="input"
+            className="editorial-input font-mono tabular-nums"
           />
         </Field>
-        <Field label="Valuta">
+        <Field label="Currency">
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
             disabled={pending}
-            className="input"
+            className="editorial-input"
           >
             <option value="EUR">EUR</option>
             <option value="USD">USD</option>
@@ -87,16 +101,21 @@ export function CreateClientForm() {
         </Field>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Colore:</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          Color
+        </span>
         {COLOR_OPTIONS.map((c) => (
           <button
             key={c}
             type="button"
             onClick={() => setColor(c)}
             aria-label={`Colore ${c}`}
-            className={`w-5 h-5 rounded-full border-2 ${
-              color === c ? "border-foreground" : "border-transparent"
-            }`}
+            className={cn(
+              "h-5 w-5 rounded-full ring-2 ring-offset-1 ring-offset-card transition-all",
+              color === c
+                ? "ring-foreground"
+                : "ring-transparent hover:ring-foreground/30",
+            )}
             style={{ backgroundColor: c }}
           />
         ))}
@@ -105,24 +124,28 @@ export function CreateClientForm() {
         <button
           type="submit"
           disabled={pending || !name.trim()}
-          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          <Plus className="size-4" />
-          Crea cliente
+          <Plus className="size-3.5" />
+          Create client
         </button>
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error && (
+          <p className="font-mono text-[11px] text-destructive">{error}</p>
+        )}
       </div>
       <style>{`
-        .input {
+        .editorial-input {
           width: 100%;
-          border-radius: 0.375rem;
-          border: 1px solid hsl(var(--input));
-          background: hsl(var(--background));
+          border-radius: 6px;
+          border: 1px solid var(--input);
+          background: var(--background);
           padding: 0.5rem 0.75rem;
-          font-size: 0.875rem;
+          font-size: 13px;
+          transition: border-color 140ms;
         }
-        .input:focus { outline: 2px solid hsl(var(--ring)); outline-offset: -1px; }
-        .input:disabled { opacity: 0.5; }
+        .editorial-input:hover { border-color: color-mix(in oklch, var(--foreground) 20%, transparent); }
+        .editorial-input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
+        .editorial-input:disabled { opacity: 0.5; }
       `}</style>
     </form>
   );
@@ -130,8 +153,10 @@ export function CreateClientForm() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="space-y-1 block">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    <label className="block space-y-1.5">
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </span>
       {children}
     </label>
   );

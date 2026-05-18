@@ -17,6 +17,7 @@ import {
 import { HoursByDayChart } from "@/components/features/reports/hours-by-day-chart";
 import { ClientPieChart } from "@/components/features/reports/client-pie-chart";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Search = { range?: string };
 
@@ -139,38 +140,40 @@ export default async function ReportsPage({
     .sort((a, b) => b.totalSeconds - a.totalSeconds);
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <header className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Reports"
+        meta={<span className="text-foreground">{label}</span>}
+        actions={
           <div className="flex items-center gap-2">
             <Link
               href={`/api/reports/time-entries.csv?range=${range}`}
-              className="text-xs px-2 py-1 rounded border bg-card hover:bg-muted"
+              className="inline-flex h-8 items-center rounded-md border border-border bg-transparent px-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               Export CSV
             </Link>
             <Link
               href={`/reports/print?range=${range}`}
-              className="text-xs px-2 py-1 rounded border bg-card hover:bg-muted"
+              className="inline-flex h-8 items-center rounded-md border border-border bg-transparent px-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              Versione stampa
+              Print
             </Link>
           </div>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <RangeToggle current={range} />
-          <span className="text-sm text-muted-foreground">{label}</span>
-        </div>
-      </header>
+        }
+      />
 
-      {/* Totali del range */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="Ore totali" value={hoursFromSeconds(totals.totalSeconds)} />
-        <Stat label="Voci" value={String(totals.entryCount)} />
-        <Stat label="Task completati" value={String(totals.completedTasks)} />
+      <div className="flex flex-wrap items-center gap-3">
+        <RangeToggle current={range} />
+      </div>
+
+      {/* Totali del range — editorial KPI grid */}
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border md:grid-cols-4">
+        <Stat label="Hours" value={hoursFromSeconds(totals.totalSeconds)} />
+        <Stat label="Entries" value={String(totals.entryCount)} />
+        <Stat label="Completed" value={String(totals.completedTasks)} />
         <Stat
-          label="Fatturabile"
+          label="Billable"
+          accent
           value={
             totals.billableByCurrency.size === 0
               ? "—"
@@ -182,73 +185,84 @@ export default async function ReportsPage({
       </section>
 
       {/* Charts row */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-md border bg-card p-3">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Ore per giorno
-          </h3>
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ChartCard title="Hours per day">
           <HoursByDayChart data={hoursByDayFilled} />
-        </div>
-        <div className="rounded-md border bg-card p-3">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Distribuzione clienti
-          </h3>
+        </ChartCard>
+        <ChartCard title="Client distribution">
           <ClientPieChart data={pieData} />
-        </div>
+        </ChartCard>
       </section>
 
       {/* Tabella per cliente */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Per cliente
-        </h2>
-        <div className="rounded-md border bg-card overflow-x-auto">
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between border-b border-border pb-1.5">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            By client
+          </h2>
+          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            {String(meaningfulRows.length).padStart(2, "0")}
+          </span>
+        </div>
+        <div className="overflow-x-auto rounded-md border border-border bg-card">
           {meaningfulRows.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            <p className="px-4 py-8 text-center font-display text-base italic text-muted-foreground">
               Nessuna attività registrata nel range selezionato.
             </p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                  <th className="text-left font-medium px-4 py-2">Cliente</th>
-                  <th className="text-right font-medium px-4 py-2">Task completati</th>
-                  <th className="text-right font-medium px-4 py-2">Ore</th>
-                  <th className="text-right font-medium px-4 py-2">Voci</th>
-                  <th className="text-right font-medium px-4 py-2">Fatturabile</th>
+                <tr className="border-b border-border font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <th className="px-4 py-2.5 text-left font-medium">Client</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Done</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Hours</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Entries</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Billable</th>
                 </tr>
               </thead>
               <tbody>
                 {meaningfulRows.map((r) => (
-                  <tr key={r.id ?? "_"} className="border-b border-border last:border-b-0">
-                    <td className="px-4 py-2">
+                  <tr
+                    key={r.id ?? "_"}
+                    className="border-b border-border transition-colors last:border-b-0 hover:bg-accent/40"
+                  >
+                    <td className="px-4 py-2.5">
                       {r.id ? (
                         <Link
                           href={`/clients/${r.id}`}
-                          className="inline-flex items-center gap-2 hover:underline"
+                          className="inline-flex items-center gap-2 text-[13px] hover:text-coral"
                         >
                           <span
-                            className="w-2.5 h-2.5 rounded-full"
+                            className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
                             style={{ backgroundColor: r.color }}
                             aria-hidden
                           />
                           {r.name}
                         </Link>
                       ) : (
-                        <span className="text-muted-foreground">{r.name}</span>
+                        <span className="font-display italic text-muted-foreground">
+                          {r.name}
+                        </span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">{r.completedTasks}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">
+                      {r.completedTasks}
+                    </td>
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">
                       {hoursFromSeconds(r.totalSeconds)}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
                       {r.entryCount}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {r.billableAmount > 0
-                        ? `${r.billableAmount.toFixed(2)} ${r.currency}`
-                        : "—"}
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">
+                      {r.billableAmount > 0 ? (
+                        <span className="text-foreground">
+                          {r.billableAmount.toFixed(2)}{" "}
+                          <span className="text-muted-foreground">{r.currency}</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -259,49 +273,59 @@ export default async function ReportsPage({
       </section>
 
       {/* Tabella per progetto */}
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Per progetto
-        </h2>
-        <div className="rounded-md border bg-card overflow-x-auto">
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between border-b border-border pb-1.5">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            By project
+          </h2>
+          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            {String(projectRows.length).padStart(2, "0")}
+          </span>
+        </div>
+        <div className="overflow-x-auto rounded-md border border-border bg-card">
           {projectRows.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            <p className="px-4 py-8 text-center font-display text-base italic text-muted-foreground">
               Nessun progetto con tracking nel range.
             </p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border text-xs uppercase text-muted-foreground">
-                  <th className="text-left font-medium px-4 py-2">Progetto</th>
-                  <th className="text-right font-medium px-4 py-2">Ore</th>
-                  <th className="text-right font-medium px-4 py-2">Voci</th>
-                  <th className="text-right font-medium px-4 py-2">Fatturabile</th>
+                <tr className="border-b border-border font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <th className="px-4 py-2.5 text-left font-medium">Project</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Hours</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Entries</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Billable</th>
                 </tr>
               </thead>
               <tbody>
                 {projectRows.map((p) => (
-                  <tr key={p.id} className="border-b border-border last:border-b-0">
-                    <td className="px-4 py-2">
+                  <tr
+                    key={p.id}
+                    className="border-b border-border transition-colors last:border-b-0 hover:bg-accent/40"
+                  >
+                    <td className="px-4 py-2.5">
                       <Link
                         href={`/projects/${p.id}`}
-                        className="inline-flex items-center gap-2 hover:underline"
+                        className="inline-flex items-center gap-2 text-[13px] hover:text-coral"
                       >
                         <span
-                          className="w-2.5 h-2.5 rounded-full"
+                          className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
                           style={{ backgroundColor: p.color }}
                           aria-hidden
                         />
                         {p.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">
                       {hoursFromSeconds(p.totalSeconds)}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums text-muted-foreground">
                       {p.entryCount}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {p.billableAmount > 0 ? p.billableAmount.toFixed(2) : "—"}
+                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">
+                      {p.billableAmount > 0
+                        ? p.billableAmount.toFixed(2)
+                        : "—"}
                     </td>
                   </tr>
                 ))}
@@ -314,32 +338,66 @@ export default async function ReportsPage({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
-    <div className="rounded-md border bg-card p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-lg font-semibold tabular-nums mt-0.5">{value}</div>
+    <div className="bg-card p-4">
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </div>
+      <div
+        className={cn(
+          "mt-1.5 font-display text-2xl leading-none tabular-nums md:text-3xl",
+          accent ? "text-coral" : "text-foreground",
+        )}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function ChartCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card p-4">
+      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        {title}
+      </h3>
+      {children}
     </div>
   );
 }
 
 function RangeToggle({ current }: { current: Range }) {
   const options: { value: Range; label: string }[] = [
-    { value: "week", label: "Settimana" },
-    { value: "last-week", label: "Scorsa" },
-    { value: "month", label: "Mese" },
+    { value: "week", label: "Week" },
+    { value: "last-week", label: "Last" },
+    { value: "month", label: "Month" },
   ];
   return (
-    <div className="inline-flex rounded-md border bg-card p-0.5 text-xs">
+    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[10px] uppercase tracking-wider">
       {options.map((o) => (
         <Link
           key={o.value}
           href={`/reports?range=${o.value}`}
           className={cn(
-            "px-3 py-1 rounded",
+            "rounded px-2.5 py-1 transition-colors",
             current === o.value
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-muted",
+              ? "bg-foreground text-background"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           {o.label}

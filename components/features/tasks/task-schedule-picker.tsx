@@ -41,29 +41,23 @@ export function TaskSchedulePicker({
     });
   }
 
-  function presetToday() {
-    const d = new Date();
+  function withDefaultTime(d: Date) {
     const [h, m] = TODAY_DEFAULT_TIME.split(":");
     d.setHours(Number(h), Number(m), 0, 0);
-    applyDate(d);
+    return d;
+  }
+
+  function presetToday() {
+    applyDate(withDefaultTime(new Date()));
   }
   function presetTomorrow() {
-    const d = addDays(new Date(), 1);
-    const [h, m] = TODAY_DEFAULT_TIME.split(":");
-    d.setHours(Number(h), Number(m), 0, 0);
-    applyDate(d);
+    applyDate(withDefaultTime(addDays(new Date(), 1)));
   }
   function presetNextMonday() {
-    const d = nextMonday(new Date());
-    const [h, m] = TODAY_DEFAULT_TIME.split(":");
-    d.setHours(Number(h), Number(m), 0, 0);
-    applyDate(d);
+    applyDate(withDefaultTime(nextMonday(new Date())));
   }
   function presetNextWeek() {
-    const d = addWeeks(new Date(), 1);
-    const [h, m] = TODAY_DEFAULT_TIME.split(":");
-    d.setHours(Number(h), Number(m), 0, 0);
-    applyDate(d);
+    applyDate(withDefaultTime(addWeeks(new Date(), 1)));
   }
   function applyCustom(d: Date | null) {
     applyDate(d);
@@ -79,49 +73,49 @@ export function TaskSchedulePicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={hasDate ? `Pianificato per ${format(currentScheduledAt!, "d MMM HH:mm")}` : "Pianifica task"}
+          aria-label={
+            hasDate
+              ? `Pianificato per ${format(currentScheduledAt!, "d MMM HH:mm")}`
+              : "Pianifica task"
+          }
           title="Pianifica"
           className={cn(
-            "text-muted-foreground hover:text-foreground disabled:cursor-not-allowed",
-            hasDate && "text-blue-600 dark:text-blue-400",
+            "inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-coral/10 hover:text-coral disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+            hasDate && "text-coral",
           )}
         >
-          <CalendarIcon className="size-4" />
+          <CalendarIcon className="size-3.5" />
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 p-2">
-        <div className="space-y-1">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 py-1">
+        <div className="space-y-0.5">
+          <div className="px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             Pianifica per
           </div>
-          <PresetButton onClick={presetToday} disabled={pending}>
-            Oggi
-            <span className="ml-auto text-xs text-muted-foreground">
-              {format(new Date(), "EEE d MMM")}
-            </span>
+          <PresetButton onClick={presetToday} disabled={pending} label="Oggi">
+            {format(new Date(), "EEE d LLL")}
           </PresetButton>
-          <PresetButton onClick={presetTomorrow} disabled={pending}>
-            Domani
-            <span className="ml-auto text-xs text-muted-foreground">
-              {format(addDays(new Date(), 1), "EEE d MMM")}
-            </span>
+          <PresetButton onClick={presetTomorrow} disabled={pending} label="Domani">
+            {format(addDays(new Date(), 1), "EEE d LLL")}
           </PresetButton>
-          <PresetButton onClick={presetNextMonday} disabled={pending}>
-            Prossimo lunedì
-            <span className="ml-auto text-xs text-muted-foreground">
-              {format(nextMonday(new Date()), "d MMM")}
-            </span>
+          <PresetButton
+            onClick={presetNextMonday}
+            disabled={pending}
+            label="Prossimo lunedì"
+          >
+            {format(nextMonday(new Date()), "d LLL")}
           </PresetButton>
-          <PresetButton onClick={presetNextWeek} disabled={pending}>
-            +1 settimana
-            <span className="ml-auto text-xs text-muted-foreground">
-              {format(addWeeks(new Date(), 1), "EEE d MMM")}
-            </span>
+          <PresetButton
+            onClick={presetNextWeek}
+            disabled={pending}
+            label="+1 settimana"
+          >
+            {format(addWeeks(new Date(), 1), "EEE d LLL")}
           </PresetButton>
         </div>
-        <div className="border-t my-2" />
-        <div className="space-y-1 px-1">
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
+        <div className="my-2 border-t border-border" />
+        <div className="space-y-1.5 px-1">
+          <div className="px-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             Data/ora specifica
           </div>
           <DateTimePicker
@@ -135,18 +129,22 @@ export function TaskSchedulePicker({
         </div>
         {hasDate && (
           <>
-            <div className="border-t my-2" />
+            <div className="my-2 border-t border-border" />
             <button
               type="button"
               onClick={clear}
               disabled={pending}
-              className="w-full inline-flex items-center gap-2 rounded px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed"
+              className="inline-flex w-full items-center gap-2 rounded px-2 py-1.5 text-[12px] text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed"
             >
               <X className="size-3.5" /> Rimuovi data
             </button>
           </>
         )}
-        {error && <p className="px-2 pt-2 text-xs text-destructive">{error}</p>}
+        {error && (
+          <p className="px-2 pt-2 font-mono text-[11px] text-destructive">
+            {error}
+          </p>
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -155,10 +153,12 @@ export function TaskSchedulePicker({
 function PresetButton({
   onClick,
   disabled,
+  label,
   children,
 }: {
   onClick: () => void;
   disabled: boolean;
+  label: string;
   children: React.ReactNode;
 }) {
   return (
@@ -166,10 +166,13 @@ function PresetButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full inline-flex items-center gap-2 rounded px-2 py-1.5 text-xs text-left hover:bg-muted disabled:cursor-not-allowed"
+      className="inline-flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-accent disabled:cursor-not-allowed"
     >
       <CalendarIcon className="size-3.5 text-muted-foreground" />
-      {children}
+      <span>{label}</span>
+      <span className="ml-auto font-mono text-[10px] tabular-nums text-muted-foreground">
+        {children}
+      </span>
     </button>
   );
 }

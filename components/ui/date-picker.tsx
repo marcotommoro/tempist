@@ -36,14 +36,17 @@ export function DatePicker({
           type="button"
           disabled={disabled}
           className={cn(
-            "inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm text-left",
-            "hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50",
+            "inline-flex h-9 items-center gap-2 rounded-md border border-input bg-background px-3 text-left text-sm transition-colors",
+            "hover:border-foreground/20 hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
             !value && "text-muted-foreground",
             className,
           )}
         >
-          <CalendarIcon className="size-4" />
-          {value ? format(value, "EEE d MMM yyyy") : placeholder}
+          <CalendarIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate">
+            {value ? format(value, "EEE d MMM yyyy") : placeholder}
+          </span>
         </button>
       </PopoverTrigger>
       <PopoverContent align={align} className="w-auto p-2">

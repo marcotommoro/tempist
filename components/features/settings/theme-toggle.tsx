@@ -1,8 +1,8 @@
 "use client";
 
 import { Laptop, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
 
+import { useTheme } from "@/components/theme/theme-provider";
 import { cn } from "@/lib/utils";
 import { useIsClient } from "@/lib/hooks/use-is-client";
 

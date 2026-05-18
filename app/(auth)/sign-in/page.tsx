@@ -43,11 +43,18 @@ function SignInForm() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Accedi</h1>
-        <p className="text-sm text-neutral-500">Inserisci la tua email per ricevere il magic link.</p>
-      </header>
+    <div className="rounded-lg border border-border bg-card/80 p-8 shadow-sm backdrop-blur-sm">
+      <div className="mb-6 space-y-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          Sign in
+        </p>
+        <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-foreground">
+          Welcome <span className="italic text-muted-foreground/90">back.</span>
+        </h1>
+        <p className="text-[13px] text-muted-foreground">
+          Inserisci la tua email per ricevere il magic link.
+        </p>
+      </div>
 
       <form onSubmit={handleMagicLink} className="space-y-3">
         <input
@@ -56,23 +63,26 @@ function SignInForm() {
           placeholder="email@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm dark:bg-neutral-900 dark:border-neutral-700"
+          autoFocus
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors hover:border-foreground/20 focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+          className="inline-flex w-full items-center justify-center rounded-md bg-foreground px-3 py-2.5 font-mono text-[11px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {submitting ? "Invio in corso..." : "Invia magic link"}
+          {submitting ? "Sending…" : "Send magic link"}
         </button>
       </form>
 
-      <div className="relative">
+      <div className="relative my-6">
         <div className="absolute inset-0 flex items-center" aria-hidden>
-          <div className="w-full border-t border-neutral-200 dark:border-neutral-800" />
+          <div className="w-full border-t border-border" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-neutral-50 dark:bg-neutral-950 px-2 text-neutral-500">oppure</span>
+        <div className="relative flex justify-center">
+          <span className="bg-card px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            or
+          </span>
         </div>
       </div>
 
@@ -81,28 +91,36 @@ function SignInForm() {
           type="button"
           disabled={submitting}
           onClick={() => handleSocial("google")}
-          className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium hover:bg-neutral-100 disabled:opacity-50 dark:bg-neutral-900 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          className="inline-flex w-full items-center justify-center rounded-md border border-border bg-transparent px-3 py-2 text-sm transition-colors hover:bg-accent disabled:opacity-50"
         >
-          Continua con Google
+          Continue with Google
         </button>
         <button
           type="button"
           disabled={submitting}
           onClick={() => handleSocial("github")}
-          className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium hover:bg-neutral-100 disabled:opacity-50 dark:bg-neutral-900 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          className="inline-flex w-full items-center justify-center rounded-md border border-border bg-transparent px-3 py-2 text-sm transition-colors hover:bg-accent disabled:opacity-50"
         >
-          Continua con GitHub
+          Continue with GitHub
         </button>
       </div>
 
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <p className="mt-4 font-mono text-[11px] text-destructive">{error}</p>
+      )}
     </div>
   );
 }
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div className="text-sm text-neutral-500">Caricamento...</div>}>
+    <Suspense
+      fallback={
+        <p className="text-center font-display text-base italic text-muted-foreground">
+          Loading…
+        </p>
+      }
+    >
       <SignInForm />
     </Suspense>
   );

@@ -16,12 +16,12 @@ import { listProjects } from "@/lib/domain/projects";
 import { TimerWidget } from "@/components/features/timer/timer-widget";
 import { GlobalManualEntryServer } from "@/components/features/timer/global-manual-entry-server";
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
-import { ThemeSwitcher } from "@/components/features/topbar/theme-switcher";
 import { CommandPalette } from "@/components/features/command-palette/command-palette";
 import {
   ProjectLink,
   SidebarLink,
 } from "@/components/features/sidebar/sidebar-link";
+import { SidebarAccount } from "@/components/features/sidebar/sidebar-account";
 
 const mainNav = [
   { href: "/today", label: "Today", icon: Calendar },
@@ -44,117 +44,133 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const others = projects.filter((p) => !p.isFavorite);
 
   return (
-    <div className="flex-1 grid grid-cols-[260px_1fr] grid-rows-[56px_1fr] min-h-screen">
-      {/* Skip to main content (accessibility) — visibile solo al focus */}
+    <div className="grid h-[100dvh] max-h-[100dvh] grid-cols-[260px_1fr] grid-rows-[56px_minmax(0,1fr)] overflow-hidden">
+      {/* Skip to main content (accessibility) */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-2 focus:left-2 focus:px-3 focus:py-1.5 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-1.5 focus:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       >
         Salta al contenuto
       </a>
 
       {/* Sidebar */}
       <aside
-        className="row-span-2 border-r border-sidebar-border bg-sidebar text-sidebar-foreground py-4 overflow-y-auto"
+        className="row-span-2 flex min-h-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
         aria-label="Navigazione principale"
       >
-        <div className="px-4 mb-3">
-          <div className="text-sm font-semibold">Todoist+Tracker</div>
-        </div>
-
-        <nav className="px-3 space-y-0.5" aria-label="Viste task">
-          {mainNav.map(({ href, label, icon: Icon }) => (
-            <SidebarLink
-              key={href}
-              href={href}
-              icon={<Icon className="w-4 h-4" />}
-              exact
-            >
-              {label}
-            </SidebarLink>
-          ))}
-        </nav>
-
-        {favorites.length > 0 && (
-          <div className="mt-6 px-3">
-            <div className="px-2 mb-1 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-              <Star className="w-3 h-3" aria-hidden />
-              Favorites
-            </div>
-            <div className="space-y-0.5" role="list">
-              {favorites.map((p) => (
-                <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-6 px-3">
-          <div className="px-2 mb-1 flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground">
-            <span>Projects</span>
-            <Link
-              href="/projects"
-              className="hover:text-foreground"
-              aria-label="Vedi tutti i progetti / nuovo"
-            >
-              <FolderKanban className="w-3.5 h-3.5" aria-hidden />
-            </Link>
-          </div>
-          <div className="space-y-0.5">
-            {others.length === 0 && favorites.length === 0 ? (
-              <p className="px-2 py-1 text-xs text-muted-foreground">
-                Nessun progetto.{" "}
-                <Link href="/projects" className="underline hover:text-foreground">
-                  Crea il primo
-                </Link>
-                .
-              </p>
-            ) : (
-              others.map((p) => (
-                <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
-              ))
-            )}
+        {/* Workspace switcher */}
+        <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-3.5">
+          <span className="grid h-7 w-7 place-items-center rounded-md bg-foreground text-background font-display text-[15px] leading-none italic">
+            T
+          </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate font-display text-[15px] leading-none text-foreground">
+              Todoist+Tracker
+            </span>
+            <span className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              {organizationId.slice(0, 8)}
+            </span>
           </div>
         </div>
 
-        <div className="mt-6 px-3">
-          <div className="px-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-            Workspace
-          </div>
-          <nav className="space-y-0.5" aria-label="Strumenti workspace">
-            {bottomNav.map(({ href, label, icon: Icon }) => (
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          <nav className="space-y-0.5" aria-label="Viste task">
+            {mainNav.map(({ href, label, icon: Icon }) => (
               <SidebarLink
                 key={href}
                 href={href}
-                icon={<Icon className="w-4 h-4" />}
+                icon={<Icon className="h-4 w-4" />}
+                exact
               >
                 {label}
               </SidebarLink>
             ))}
           </nav>
+
+          {favorites.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-1.5 px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <Star className="h-3 w-3" aria-hidden />
+                <span>Favorites</span>
+              </div>
+              <div className="space-y-0.5" role="list">
+                {favorites.map((p) => (
+                  <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6">
+            <div className="flex items-center justify-between px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <span>Projects</span>
+              <Link
+                href="/projects"
+                className="rounded-sm p-0.5 transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                aria-label="Vedi tutti i progetti / nuovo"
+              >
+                <FolderKanban className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </div>
+            <div className="space-y-0.5">
+              {others.length === 0 && favorites.length === 0 ? (
+                <p className="px-3 py-1.5 text-[12px] text-muted-foreground">
+                  Nessun progetto.{" "}
+                  <Link href="/projects" className="text-coral underline-offset-2 hover:underline">
+                    Crea il primo
+                  </Link>
+                  .
+                </p>
+              ) : (
+                others.map((p) => (
+                  <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <div className="px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              Workspace
+            </div>
+            <nav className="space-y-0.5" aria-label="Strumenti workspace">
+              {bottomNav.map(({ href, label, icon: Icon }) => (
+                <SidebarLink
+                  key={href}
+                  href={href}
+                  icon={<Icon className="h-4 w-4" />}
+                >
+                  {label}
+                </SidebarLink>
+              ))}
+            </nav>
+          </div>
         </div>
+
+        {/* Account + theme pinned at bottom */}
+        <SidebarAccount email={user.email} />
       </aside>
 
-      {/* Topbar */}
-      <header className="border-b border-border flex items-center justify-between px-4">
-        <div className="text-sm text-muted-foreground">
-          Workspace{" "}
-          <span className="font-medium text-foreground">
-            {organizationId.slice(0, 8)}
-          </span>
+      {/* Topbar — workspace tools only. Pinned by the parent grid row; the row never scrolls. */}
+      <header className="z-20 flex items-center justify-between border-b border-border bg-background px-5">
+        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          <span>Workspace</span>
+          <span className="text-foreground">{organizationId.slice(0, 8)}</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <GlobalManualEntryServer />
           <TimerWidget />
           <NotificationsBellServer />
-          <ThemeSwitcher />
-          <span className="text-sm text-muted-foreground">{user.email}</span>
         </div>
       </header>
 
-      {/* Content */}
-      <main id="main-content" className="p-6 overflow-auto" tabIndex={-1}>
-        {children}
+      {/* Content — the ONLY scrollable region. Topbar + sidebar stay fixed. */}
+      <main
+        id="main-content"
+        className="min-h-0 overflow-y-auto overflow-x-hidden"
+        tabIndex={-1}
+      >
+        <div className="mx-auto w-full max-w-3xl px-6 pb-16">{children}</div>
       </main>
 
       {/* Command palette globale (Cmd+K) */}

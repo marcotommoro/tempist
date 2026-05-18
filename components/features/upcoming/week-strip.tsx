@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { addDays, format, isSameDay, startOfWeek, subWeeks, addWeeks } from "date-fns";
+import {
+  addDays,
+  addWeeks,
+  format,
+  isSameDay,
+  startOfWeek,
+  subWeeks,
+} from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -10,48 +17,46 @@ const WEEKDAY_SHORT_IT = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 
 /**
  * Strip 7 giorni con day of week + day number. Cliccando un giorno setta
- * ?cursor=YYYY-MM-DD nell'URL (server re-render con quel range).
+ * ?cursor=YYYY-MM-DD nell'URL.
  */
 export function WeekStrip({
   cursorDate,
   todayLocal,
 }: {
-  cursorDate: Date; // primo giorno mostrato (di solito oggi o lunedì settimana)
+  cursorDate: Date;
   todayLocal: Date;
 }) {
   const weekStart = startOfWeek(cursorDate, { weekStartsOn: 1 });
-  const days: Date[] = [];
-  for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
 
   const prev = format(subWeeks(weekStart, 1), "yyyy-MM-dd");
   const next = format(addWeeks(weekStart, 1), "yyyy-MM-dd");
   const today = format(todayLocal, "yyyy-MM-dd");
 
   return (
-    <div className="flex items-center justify-between gap-2 mb-4">
-      <div className="text-sm text-muted-foreground">
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <div className="font-display text-lg leading-none text-foreground">
         {format(weekStart, "MMMM yyyy")}
       </div>
       <div className="flex items-center gap-1">
         <Link
           href={`?cursor=${prev}`}
           aria-label="Settimana precedente"
-          className="size-7 inline-flex items-center justify-center rounded-md border bg-card hover:bg-muted"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft className="size-3.5" />
         </Link>
         <Link
           href={`?cursor=${today}`}
-          className="px-3 h-7 inline-flex items-center text-xs rounded-md border bg-card hover:bg-muted"
+          className="inline-flex h-7 items-center rounded-md border border-border bg-card/40 px-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          Oggi
+          Today
         </Link>
         <Link
           href={`?cursor=${next}`}
           aria-label="Settimana successiva"
-          className="size-7 inline-flex items-center justify-center rounded-md border bg-card hover:bg-muted"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <ChevronRight className="size-4" />
+          <ChevronRight className="size-3.5" />
         </Link>
       </div>
     </div>
@@ -60,7 +65,6 @@ export function WeekStrip({
 
 /**
  * Riga visiva con i 7 giorni della settimana corrente (basata su cursorDate).
- * Cliccando un giorno scrolla all'ancora #day-yyyy-MM-dd.
  */
 export function WeekDays({
   cursorDate,
@@ -74,7 +78,7 @@ export function WeekDays({
   for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
 
   return (
-    <ul className="grid grid-cols-7 border-b pb-2 mb-4">
+    <ul className="mb-4 grid grid-cols-7 border-b border-border pb-3">
       {days.map((d) => {
         const isToday = isSameDay(d, todayLocal);
         const dayOfWeek = WEEKDAY_SHORT_IT[d.getDay()];
@@ -84,15 +88,17 @@ export function WeekDays({
           <li key={d.toISOString()} className="text-center">
             <a
               href={`#${anchor}`}
-              className="inline-flex items-center gap-1.5 text-sm hover:opacity-80"
+              className="group inline-flex flex-col items-center gap-0.5 hover:opacity-80"
             >
-              <span className="text-muted-foreground">{dayOfWeek}</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                {dayOfWeek}
+              </span>
               <span
                 className={cn(
-                  "inline-flex items-center justify-center min-w-6 h-6 px-1 rounded text-xs font-medium tabular-nums",
+                  "inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-mono text-[12px] font-medium tabular-nums transition-colors",
                   isToday
-                    ? "bg-red-500 text-white"
-                    : "text-foreground",
+                    ? "bg-coral text-coral-foreground"
+                    : "text-foreground group-hover:bg-accent",
                 )}
               >
                 {dayNum}
