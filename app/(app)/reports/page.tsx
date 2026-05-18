@@ -1,47 +1,24 @@
 import Link from "next/link";
-import {
-  endOfMonth,
-  endOfWeek,
-  startOfMonth,
-  startOfWeek,
-  format,
-} from "date-fns";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listClients } from "@/lib/domain/clients";
+import { listProjects } from "@/lib/domain/projects";
 import { getClientAggregates } from "@/lib/domain/time-entries";
 import { getCompletedTaskCountByClient } from "@/lib/domain/tasks";
+import {
+  getHoursByDay,
+  getProjectBreakdown,
+} from "@/lib/domain/analytics";
+import {
+  computeReportRange,
+  fillDailyGaps,
+  type Range,
+} from "@/lib/utils/report-range";
+import { HoursByDayChart } from "@/components/features/reports/hours-by-day-chart";
+import { ClientPieChart } from "@/components/features/reports/client-pie-chart";
 import { cn } from "@/lib/utils";
 
-type Range = "week" | "month";
-
 type Search = { range?: string };
-
-function computeRange(
-  range: Range,
-  timezone: string,
-  now: Date = new Date(),
-): { from: Date; to: Date; label: string } {
-  const nowLocal = toZonedTime(now, timezone);
-  if (range === "month") {
-    const startLocal = startOfMonth(nowLocal);
-    const endLocal = endOfMonth(nowLocal);
-    return {
-      from: fromZonedTime(startLocal, timezone),
-      to: fromZonedTime(endLocal, timezone),
-      label: format(nowLocal, "MMMM yyyy"),
-    };
-  }
-  // week — settimana lun→dom
-  const startLocal = startOfWeek(nowLocal, { weekStartsOn: 1 });
-  const endLocal = endOfWeek(nowLocal, { weekStartsOn: 1 });
-  return {
-    from: fromZonedTime(startLocal, timezone),
-    to: fromZonedTime(endLocal, timezone),
-    label: `${format(startLocal, "d MMM")} – ${format(endLocal, "d MMM yyyy")}`,
-  };
-}
 
 function hoursFromSeconds(s: number): string {
   return (s / 3600).toFixed(2);
@@ -53,18 +30,33 @@ export default async function ReportsPage({
   searchParams: Promise<Search>;
 }) {
   const { range: rangeParam } = await searchParams;
-  const range: Range = rangeParam === "month" ? "month" : "week";
+  const range: Range =
+    rangeParam === "month"
+      ? "month"
+      : rangeParam === "last-week"
+        ? "last-week"
+        : "week";
 
   const { user, organizationId } = await requireActiveOrganization();
   const timezone =
     (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
 
-  const { from, to, label } = computeRange(range, timezone);
+  const { from, to, label } = computeReportRange(range, timezone);
 
-  const [clients, aggregates, completedByClient] = await Promise.all([
+  const [
+    clients,
+    projects,
+    aggregates,
+    completedByClient,
+    hoursByDay,
+    projectBreakdown,
+  ] = await Promise.all([
     listClients({ organizationId, includeArchived: true }),
+    listProjects({ organizationId }),
     getClientAggregates({ organizationId, from, to }),
     getCompletedTaskCountByClient({ organizationId, from, to }),
+    getHoursByDay({ organizationId, from, to }),
+    getProjectBreakdown({ organizationId, from, to }),
   ]);
 
   type Row = {
@@ -92,25 +84,18 @@ export default async function ReportsPage({
     };
   });
 
-  // Entries senza cliente: chiave null nell'aggregate query — è gia filtrata via clientId NOT NULL
-  // in getClientAggregates, ma se cambiasse, gestiamolo qui.
-  // (Per ora le entries senza clientId non vengono restituite, quindi niente riga "Senza cliente".)
-
-  // Filtra righe con tutto a zero (rumore visivo)
-  const meaningful = rows.filter(
+  const meaningfulRows = rows.filter(
     (r) => r.totalSeconds > 0 || r.completedTasks > 0,
   );
 
-  const totals = meaningful.reduce(
+  const totals = meaningfulRows.reduce(
     (acc, r) => {
       acc.totalSeconds += r.totalSeconds;
       acc.entryCount += r.entryCount;
       acc.completedTasks += r.completedTasks;
-      // billable: sommo per currency separatamente
-      const cur = r.currency;
       acc.billableByCurrency.set(
-        cur,
-        (acc.billableByCurrency.get(cur) ?? 0) + r.billableAmount,
+        r.currency,
+        (acc.billableByCurrency.get(r.currency) ?? 0) + r.billableAmount,
       );
       return acc;
     },
@@ -122,10 +107,57 @@ export default async function ReportsPage({
     },
   );
 
+  // Data per il bar chart: riempi i buchi
+  const hoursByDayFilled = fillDailyGaps(
+    hoursByDay,
+    from,
+    to,
+    (day) => ({ day, totalSeconds: 0 }),
+  ).map((d) => ({ day: d.day, hours: d.totalSeconds / 3600 }));
+
+  // Data per il pie chart
+  const pieData = meaningfulRows.map((r) => ({
+    name: r.name,
+    hours: r.totalSeconds / 3600,
+    color: r.color,
+  }));
+
+  // Project breakdown rows
+  const projectRows = projects
+    .map((p) => {
+      const agg = projectBreakdown.get(p.id);
+      return {
+        id: p.id,
+        name: p.name,
+        color: p.color,
+        totalSeconds: agg?.totalSeconds ?? 0,
+        entryCount: agg?.entryCount ?? 0,
+        billableAmount: agg?.billableAmount ?? 0,
+      };
+    })
+    .filter((p) => p.totalSeconds > 0)
+    .sort((a, b) => b.totalSeconds - a.totalSeconds);
+
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-6xl">
       <header className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/api/reports/time-entries.csv?range=${range}`}
+              className="text-xs px-2 py-1 rounded border bg-card hover:bg-muted"
+            >
+              Export CSV
+            </Link>
+            <Link
+              href={`/reports/print?range=${range}`}
+              className="text-xs px-2 py-1 rounded border bg-card hover:bg-muted"
+            >
+              Versione stampa
+            </Link>
+          </div>
+        </div>
         <div className="flex items-center gap-3 flex-wrap">
           <RangeToggle current={range} />
           <span className="text-sm text-muted-foreground">{label}</span>
@@ -135,14 +167,8 @@ export default async function ReportsPage({
       {/* Totali del range */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat label="Ore totali" value={hoursFromSeconds(totals.totalSeconds)} />
-        <Stat
-          label="Voci"
-          value={String(totals.entryCount)}
-        />
-        <Stat
-          label="Task completati"
-          value={String(totals.completedTasks)}
-        />
+        <Stat label="Voci" value={String(totals.entryCount)} />
+        <Stat label="Task completati" value={String(totals.completedTasks)} />
         <Stat
           label="Fatturabile"
           value={
@@ -155,13 +181,29 @@ export default async function ReportsPage({
         />
       </section>
 
+      {/* Charts row */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-md border bg-card p-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Ore per giorno
+          </h3>
+          <HoursByDayChart data={hoursByDayFilled} />
+        </div>
+        <div className="rounded-md border bg-card p-3">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            Distribuzione clienti
+          </h3>
+          <ClientPieChart data={pieData} />
+        </div>
+      </section>
+
       {/* Tabella per cliente */}
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
           Per cliente
         </h2>
         <div className="rounded-md border bg-card overflow-x-auto">
-          {meaningful.length === 0 ? (
+          {meaningfulRows.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-muted-foreground">
               Nessuna attività registrata nel range selezionato.
             </p>
@@ -177,7 +219,7 @@ export default async function ReportsPage({
                 </tr>
               </thead>
               <tbody>
-                {meaningful.map((r) => (
+                {meaningfulRows.map((r) => (
                   <tr key={r.id ?? "_"} className="border-b border-border last:border-b-0">
                     <td className="px-4 py-2">
                       {r.id ? (
@@ -196,9 +238,7 @@ export default async function ReportsPage({
                         <span className="text-muted-foreground">{r.name}</span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {r.completedTasks}
-                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">{r.completedTasks}</td>
                     <td className="px-4 py-2 text-right tabular-nums">
                       {hoursFromSeconds(r.totalSeconds)}
                     </td>
@@ -209,6 +249,59 @@ export default async function ReportsPage({
                       {r.billableAmount > 0
                         ? `${r.billableAmount.toFixed(2)} ${r.currency}`
                         : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+
+      {/* Tabella per progetto */}
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          Per progetto
+        </h2>
+        <div className="rounded-md border bg-card overflow-x-auto">
+          {projectRows.length === 0 ? (
+            <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Nessun progetto con tracking nel range.
+            </p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs uppercase text-muted-foreground">
+                  <th className="text-left font-medium px-4 py-2">Progetto</th>
+                  <th className="text-right font-medium px-4 py-2">Ore</th>
+                  <th className="text-right font-medium px-4 py-2">Voci</th>
+                  <th className="text-right font-medium px-4 py-2">Fatturabile</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projectRows.map((p) => (
+                  <tr key={p.id} className="border-b border-border last:border-b-0">
+                    <td className="px-4 py-2">
+                      <Link
+                        href={`/projects/${p.id}`}
+                        className="inline-flex items-center gap-2 hover:underline"
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: p.color }}
+                          aria-hidden
+                        />
+                        {p.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {hoursFromSeconds(p.totalSeconds)}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                      {p.entryCount}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums">
+                      {p.billableAmount > 0 ? p.billableAmount.toFixed(2) : "—"}
                     </td>
                   </tr>
                 ))}
@@ -233,6 +326,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function RangeToggle({ current }: { current: Range }) {
   const options: { value: Range; label: string }[] = [
     { value: "week", label: "Settimana" },
+    { value: "last-week", label: "Scorsa" },
     { value: "month", label: "Mese" },
   ];
   return (
