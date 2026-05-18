@@ -667,3 +667,5 @@ export type Client = typeof client.$inferSelect;
 export type NewClient = typeof client.$inferInsert;
 export type Filter = typeof filter.$inferSelect;
 export type NewFilter = typeof filter.$inferInsert;
+export type Notification = typeof notification.$inferSelect;
+export type NewNotification = typeof notification.$inferInsert;
