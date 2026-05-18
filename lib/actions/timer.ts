@@ -2,11 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 
+import { and, eq, isNull } from "drizzle-orm";
+
 import { requireActiveOrganization } from "@/lib/auth/workspace";
+import { db, schema } from "@/lib/db";
 import {
   createManualEntry,
   deleteTimeEntry,
   startTimer,
+  startTimerFromTask,
   stopTimer,
 } from "@/lib/domain/time-entries";
 import type { ActionResult } from "./tasks";
@@ -59,6 +63,35 @@ export async function stopTimerAction(): Promise<ActionResult> {
     }
     revalidateAll();
     return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+export async function startTimerFromTaskAction(
+  taskId: string,
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const { user, organizationId } = await requireActiveOrganization();
+    const task = await db.query.task.findFirst({
+      where: and(
+        eq(schema.task.id, taskId),
+        eq(schema.task.organizationId, organizationId),
+        isNull(schema.task.deletedAt),
+      ),
+    });
+    if (!task) return { ok: false, error: "Task non trovato" };
+    const res = await startTimerFromTask({ organizationId, userId: user.id, task });
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: res.existing
+          ? `Hai già un timer attivo: "${res.existing.description ?? "(senza descrizione)"}"`
+          : "Hai già un timer attivo",
+      };
+    }
+    revalidateAll();
+    return { ok: true, data: { id: res.entry.id } };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Errore" };
   }

@@ -13,8 +13,43 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
-import type { TimeEntry } from "@/lib/db/schema";
+import type { Task, TimeEntry } from "@/lib/db/schema";
 import { resolveRate } from "./billing";
+
+// ---------------------------------------------------------------------------
+// Audit log helpers
+// ---------------------------------------------------------------------------
+
+type AuditAction = "CREATE" | "UPDATE" | "STOP" | "RESUME";
+
+async function writeAudit(opts: {
+  timeEntryId: string;
+  actorId: string;
+  action: AuditAction;
+  before?: TimeEntry | null;
+  after?: TimeEntry | null;
+}) {
+  // TODO: schema attualmente fa onDelete:cascade su timeEntryId → audit di DELETE
+  // perderebbe la traccia. Migration futura: set onDelete:setNull + nullable.
+  await db.insert(schema.timeEntryAudit).values({
+    timeEntryId: opts.timeEntryId,
+    actorId: opts.actorId,
+    action: opts.action,
+    beforeJson: opts.before ? serializeEntry(opts.before) : null,
+    afterJson: opts.after ? serializeEntry(opts.after) : null,
+  });
+}
+
+function serializeEntry(e: TimeEntry): Record<string, unknown> {
+  // Date → ISO string per jsonb (JSON.stringify lo fa già, ma esplicitiamo)
+  return {
+    ...e,
+    startedAt: e.startedAt.toISOString(),
+    endedAt: e.endedAt?.toISOString() ?? null,
+    createdAt: e.createdAt.toISOString(),
+    updatedAt: e.updatedAt.toISOString(),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -139,6 +174,12 @@ export async function startTimer(input: StartTimerInput): Promise<
       })
       .returning();
     if (!created) throw new Error("Insert time_entry fallito");
+    await writeAudit({
+      timeEntryId: created.id,
+      actorId: input.userId,
+      action: "CREATE",
+      after: created,
+    });
     return { ok: true, entry: created };
   } catch (err) {
     if (isPgUniqueViolation(err)) {
@@ -169,6 +210,15 @@ export async function stopTimer(opts: {
     })
     .where(eq(schema.timeEntry.id, running.id))
     .returning();
+  if (updated) {
+    await writeAudit({
+      timeEntryId: updated.id,
+      actorId: opts.userId,
+      action: "STOP",
+      before: running,
+      after: updated,
+    });
+  }
   return updated ?? null;
 }
 
@@ -216,7 +266,34 @@ export async function createManualEntry(input: CreateManualEntryInput): Promise<
     })
     .returning();
   if (!created) throw new Error("Insert manual entry fallito");
+  await writeAudit({
+    timeEntryId: created.id,
+    actorId: input.userId,
+    action: "CREATE",
+    after: created,
+  });
   return created;
+}
+
+/**
+ * Avvia un timer ereditando i campi da un Task: clientId, projectId, title come description.
+ */
+export async function startTimerFromTask(opts: {
+  organizationId: string;
+  userId: string;
+  task: Task;
+}): Promise<
+  | { ok: true; entry: TimeEntry }
+  | { ok: false; reason: "already-running"; existing: TimeEntry | null }
+> {
+  return startTimer({
+    organizationId: opts.organizationId,
+    userId: opts.userId,
+    description: opts.task.title,
+    clientId: opts.task.clientId,
+    projectId: opts.task.projectId,
+    taskId: opts.task.id,
+  });
 }
 
 export async function deleteTimeEntry(opts: {

@@ -46,7 +46,40 @@
 
 ### Prossimi passi
 
-→ **Fase 2 — Time tracking core.**
+→ **Fase 3 — Integrazione Task ↔ Timer + UI dei collegamenti.**
+
+## Fase 2 — Time tracking core ✅
+
+**Data:** 2026-05-18
+
+### Iterazioni eseguite
+
+- **2.1** Clients CRUD
+  * `lib/domain/clients.ts` + `lib/actions/clients.ts` (4 actions con Zod)
+  * `/clients` list + create, `/clients/[id]` detail
+- **2.2** Timer core + widget topbar
+  * `startTimer` (cattura unique violation 23505 da partial index DB-level)
+  * `stopTimer` con `durationSeconds` calcolato
+  * Timer widget live tick 1s (Server Component + Client Component)
+- **2.3** TimeEntry list + manual entry retroattiva
+  * `/clients/[id]` mostra stats (ore, fatturabile, # voci) + form retroattivo
+  * `TimeEntryRow` con rate snapshot×ore e billable indicator
+- **2.4** Billing rates gerarchici
+  * `lib/domain/billing.ts` resolver con cascade TASK→PROJECT→CLIENT(+default)→USER
+  * Snapshot ricco al momento del tracking (passa tutti gli scope al resolver)
+  * `createBillingRate` immutabile (storia preservata)
+- **2.5** Timer da task + audit log
+  * `startTimerFromTask` eredita clientId/projectId/title
+  * Pulsante Play su TaskItem (hover)
+  * Audit log su CREATE e STOP (DELETE limitato dal cascade FK, TODO migration)
+- **2.6** Test verifica
+  * +9 nuovi unit test (durationSeconds + cascade order invariant)
+  * Build verde (15 routes, +2 vs Fase 1: /clients, /clients/[id])
+
+### Test coverage Fase 2
+
+- **53 unit tests** verdi (era 44 a fine Fase 1)
+- typecheck/lint zero issues, build verde
 
 ## Fase 1 — Task management core ✅
 

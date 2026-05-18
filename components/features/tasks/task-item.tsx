@@ -1,11 +1,12 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Play, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { deleteTaskAction, toggleTaskAction } from "@/lib/actions/tasks";
+import { startTimerFromTaskAction } from "@/lib/actions/timer";
 import type { Task } from "@/lib/db/schema";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
@@ -32,6 +33,14 @@ export function TaskItem({ task }: { task: Task }) {
     setError(null);
     startTransition(async () => {
       const res = await deleteTaskAction(task.id);
+      if (!res.ok) setError(res.error);
+    });
+  }
+
+  function startTimer() {
+    setError(null);
+    startTransition(async () => {
+      const res = await startTimerFromTaskAction(task.id);
       if (!res.ok) setError(res.error);
     });
   }
@@ -66,18 +75,35 @@ export function TaskItem({ task }: { task: Task }) {
             <span>{format(task.scheduledAt, "d MMM HH:mm")}</span>
           )}
           {task.dueDate && <span>due {format(task.dueDate, "d MMM")}</span>}
+          {task.recurrenceRule && (
+            <span title={task.recurrenceRule}>🔁</span>
+          )}
           {error && <span className="text-red-500">{error}</span>}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={del}
-        disabled={pending}
-        aria-label="Cancella task"
-        className="opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed text-muted-foreground hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </button>
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!isDone && (
+          <button
+            type="button"
+            onClick={startTimer}
+            disabled={pending}
+            aria-label="Avvia timer su questo task"
+            title="Start timer"
+            className="text-muted-foreground hover:text-green-600 disabled:cursor-not-allowed"
+          >
+            <Play className="size-4" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={del}
+          disabled={pending}
+          aria-label="Cancella task"
+          className="disabled:cursor-not-allowed text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      </div>
     </li>
   );
 }
