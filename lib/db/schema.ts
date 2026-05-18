@@ -671,3 +671,5 @@ export type Notification = typeof notification.$inferSelect;
 export type NewNotification = typeof notification.$inferInsert;
 export type Reminder = typeof reminder.$inferSelect;
 export type NewReminder = typeof reminder.$inferInsert;
+export type IcalToken = typeof icalToken.$inferSelect;
+export type NewIcalToken = typeof icalToken.$inferInsert;
