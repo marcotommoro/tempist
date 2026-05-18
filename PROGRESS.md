@@ -48,6 +48,65 @@
 
 → **Fase 3 — Integrazione Task ↔ Timer + UI dei collegamenti.**
 
+## Fase 4 — Calendar & Notifications ✅ (parziale: 4.6 Web Push skipped su richiesta utente)
+
+**Data:** 2026-05-18
+
+### Iterazioni eseguite
+
+- **4.1** Notifications in-app
+  * Dominio + 3 server actions, bell topbar con badge unread + popover
+  * Trigger reali arrivano dai job (4.2, 4.4)
+- **4.2** Reminder system + pg-boss scan job
+  * `parseRelativeOffset` + `computeTriggerTime` (pure, testati)
+  * Notazione: `-30m`, `-1h`, `-1d`, `-1w` (`+` per dopo scheduledAt)
+  * `findDueReminders` + `fireReminder` con claim atomico (UPDATE...WHERE sent_at IS NULL)
+  * Cron `* * * * *` worker; alle notifications di tipo `reminder.fired`
+  * UI: `TaskReminderButton` popover (preset relativi + datetime picker)
+  * `getPendingReminderCountByTask` aggregate, badge sui task
+- **4.3** iCal feed (read-only)
+  * `lib/utils/ics.ts` puro RFC 5545 (escape, fold, CRLF, status:completed)
+  * Token random 24-byte hex (192 bit entropy), revocabile
+  * Endpoint pubblico `/api/ical/[token]` con `text/calendar`
+  * `/settings` IcalSection con generate/copy/revoke
+- **4.4** Email digest giornaliero
+  * `lib/integrations/email.ts` wrapper Resend con dev fallback console
+  * Renderers puri (text + html) testabili in isolamento
+  * `processDailyDigest`: ora locale check + dedupe via notification "Digest:"
+  * Cron `0 * * * *` globale, filtra 08:00 user-tz internamente
+  * `/settings` DigestSection con "Invia digest di prova"
+- **4.5** Google Calendar OAuth + sync push-only
+  * AES-256-GCM con chiave da BETTER_AUTH_SECRET via scrypt
+  * Token cifrati at-rest; access token refresh on-demand 60s margin
+  * OAuth: `/connect` redirect, `/callback` exchange (state = userId|orgId)
+  * Cron `*/5 * * * *` sync push: INSERT/PATCH/DELETE primary calendar events
+  * `calendar_event_link` binding task ↔ external event
+  * UI `/settings` CalendarSection con connect (disabled se env mancanti) + disconnect
+- **4.6** Web Push — **skipped** (scelta utente)
+  * Le notifiche restano in-app + email digest. Da considerare in Fase 6.
+
+### Test coverage Fase 4
+
+- **79 unit tests** verdi (era 53 a fine Fase 3) — +26 tests
+  * 13 reminder-time
+  * 6 ics
+  * 3 digest-render
+  * 4 encryption
+- `pnpm typecheck` zero errori, `pnpm lint` zero warning, `pnpm build` 19 routes
+  (3 nuove API: /api/ical/[token], /api/integrations/google-calendar/{connect,callback})
+
+### Decisioni in corso d'opera
+
+- **Calendar sync push-only** invece di bidirezionale: ridotto scope da ~600 a ~250
+  righe, scelta utente. Il pull (event → task) entra in fase futura quando il MVP
+  girerà in produzione e ci sarà copy-back use case reale.
+- **Web Push skipped**: richiede VAPID keys + HTTPS reale, valore incrementale basso
+  rispetto a in-app + email. Rinviato.
+- **Email helper estratto** in `lib/integrations/email.ts` per coerenza tra magic
+  link e digest (DRY parziale — config.ts conserva il banner colorato dev).
+- **Pattern "pure utils + impure domain"** consolidato: `today-bounds`, `reminder-time`,
+  `ics`, `digest-render`, `encryption` sono tutti puri e testati in isolation.
+
 ## Fase 3 — Integrazione Task ↔ Timer ✅
 
 **Data:** 2026-05-18
