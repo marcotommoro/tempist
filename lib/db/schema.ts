@@ -673,3 +673,7 @@ export type Reminder = typeof reminder.$inferSelect;
 export type NewReminder = typeof reminder.$inferInsert;
 export type IcalToken = typeof icalToken.$inferSelect;
 export type NewIcalToken = typeof icalToken.$inferInsert;
+export type CalendarAccount = typeof calendarAccount.$inferSelect;
+export type NewCalendarAccount = typeof calendarAccount.$inferInsert;
+export type CalendarEventLink = typeof calendarEventLink.$inferSelect;
+export type NewCalendarEventLink = typeof calendarEventLink.$inferInsert;

@@ -13,6 +13,7 @@ import { getBoss, stopBoss } from "../lib/jobs/boss";
 import { registerHealthCheck } from "../lib/jobs/definitions/health-check";
 import { registerReminderScan } from "../lib/jobs/definitions/reminder-scan";
 import { registerDigestDaily } from "../lib/jobs/definitions/digest-daily";
+import { registerCalendarSync } from "../lib/jobs/definitions/calendar-sync";
 
 async function main() {
   const boss = await getBoss();
@@ -21,6 +22,7 @@ async function main() {
   await registerHealthCheck(boss);
   await registerReminderScan(boss);
   await registerDigestDaily(boss);
+  await registerCalendarSync(boss);
 
   console.log("[worker] ready. listening for jobs.");
 }
