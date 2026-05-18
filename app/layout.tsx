@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorkerRegister } from "@/components/features/pwa/sw-register";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,7 +17,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Todoist + Tracker",
-  description: "Task management + time tracking",
+  description: "Task management + time tracking unificati",
+  manifest: "/manifest.webmanifest",
+  applicationName: "Todoist+Tracker",
+  appleWebApp: {
+    capable: true,
+    title: "Todoist+Tracker",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -33,6 +54,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
         <Toaster />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
