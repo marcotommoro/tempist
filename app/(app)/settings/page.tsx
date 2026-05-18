@@ -7,6 +7,7 @@ import { IcalSection } from "@/components/features/settings/ical-section";
 import { DigestSection } from "@/components/features/settings/digest-section";
 import { CalendarSection } from "@/components/features/settings/calendar-section";
 import { WeeklyReportSection } from "@/components/features/settings/weekly-report-section";
+import { ThemeSection } from "@/components/features/settings/theme-section";
 
 type Search = { gcal_connected?: string; gcal_error?: string };
 
@@ -43,6 +44,7 @@ export default async function SettingsPage({
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
       </header>
+      <ThemeSection />
       <IcalSection tokens={tokens} baseUrl={baseUrl} />
       <DigestSection userEmail={user.email} />
       <WeeklyReportSection />
