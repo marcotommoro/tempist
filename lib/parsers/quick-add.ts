@@ -29,6 +29,8 @@
 
 import * as chrono from "chrono-node";
 
+import { parseRecurrence } from "./recurrence";
+
 export type Priority = "P1" | "P2" | "P3" | "P4";
 
 export type ParsedQuickAdd = {
@@ -39,6 +41,7 @@ export type ParsedQuickAdd = {
   labelNames: string[];
   estimatedMinutes: number | null;
   clientName: string | null;
+  recurrenceRule: string | null;
 };
 
 const NAME_RE = /[\p{L}\p{N}_-]+/u;
@@ -71,6 +74,22 @@ function extractPriority(text: string): { value: Priority; rest: string } {
     return lead;
   });
   return { value: last, rest };
+}
+
+function extractRepeats(text: string): { value: string | null; rest: string } {
+  // repeats:VALUE — VALUE puo' contenere spazi se quotato? Per ora prendiamo
+  // fino al prossimo token strutturato. Pattern semplice: repeats:WORD(_WORD)*
+  // Per supportare "repeats:every monday", richiediamo che VALUE non contenga
+  // i marker speciali (#@!).
+  const re = /(?:^|\s)repeats:([^\s#@!]+(?:\s+[^\s#@!]+)*?)(?=\s+#|\s+@|\s+!|\s+p[1-4]\b|$)/iu;
+  const m = text.match(re);
+  if (!m || !m[1]) return { value: null, rest: text };
+  const raw = m[1].trim();
+  const rrule = parseRecurrence(raw);
+  return {
+    value: rrule, // null se non parsabile
+    rest: text.replace(re, " "),
+  };
 }
 
 function extractClient(text: string): { value: string | null; rest: string } {
@@ -145,6 +164,9 @@ export function parseQuickAdd(
   const client = extractClient(working);
   working = client.rest;
 
+  const repeats = extractRepeats(working);
+  working = repeats.rest;
+
   const prio = extractPriority(working);
   working = prio.rest;
 
@@ -164,5 +186,6 @@ export function parseQuickAdd(
     labelNames: labels.values,
     estimatedMinutes: dur.minutes,
     clientName: client.value,
+    recurrenceRule: repeats.value,
   };
 }

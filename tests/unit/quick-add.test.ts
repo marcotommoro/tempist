@@ -105,4 +105,26 @@ describe("parseQuickAdd", () => {
     const r = parseQuickAdd("  Task   with    spaces  #P  ", { now: NOW });
     expect(r.title).toBe("Task with spaces");
   });
+
+  it("extracts repeats:VALUE → RRULE string", () => {
+    expect(parseQuickAdd("Daily standup repeats:daily", { now: NOW })).toMatchObject({
+      title: "Daily standup",
+      recurrenceRule: "FREQ=DAILY",
+    });
+    expect(parseQuickAdd("Weekly review repeats:weekly", { now: NOW })).toMatchObject({
+      title: "Weekly review",
+      recurrenceRule: "FREQ=WEEKLY",
+    });
+    expect(parseQuickAdd("Stand up repeats:every monday p1", { now: NOW })).toMatchObject({
+      title: "Stand up",
+      priority: "P1",
+      recurrenceRule: "FREQ=WEEKLY;BYDAY=MO",
+    });
+  });
+
+  it("repeats with unknown keyword → recurrenceRule null but token still extracted", () => {
+    const r = parseQuickAdd("Task repeats:nonsense", { now: NOW });
+    expect(r.title).toBe("Task");
+    expect(r.recurrenceRule).toBeNull();
+  });
 });

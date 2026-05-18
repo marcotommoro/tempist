@@ -83,6 +83,7 @@ export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) 
           labelNames={parsed.labelNames}
           estimatedMinutes={parsed.estimatedMinutes}
           clientName={parsed.clientName}
+          recurrenceRule={parsed.recurrenceRule}
         />
       )}
 
@@ -116,6 +117,7 @@ function ParsedPreview(props: {
   labelNames: string[];
   estimatedMinutes: number | null;
   clientName: string | null;
+  recurrenceRule: string | null;
 }) {
   const hasAnyToken =
     props.scheduledAt ||
@@ -123,7 +125,8 @@ function ParsedPreview(props: {
     props.projectName ||
     props.labelNames.length > 0 ||
     props.estimatedMinutes ||
-    props.clientName;
+    props.clientName ||
+    props.recurrenceRule;
 
   if (!hasAnyToken) return null;
 
@@ -158,6 +161,11 @@ function ParsedPreview(props: {
       {props.estimatedMinutes != null && (
         <Chip className="bg-muted text-muted-foreground">
           ⏱ {props.estimatedMinutes}m
+        </Chip>
+      )}
+      {props.recurrenceRule && (
+        <Chip className="bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300">
+          🔁 {props.recurrenceRule}
         </Chip>
       )}
     </div>

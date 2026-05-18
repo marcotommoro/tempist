@@ -109,6 +109,7 @@ export async function createTaskFromQuickAddAction(
       estimatedMinutes: parsed.estimatedMinutes,
       projectId,
       clientId,
+      recurrenceRule: parsed.recurrenceRule,
     });
 
     // ---- Link labels ----

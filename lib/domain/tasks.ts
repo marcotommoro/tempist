@@ -14,6 +14,7 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import { db, schema } from "@/lib/db";
 import type { Task } from "@/lib/db/schema";
+import { computeNextOccurrence } from "@/lib/parsers/recurrence";
 
 // ----------------------------------------------------------------------------
 // Boundary helpers
@@ -115,6 +116,7 @@ export type CreateTaskInput = {
   projectId?: string | null;
   sectionId?: string | null;
   clientId?: string | null;
+  recurrenceRule?: string | null;
 };
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
@@ -132,6 +134,7 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
       projectId: input.projectId ?? null,
       sectionId: input.sectionId ?? null,
       clientId: input.clientId ?? null,
+      recurrenceRule: input.recurrenceRule ?? null,
     })
     .returning();
   if (!created) throw new Error("Insert task failed");
@@ -139,13 +142,13 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
 }
 
 /**
- * Toggle complete/incomplete. Restituisce lo stato aggiornato.
- * Se completedAt era valorizzato → uncheck (null). Se era null → check (now).
+ * Toggle complete/incomplete. Restituisce lo stato aggiornato + eventuale next-occurrence
+ * spawned se il task aveva una recurrenceRule e veniva *completato* (non riaperto).
  */
 export async function toggleTaskComplete(opts: {
   taskId: string;
   organizationId: string;
-}): Promise<Task> {
+}): Promise<{ task: Task; spawned: Task | null }> {
   const current = await db.query.task.findFirst({
     where: and(
       eq(schema.task.id, opts.taskId),
@@ -155,13 +158,38 @@ export async function toggleTaskComplete(opts: {
   });
   if (!current) throw new Error("Task non trovato o cancellato");
 
+  const isCompleting = !current.completedAt;
+
   const [updated] = await db
     .update(schema.task)
-    .set({ completedAt: current.completedAt ? null : new Date() })
+    .set({ completedAt: isCompleting ? new Date() : null })
     .where(eq(schema.task.id, opts.taskId))
     .returning();
   if (!updated) throw new Error("Update task fallito");
-  return updated;
+
+  // Spawn next occurrence se: stiamo COMPLETANDO + recurrenceRule + scheduledAt
+  let spawned: Task | null = null;
+  if (isCompleting && current.recurrenceRule && current.scheduledAt) {
+    const nextDate = computeNextOccurrence(current.recurrenceRule, current.scheduledAt);
+    if (nextDate) {
+      spawned = await createTask({
+        organizationId: current.organizationId,
+        createdById: current.createdById,
+        title: current.title,
+        descriptionMarkdown: current.descriptionMarkdown,
+        priority: current.priority,
+        scheduledAt: nextDate,
+        dueDate: current.dueDate,
+        estimatedMinutes: current.estimatedMinutes,
+        projectId: current.projectId,
+        sectionId: current.sectionId,
+        clientId: current.clientId,
+        recurrenceRule: current.recurrenceRule, // catena continua
+      });
+    }
+  }
+
+  return { task: updated, spawned };
 }
 
 /**
