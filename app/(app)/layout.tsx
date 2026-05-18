@@ -13,6 +13,7 @@ import {
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listProjects } from "@/lib/domain/projects";
+import { TimerWidget } from "@/components/features/timer/timer-widget";
 
 const mainNav = [
   { href: "/today", label: "Today", icon: Calendar },
@@ -109,8 +110,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <span className="font-medium text-foreground">{organizationId.slice(0, 8)}</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-xs text-muted-foreground">[timer slot]</div>
-          <span className="text-sm">{user.email}</span>
+          <TimerWidget />
+          <span className="text-sm text-muted-foreground">{user.email}</span>
         </div>
       </header>
 
