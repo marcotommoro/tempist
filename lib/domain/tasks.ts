@@ -81,6 +81,27 @@ export async function getInboxTasks(ctx: ListContext): Promise<Task[]> {
 }
 
 /**
+ * Tasks linkati direttamente a un client (task.clientId = X).
+ * Esclude i task collegati indirettamente via project — si vedono nella pagina project.
+ * Open by default; passa `includeCompleted` per includere anche i completati.
+ */
+export async function getTasksForClient(
+  ctx: ListContext & { clientId: string; includeCompleted?: boolean; limit?: number },
+): Promise<Task[]> {
+  const conds = [
+    eq(schema.task.organizationId, ctx.organizationId),
+    eq(schema.task.clientId, ctx.clientId),
+    isNull(schema.task.deletedAt),
+  ];
+  if (!ctx.includeCompleted) conds.push(isNull(schema.task.completedAt));
+  return db.query.task.findMany({
+    where: and(...conds),
+    orderBy: [asc(schema.task.completedAt), asc(schema.task.scheduledAt), desc(schema.task.createdAt)],
+    limit: ctx.limit,
+  });
+}
+
+/**
  * Upcoming: task con scheduledAt > fine di oggi, entro `horizonDays` giorni.
  */
 export async function getUpcomingTasks(

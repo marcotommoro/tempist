@@ -2,9 +2,14 @@ import { notFound } from "next/navigation";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getClient } from "@/lib/domain/clients";
-import { listTimeEntriesForClient } from "@/lib/domain/time-entries";
+import {
+  getTrackedSecondsByTask,
+  listTimeEntriesForClient,
+} from "@/lib/domain/time-entries";
+import { getTasksForClient } from "@/lib/domain/tasks";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
+import { TaskList } from "@/components/features/tasks/task-list";
 import { formatDuration } from "@/lib/utils/format-duration";
 
 type Params = { id: string };
@@ -23,6 +28,17 @@ export default async function ClientDetailPage({
     clientId: id,
     organizationId,
     limit: 100,
+  });
+
+  const tasks = await getTasksForClient({
+    organizationId,
+    clientId: id,
+    includeCompleted: true,
+    limit: 50,
+  });
+  const trackedByTask = await getTrackedSecondsByTask({
+    organizationId,
+    taskIds: tasks.map((t) => t.id),
   });
 
   // Totali per il cliente
@@ -71,6 +87,17 @@ export default async function ClientDetailPage({
       </section>
 
       <ManualEntryForm clientId={id} />
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          Tasks <span className="ml-1 text-xs">({tasks.length})</span>
+        </h2>
+        <TaskList
+          tasks={tasks}
+          trackedByTask={trackedByTask}
+          emptyMessage="Nessun task legato a questo cliente."
+        />
+      </section>
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
