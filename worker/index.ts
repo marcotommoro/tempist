@@ -12,6 +12,7 @@ import "dotenv/config";
 import { getBoss, stopBoss } from "../lib/jobs/boss";
 import { registerHealthCheck } from "../lib/jobs/definitions/health-check";
 import { registerReminderScan } from "../lib/jobs/definitions/reminder-scan";
+import { registerDigestDaily } from "../lib/jobs/definitions/digest-daily";
 
 async function main() {
   const boss = await getBoss();
@@ -19,6 +20,7 @@ async function main() {
 
   await registerHealthCheck(boss);
   await registerReminderScan(boss);
+  await registerDigestDaily(boss);
 
   console.log("[worker] ready. listening for jobs.");
 }

@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listActiveTokens } from "@/lib/domain/ical";
 import { IcalSection } from "@/components/features/settings/ical-section";
+import { DigestSection } from "@/components/features/settings/digest-section";
 
 export default async function SettingsPage() {
   const { user, organizationId } = await requireActiveOrganization();
@@ -22,6 +23,7 @@ export default async function SettingsPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
       </header>
       <IcalSection tokens={tokens} baseUrl={baseUrl} />
+      <DigestSection userEmail={user.email} />
     </div>
   );
 }
