@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { todayBoundsUtc } from "@/lib/domain/tasks";
+import { todayBoundsUtc } from "@/lib/utils/today-bounds";
 
 describe("todayBoundsUtc", () => {
   it("computes Europe/Rome bounds correctly in CEST (summer)", () => {

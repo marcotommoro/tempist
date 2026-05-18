@@ -48,6 +48,40 @@
 
 → **Fase 3 — Integrazione Task ↔ Timer + UI dei collegamenti.**
 
+## Fase 3 — Integrazione Task ↔ Timer ✅
+
+**Data:** 2026-05-18
+
+### Iterazioni eseguite
+
+- **3.1** Aggregato `getTrackedSecondsByTask`
+  * Single GROUP BY → `Map<taskId, seconds>` per O(1) lookup
+  * Esclude `isRunning = true` (la live duration sta nel widget)
+  * `getClientAggregates` per la dashboard (totali per cliente con billable amount)
+- **3.2** Progress bar stima vs tracciato su TaskItem
+  * `TaskProgress` component: bar con stato `over` (>100%) o testo standalone se niente stima
+  * Tutte le pagine task-oriented (today/inbox/upcoming/filters/projects) fetchano e passano l'aggregato
+- **3.3** Prompt durata al complete (Dialog)
+  * `CompleteWithDurationDialog`: si apre solo se `estimatedMinutes > 0` && `trackedSeconds === 0`
+  * Conferma → manual entry retroattiva linkata a task/project/client, poi toggle complete
+  * Salta → toggle complete senza entry
+- **3.4** Tasks linkati al cliente su `/clients/[id]`
+  * `getTasksForClient` (solo `task.clientId` diretto — i task via project si vedono nella pagina project)
+  * Sezione "Tasks" sopra Time entries con la stessa progress bar
+- **3.5** Report dashboard `/reports`
+  * `getCompletedTaskCountByClient` aggregate by clientId
+  * Filtro week/month TZ-aware (`fromZonedTime + startOfWeek`)
+  * Tabella per cliente: completed tasks, ore, voci, fatturabile (split per currency nei totali)
+
+### Refactor in corso d'opera
+
+- Estratto `todayBoundsUtc` in `lib/utils/today-bounds.ts` (funzione pura, niente import di `db`) — il test unit non richiede più `DATABASE_URL` per girare in isolamento.
+
+### Test coverage Fase 3
+
+- **53 unit tests** verdi (uguale a Fase 2, niente nuovi unit perché la logica nuova è UI/component)
+- `pnpm typecheck` zero errori, `pnpm lint` zero warning, `pnpm build` 16 routes (`/reports` ora dinamica)
+
 ## Fase 2 — Time tracking core ✅
 
 **Data:** 2026-05-18

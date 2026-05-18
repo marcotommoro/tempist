@@ -8,34 +8,15 @@
  * conversione tz avviene qui per i bound dei range (today/upcoming).
  */
 
-import { and, asc, desc, eq, gte, isNotNull, isNull, lt } from "drizzle-orm";
-import { addDays, endOfDay, startOfDay } from "date-fns";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { and, asc, desc, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { addDays } from "date-fns";
 
 import { db, schema } from "@/lib/db";
 import type { Task } from "@/lib/db/schema";
 import { computeNextOccurrence } from "@/lib/parsers/recurrence";
+import { todayBoundsUtc } from "@/lib/utils/today-bounds";
 
-// ----------------------------------------------------------------------------
-// Boundary helpers
-// ----------------------------------------------------------------------------
-
-/**
- * Ritorna {startUtc, endUtc}: gli istanti UTC che corrispondono a
- * "inizio oggi" e "fine oggi" nella timezone dell'utente.
- */
-export function todayBoundsUtc(timezone: string, now: Date = new Date()): {
-  startUtc: Date;
-  endUtc: Date;
-} {
-  const nowLocal = toZonedTime(now, timezone);
-  const startLocal = startOfDay(nowLocal);
-  const endLocal = endOfDay(nowLocal);
-  return {
-    startUtc: fromZonedTime(startLocal, timezone),
-    endUtc: fromZonedTime(endLocal, timezone),
-  };
-}
+export { todayBoundsUtc };
 
 // ----------------------------------------------------------------------------
 // Queries
@@ -78,6 +59,40 @@ export async function getInboxTasks(ctx: ListContext): Promise<Task[]> {
     ),
     orderBy: [asc(schema.task.order), desc(schema.task.createdAt)],
   });
+}
+
+/**
+ * Conteggio task completati per cliente in un range [from, to).
+ * Conta solo i task con task.clientId valorizzato (esclude tasks via project).
+ */
+export async function getCompletedTaskCountByClient(opts: {
+  organizationId: string;
+  from?: Date;
+  to?: Date;
+}): Promise<Map<string, number>> {
+  const conds = [
+    eq(schema.task.organizationId, opts.organizationId),
+    isNotNull(schema.task.completedAt),
+    isNotNull(schema.task.clientId),
+    isNull(schema.task.deletedAt),
+  ];
+  if (opts.from) conds.push(gte(schema.task.completedAt, opts.from));
+  if (opts.to) conds.push(lt(schema.task.completedAt, opts.to));
+
+  const rows = await db
+    .select({
+      clientId: schema.task.clientId,
+      count: sql<number>`COUNT(*)::int`,
+    })
+    .from(schema.task)
+    .where(and(...conds))
+    .groupBy(schema.task.clientId);
+
+  const map = new Map<string, number>();
+  for (const r of rows) {
+    if (r.clientId) map.set(r.clientId, Number(r.count));
+  }
+  return map;
 }
 
 /**
