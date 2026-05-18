@@ -46,13 +46,45 @@
 
 ### Prossimi passi
 
-→ **Fase 1 — Task management core.**
+→ **Fase 2 — Time tracking core.**
 
-Pianificheremo Fase 1 in dettaglio dopo review Fase 0. Comprenderà:
-- Modelli operativi (Drizzle queries) per Task/Project/Section/Label
-- Quick Add con NLP (chrono-node + parser custom `#proj @label p1 cliente:X`)
-- Viste: List, Board (Kanban con @dnd-kit), Calendar (weekly)
-- Filtri custom con mini DSL
-- Task ricorrenti (RRULE iCal)
-- Inbox / Today / Upcoming come viste virtuali
-- 70%+ test coverage su parser e logica business
+## Fase 1 — Task management core ✅
+
+**Data:** 2026-05-18
+
+### Iterazioni eseguite
+
+- **1.1** Task CRUD reali su Today/Inbox/Upcoming
+  * `lib/domain/tasks.ts` + `lib/actions/tasks.ts` + componenti TaskList/TaskItem/QuickAdd
+  * `todayBoundsUtc` TZ-aware (Europe/Rome / NY / UTC test coverage)
+- **1.2** Quick Add NLP
+  * `lib/parsers/quick-add.ts`: chrono-node + token `#proj @label p1..p4 !cliente:X 60min`
+  * Resolve names→IDs: project/client REQUIRE existence; label AUTO-CREATE
+  * Live preview chips colorate
+- **1.3** Projects + Sections CRUD
+  * Domain + 7 server actions
+  * Sidebar dinamico (favorites + projects list)
+  * `/projects` list, `/projects/[id]` detail con sezioni
+- **1.4** Labels + Filter DSL
+  * Parser `priority:P1 @urgent due:7d is:open` (AND-only)
+  * Executor con INNER JOIN+HAVING per label-AND
+  * Saved filters CRUD + `/filters/[id]` view
+- **1.5** Board Kanban (@dnd-kit)
+  * Drag-and-drop cross-column + reorder within
+  * Toggle List | Board su `/projects/[id]?view=board`
+  * `moveTaskAction` in transazione (riassegna order per la colonna intera)
+- **1.6** Recurring tasks (RRULE)
+  * `lib/parsers/recurrence.ts` IT/EN keywords + pass-through RRULE
+  * `computeNextOccurrence` con DTSTART anchoring
+  * `toggleTaskComplete` spawn-a next occurrence
+  * Quick Add esteso: `repeats:every monday`
+
+### Test coverage Fase 1
+
+- **44 unit tests** verdi (era 11 a fine Fase 0)
+  * 13 quick-add NLP parser
+  * 5 today-bounds TZ
+  * 9 filter-dsl
+  * 9 recurrence
+  * 6 format-duration + 2 placeholder integration
+- `pnpm typecheck` zero errori, `pnpm lint` zero warning, `pnpm build` 15 routes
