@@ -6,9 +6,16 @@ import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { deleteTaskAction, toggleTaskAction } from "@/lib/actions/tasks";
-import { startTimerFromTaskAction } from "@/lib/actions/timer";
+import {
+  createManualEntryAction,
+  startTimerFromTaskAction,
+} from "@/lib/actions/timer";
 import type { Task } from "@/lib/db/schema";
 import { TaskProgress } from "./task-progress";
+import {
+  CompleteWithDurationDialog,
+  type CompleteDecision,
+} from "./complete-with-duration-dialog";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
   P1: "text-red-500",
@@ -26,13 +33,56 @@ export function TaskItem({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const isDone = !!task.completedAt;
 
-  function toggle() {
+  const shouldPromptDuration =
+    !isDone &&
+    !!task.estimatedMinutes &&
+    task.estimatedMinutes > 0 &&
+    trackedSeconds === 0;
+
+  function runToggle() {
     setError(null);
     startTransition(async () => {
       const res = await toggleTaskAction(task.id);
       if (!res.ok) setError(res.error);
+    });
+  }
+
+  function onCheckboxChange() {
+    if (shouldPromptDuration) {
+      setDialogOpen(true);
+      return;
+    }
+    runToggle();
+  }
+
+  function onDurationDecision(d: CompleteDecision) {
+    setError(null);
+    startTransition(async () => {
+      if (d.type === "confirm") {
+        const endedAt = new Date();
+        const startedAt = new Date(endedAt.getTime() - d.minutes * 60_000);
+        const entry = await createManualEntryAction({
+          startedAt: startedAt.toISOString(),
+          endedAt: endedAt.toISOString(),
+          description: task.title,
+          taskId: task.id,
+          projectId: task.projectId,
+          clientId: task.clientId,
+        });
+        if (!entry.ok) {
+          setError(entry.error);
+          return;
+        }
+      }
+      const res = await toggleTaskAction(task.id);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setDialogOpen(false);
     });
   }
 
@@ -63,7 +113,7 @@ export function TaskItem({
         type="checkbox"
         checked={isDone}
         disabled={pending}
-        onChange={toggle}
+        onChange={onCheckboxChange}
         aria-label={isDone ? "Segna come da fare" : "Segna come completato"}
         className="mt-1 size-4 cursor-pointer accent-primary disabled:cursor-not-allowed"
       />
@@ -115,6 +165,16 @@ export function TaskItem({
           <Trash2 className="size-4" />
         </button>
       </div>
+      {shouldPromptDuration && task.estimatedMinutes != null && (
+        <CompleteWithDurationDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          taskTitle={task.title}
+          defaultMinutes={task.estimatedMinutes}
+          pending={pending}
+          onDecision={onDurationDecision}
+        />
+      )}
     </li>
   );
 }
