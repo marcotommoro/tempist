@@ -14,7 +14,6 @@ import {
   getCommentsByTaskId,
   type CommentWithAuthor,
 } from "@/lib/domain/comments";
-import type { Comment } from "@/lib/db/schema";
 
 import type { ActionResult } from "./tasks";
 
@@ -48,7 +47,7 @@ const createCommentSchema = z.object({
 export async function createCommentAction(
   taskId: string,
   bodyMarkdown: string,
-): Promise<ActionResult<Comment>> {
+): Promise<ActionResult<CommentWithAuthor>> {
   try {
     const parsed = createCommentSchema.safeParse({ taskId, bodyMarkdown });
     if (!parsed.success) {
@@ -63,7 +62,18 @@ export async function createCommentAction(
       bodyMarkdown: parsed.data.bodyMarkdown,
     });
     revalidateTaskViews();
-    return { ok: true, data: created };
+    return {
+      ok: true,
+      data: {
+        ...created,
+        author: {
+          id: user.id,
+          name: user.name ?? null,
+          email: user.email,
+          image: user.image ?? null,
+        },
+      },
+    };
   } catch (err) {
     return {
       ok: false,

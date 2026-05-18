@@ -40,8 +40,8 @@ export function TaskCommentsSection({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
+  function submit(e?: FormEvent) {
+    e?.preventDefault();
     const text = draft.trim();
     if (!text) return;
     setError(null);
@@ -65,8 +65,10 @@ export function TaskCommentsSection({
       const res = await createCommentAction(taskId, text);
       if (!res.ok) {
         setError(res.error);
+        setDraft(text);
         return;
       }
+      setComments((prev) => [...prev, res.data]);
     });
   }
 
@@ -138,8 +140,14 @@ export function TaskCommentsSection({
             <Textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
               disabled={pending}
-              placeholder="Commenta..."
+              placeholder="Commenta... (⌘↵ per inviare)"
               rows={2}
               className="text-sm"
             />

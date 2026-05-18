@@ -51,9 +51,18 @@ export function TaskDescriptionEditor({
         <Textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              save();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              cancel();
+            }
+          }}
           autoFocus
           disabled={pending}
-          placeholder="Aggiungi una descrizione... (markdown supportato)"
+          placeholder="Aggiungi una descrizione... (markdown supportato — ⌘↵ per salvare)"
           rows={6}
           className="text-sm"
         />
