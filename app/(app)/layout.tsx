@@ -3,6 +3,7 @@ import {
   BarChart3,
   CalendarDays,
   Calendar,
+  Filter as FilterIcon,
   FolderKanban,
   Inbox,
   Settings,
@@ -20,6 +21,7 @@ const mainNav = [
 ];
 
 const bottomNav = [
+  { href: "/filters", label: "Filters", icon: FilterIcon },
   { href: "/clients", label: "Clients", icon: Users },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
