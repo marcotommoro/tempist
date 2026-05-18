@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition, useState } from "react";
-import { Play, Trash2 } from "lucide-react";
+import { MessageSquare, Play, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import {
 } from "./complete-with-duration-dialog";
 import { TaskReminderButton } from "./task-reminder-button";
 import { TaskSchedulePicker } from "./task-schedule-picker";
+import { TaskDetailDialog } from "./task-detail-dialog";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
   P1: "text-red-500",
@@ -30,14 +31,23 @@ export function TaskItem({
   task,
   trackedSeconds = 0,
   reminderCount = 0,
+  commentCount = 0,
+  projectName = null,
+  projectColor = null,
+  currentUserId,
 }: {
   task: Task;
   trackedSeconds?: number;
   reminderCount?: number;
+  commentCount?: number;
+  projectName?: string | null;
+  projectColor?: string | null;
+  currentUserId?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const isDone = !!task.completedAt;
 
   const shouldPromptDuration =
@@ -122,22 +132,33 @@ export function TaskItem({
         className="mt-1 size-4 cursor-pointer accent-primary disabled:cursor-not-allowed"
       />
       <div className="flex-1 min-w-0">
-        <p
+        <button
+          type="button"
+          onClick={() => setDetailOpen(true)}
           className={cn(
-            "text-sm leading-tight break-words",
+            "block text-sm leading-tight break-words text-left w-full hover:underline underline-offset-2 cursor-pointer",
             isDone && "line-through text-muted-foreground",
           )}
         >
           {task.title}
-        </p>
+        </button>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <span className={cn("font-medium", PRIORITY_COLOR[task.priority])}>{task.priority}</span>
           {task.scheduledAt && (
             <span>{format(task.scheduledAt, "d MMM HH:mm")}</span>
           )}
-          {task.dueDate && <span>due {format(task.dueDate, "d MMM")}</span>}
+          {task.dueDate && (
+            <span className="inline-flex items-center gap-1 rounded bg-amber-100 dark:bg-amber-950/40 px-1.5 py-0.5 text-amber-900 dark:text-amber-200">
+              Scadenza {format(task.dueDate, "d MMM")}
+            </span>
+          )}
           {task.recurrenceRule && (
             <span title={task.recurrenceRule}>🔁</span>
+          )}
+          {commentCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <MessageSquare className="size-3" /> {commentCount}
+            </span>
           )}
           <TaskProgress
             trackedSeconds={trackedSeconds}
@@ -190,6 +211,16 @@ export function TaskItem({
           defaultMinutes={task.estimatedMinutes}
           pending={pending}
           onDecision={onDurationDecision}
+        />
+      )}
+      {currentUserId && (
+        <TaskDetailDialog
+          task={task}
+          projectName={projectName}
+          projectColor={projectColor}
+          currentUserId={currentUserId}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
         />
       )}
     </li>

@@ -1,5 +1,75 @@
 # Progress
 
+## Feature pack — Task detail dialog + Calendar picker + Commenti + Scadenza + Completed visibili ✅
+
+**Data:** 2026-05-18
+
+### Cosa è stato fatto
+
+- [x] **Date picker decente** — sostituito `<input type="datetime-local">` con shadcn `Calendar` (react-day-picker v10). Nuovi primitives riutilizzabili `<DateTimePicker>` e `<DatePicker>` in `components/ui/`.
+- [x] **Task completati visibili sul giorno** — rimosso `isNull(completedAt)` da `getInboxTasks` e `getUpcomingTasks`. `getTodayTasks` ora include i completati di oggi (filtro `completedAt IS NULL OR scheduledAt >= startUtc`). `TaskList` ordina completati in fondo.
+- [x] **Descrizione task** — `<TaskDescriptionEditor>` con view ↔ edit toggle, `Textarea` shadcn + `<Markdown>` (react-markdown, default safe HTML escape).
+- [x] **Commenti task** — `lib/domain/comments.ts` (getCommentsByTaskId, getCommentCountByTask, createComment, deleteComment author-only). `lib/actions/comments.ts` (createCommentAction, deleteCommentAction, fetchTaskCommentsAction). `<TaskCommentsSection>` con avatar + timestamp + optimistic update via `useOptimistic`. Badge "💬 N" in TaskItem.
+- [x] **Scadenza separata da Data** — `task.dueDate` esposto in TaskDetailDialog sidebar (`<DatePicker>` solo data). Pillina ambra "Scadenza DD MMM" in TaskItem accanto a Data.
+- [x] **Task detail dialog** — `<TaskDetailDialog>` (modale 2 colonne) si apre cliccando il titolo del task. Contiene: checkbox + titolo editabile inline, descrizione, commenti, sidebar (Progetto, Data, Scadenza, Priorità). Carica commenti lazy on-open via Server Action.
+- [x] **Priorità modifica** — `<TaskPrioritySelect>` Popover P1/P2/P3/P4 con colori, salva via nuova `setTaskPriorityAction`.
+
+### File nuovi
+
+```
+components/ui/calendar.tsx          (shadcn install)
+components/ui/textarea.tsx          (shadcn install)
+components/ui/date-picker.tsx       (composed)
+components/ui/date-time-picker.tsx  (composed: Calendar + time input)
+components/features/tasks/task-detail-dialog.tsx
+components/features/tasks/task-description-editor.tsx
+components/features/tasks/task-comments-section.tsx
+components/features/tasks/task-priority-select.tsx
+lib/domain/comments.ts
+lib/actions/comments.ts
+lib/utils/markdown.tsx
+```
+
+### File modificati
+
+- `lib/db/schema.ts` — esportato type `Comment`
+- `lib/domain/tasks.ts` — query Today/Inbox/Upcoming includono completed; aggiunti `updateTaskDescription`, `updateTaskPriority`, `updateTaskTitle`
+- `lib/actions/tasks.ts` — aggiunte `setTaskDescriptionAction`, `setTaskPriorityAction`, `setTaskTitleAction`
+- `components/features/tasks/task-item.tsx` — titolo click → apre dialog; pillina Scadenza; badge commenti
+- `components/features/tasks/task-list.tsx` — sort completed in fondo; passthrough commentsByTask/projectsById/currentUserId
+- `components/features/tasks/task-schedule-picker.tsx` — datetime-local → DateTimePicker
+- `components/features/timer/global-manual-entry-dialog.tsx` — input date → DatePicker
+- `components/features/upcoming/overdue-section.tsx` — passthrough nuovi prop
+- 4 pagine (today, inbox, upcoming, projects/[id]) — fetch `getCommentCountByTask` + `listProjects` per metadata
+
+### Dipendenze aggiunte
+
+```
+react-day-picker 10.0.1
+react-markdown 10.1.0
+isomorphic-dompurify 3.13.0  (riservato — non usato; react-markdown è safe by default senza rehype-raw)
+```
+
+### Decisioni di sicurezza
+
+- `react-markdown` non abilita HTML grezzo (no `rehype-raw`): output sanitizzato by default. Sufficiente per descrizione e commenti.
+- Multi-tenancy guard su `createComment` e su tutte le query: il task deve appartenere alla `activeOrganizationId`.
+- `deleteComment` author-only via SQL: `WHERE author_id = currentUserId`.
+
+### Verifica
+
+- ✅ `pnpm typecheck` clean
+- ✅ `pnpm lint` clean
+- ✅ `pnpm test` 106/106
+- ✅ `pnpm build` 21 routes (da 19)
+
+### Note
+
+- Subtask, etichette inline e reminder nella sidebar del dialog **fuori scope** per questo pack.
+- Calendar shadcn-install aveva una key `table` non più valida in react-day-picker v10 → patch puntuale a `month_grid` in `components/ui/calendar.tsx`.
+
+---
+
 ## Fase 0 — Setup ✅ (in completamento)
 
 **Data:** 2026-05-15

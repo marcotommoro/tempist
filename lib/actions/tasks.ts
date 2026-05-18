@@ -22,7 +22,10 @@ import {
   rescheduleOverdueToToday,
   softDeleteTask,
   toggleTaskComplete,
+  updateTaskDescription,
+  updateTaskPriority,
   updateTaskSchedule,
+  updateTaskTitle,
 } from "@/lib/domain/tasks";
 
 export type ActionResult<T = undefined> =
@@ -187,6 +190,66 @@ export async function deleteTaskAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Errore cancellazione task",
+    };
+  }
+}
+
+export async function setTaskDescriptionAction(
+  taskId: string,
+  descriptionMarkdown: string | null,
+): Promise<ActionResult> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    const normalized = descriptionMarkdown?.trim();
+    await updateTaskDescription({
+      taskId,
+      organizationId,
+      descriptionMarkdown: normalized ? normalized : null,
+    });
+    revalidateTaskViews();
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento descrizione",
+    };
+  }
+}
+
+export async function setTaskPriorityAction(
+  taskId: string,
+  priority: "P1" | "P2" | "P3" | "P4",
+): Promise<ActionResult> {
+  try {
+    if (!["P1", "P2", "P3", "P4"].includes(priority)) {
+      return { ok: false, error: "Priorità non valida" };
+    }
+    const { organizationId } = await requireActiveOrganization();
+    await updateTaskPriority({ taskId, organizationId, priority });
+    revalidateTaskViews();
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento priorità",
+    };
+  }
+}
+
+export async function setTaskTitleAction(
+  taskId: string,
+  title: string,
+): Promise<ActionResult> {
+  try {
+    if (!title.trim()) return { ok: false, error: "Titolo richiesto" };
+    const { organizationId } = await requireActiveOrganization();
+    await updateTaskTitle({ taskId, organizationId, title });
+    revalidateTaskViews();
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento titolo",
     };
   }
 }

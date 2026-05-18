@@ -4,17 +4,23 @@ import { useState, useTransition } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 import { rescheduleOverdueAction } from "@/lib/actions/tasks";
-import { TaskList } from "@/components/features/tasks/task-list";
+import { TaskList, type ProjectMeta } from "@/components/features/tasks/task-list";
 import type { Task } from "@/lib/db/schema";
 
 export function OverdueSection({
   tasks,
   trackedByTask,
   remindersByTask,
+  commentsByTask,
+  projectsById,
+  currentUserId,
 }: {
   tasks: Task[];
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
+  commentsByTask?: Map<string, number>;
+  projectsById?: Map<string, ProjectMeta>;
+  currentUserId?: string;
 }) {
   const [open, setOpen] = useState(true);
   const [pending, startTransition] = useTransition();
@@ -64,6 +70,9 @@ export function OverdueSection({
             tasks={tasks}
             trackedByTask={trackedByTask}
             remindersByTask={remindersByTask}
+            commentsByTask={commentsByTask}
+            projectsById={projectsById}
+            currentUserId={currentUserId}
             emptyMessage="Nessuna scadenza in arretrato."
           />
           {error && <p className="text-xs text-destructive">{error}</p>}

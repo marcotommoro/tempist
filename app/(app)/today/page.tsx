@@ -2,7 +2,9 @@ import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getTodayTasks } from "@/lib/domain/tasks";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
-import { TaskList } from "@/components/features/tasks/task-list";
+import { getCommentCountByTask } from "@/lib/domain/comments";
+import { listProjects } from "@/lib/domain/projects";
+import { TaskList, type ProjectMeta } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
 
 export default async function TodayPage() {
@@ -12,10 +14,16 @@ export default async function TodayPage() {
 
   const tasks = await getTodayTasks({ organizationId, timezone });
   const taskIds = tasks.map((t) => t.id);
-  const [trackedByTask, remindersByTask] = await Promise.all([
+  const [trackedByTask, remindersByTask, commentsByTask, projects] = await Promise.all([
     getTrackedSecondsByTask({ organizationId, taskIds }),
     getPendingReminderCountByTask(taskIds),
+    getCommentCountByTask({ taskIds }),
+    listProjects({ organizationId }),
   ]);
+
+  const projectsById = new Map<string, ProjectMeta>(
+    projects.map((p) => [p.id, { name: p.name, color: p.color }]),
+  );
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -34,6 +42,9 @@ export default async function TodayPage() {
         tasks={tasks}
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
+        commentsByTask={commentsByTask}
+        projectsById={projectsById}
+        currentUserId={user.id}
         emptyMessage="Tutto pulito per oggi. ✨"
       />
     </div>

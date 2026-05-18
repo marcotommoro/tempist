@@ -8,7 +8,9 @@ import {
 } from "@/lib/domain/tasks";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
-import { TaskList } from "@/components/features/tasks/task-list";
+import { getCommentCountByTask } from "@/lib/domain/comments";
+import { listProjects } from "@/lib/domain/projects";
+import { TaskList, type ProjectMeta } from "@/components/features/tasks/task-list";
 import { OverdueSection } from "@/components/features/upcoming/overdue-section";
 import {
   WeekDays,
@@ -73,10 +75,15 @@ export default async function UpcomingPage({
     ...overdueTasks.map((t) => t.id),
     ...rangeTasks.map((t) => t.id),
   ];
-  const [trackedByTask, remindersByTask] = await Promise.all([
+  const [trackedByTask, remindersByTask, commentsByTask, projects] = await Promise.all([
     getTrackedSecondsByTask({ organizationId, taskIds: allTaskIds }),
     getPendingReminderCountByTask(allTaskIds),
+    getCommentCountByTask({ taskIds: allTaskIds }),
+    listProjects({ organizationId }),
   ]);
+  const projectsById = new Map<string, ProjectMeta>(
+    projects.map((p) => [p.id, { name: p.name, color: p.color }]),
+  );
 
   // Raggruppa per giorno locale
   const tasksByDay = groupByDay(rangeTasks, (t) => t.scheduledAt, timezone);
@@ -97,6 +104,9 @@ export default async function UpcomingPage({
         tasks={overdueTasks}
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
+        commentsByTask={commentsByTask}
+        projectsById={projectsById}
+        currentUserId={user.id}
       />
 
       <div className="space-y-5">
@@ -120,6 +130,9 @@ export default async function UpcomingPage({
                   tasks={dayTasks}
                   trackedByTask={trackedByTask}
                   remindersByTask={remindersByTask}
+                  commentsByTask={commentsByTask}
+                  projectsById={projectsById}
+                  currentUserId={user.id}
                 />
               ) : (
                 <p className="text-xs text-muted-foreground px-1">

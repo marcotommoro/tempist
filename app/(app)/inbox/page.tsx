@@ -2,16 +2,18 @@ import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getInboxTasks } from "@/lib/domain/tasks";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
+import { getCommentCountByTask } from "@/lib/domain/comments";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
 
 export default async function InboxPage() {
-  const { organizationId } = await requireActiveOrganization();
+  const { user, organizationId } = await requireActiveOrganization();
   const tasks = await getInboxTasks({ organizationId });
   const taskIds = tasks.map((t) => t.id);
-  const [trackedByTask, remindersByTask] = await Promise.all([
+  const [trackedByTask, remindersByTask, commentsByTask] = await Promise.all([
     getTrackedSecondsByTask({ organizationId, taskIds }),
     getPendingReminderCountByTask(taskIds),
+    getCommentCountByTask({ taskIds }),
   ]);
 
   return (
@@ -29,6 +31,8 @@ export default async function InboxPage() {
         tasks={tasks}
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
+        commentsByTask={commentsByTask}
+        currentUserId={user.id}
         emptyMessage="Inbox vuota."
       />
     </div>

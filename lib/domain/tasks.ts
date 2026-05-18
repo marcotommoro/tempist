@@ -27,34 +27,38 @@ export type ListContext = {
 };
 
 /**
- * Today: task non completati con scheduledAt nel range "fino a fine giornata utente".
- * Include intenzionalmente gli overdue (scheduledAt nel passato e non completati).
+ * Today: task con scheduledAt nel range "fino a fine giornata utente".
+ * Include overdue non completati e completati nella giornata (rimangono visibili,
+ * barrati nella UI). Esclude i completati ieri o prima per non gonfiare la lista.
  */
 export async function getTodayTasks(
   ctx: ListContext & { timezone: string },
 ): Promise<Task[]> {
-  const { endUtc } = todayBoundsUtc(ctx.timezone);
+  const { startUtc, endUtc } = todayBoundsUtc(ctx.timezone);
   return db.query.task.findMany({
     where: and(
       eq(schema.task.organizationId, ctx.organizationId),
-      isNull(schema.task.completedAt),
       isNull(schema.task.deletedAt),
       isNotNull(schema.task.scheduledAt),
       lt(schema.task.scheduledAt, endUtc),
+      // include non-completed tasks (any scheduledAt < endUtc), OR completed tasks
+      // whose scheduledAt is today (in [startUtc, endUtc)). We express this as:
+      //   completedAt IS NULL OR scheduledAt >= startUtc
+      sql`(${schema.task.completedAt} IS NULL OR ${schema.task.scheduledAt} >= ${startUtc})`,
     ),
     orderBy: [asc(schema.task.scheduledAt), asc(schema.task.order)],
   });
 }
 
 /**
- * Inbox: task senza project, non completati, non cancellati.
+ * Inbox: task senza project, non cancellati. Include i completati che restano
+ * visibili (barrati) per coerenza con Today/Upcoming.
  */
 export async function getInboxTasks(ctx: ListContext): Promise<Task[]> {
   return db.query.task.findMany({
     where: and(
       eq(schema.task.organizationId, ctx.organizationId),
       isNull(schema.task.projectId),
-      isNull(schema.task.completedAt),
       isNull(schema.task.deletedAt),
     ),
     orderBy: [asc(schema.task.order), desc(schema.task.createdAt)],
@@ -143,6 +147,7 @@ export async function getOverdueTasks(
 export async function getTasksInRange(
   ctx: ListContext & { from: Date; to: Date; includeCompleted?: boolean },
 ): Promise<Task[]> {
+  const includeCompleted = ctx.includeCompleted ?? true;
   const conds = [
     eq(schema.task.organizationId, ctx.organizationId),
     isNull(schema.task.deletedAt),
@@ -150,7 +155,7 @@ export async function getTasksInRange(
     gte(schema.task.scheduledAt, ctx.from),
     lt(schema.task.scheduledAt, ctx.to),
   ];
-  if (!ctx.includeCompleted) conds.push(isNull(schema.task.completedAt));
+  if (!includeCompleted) conds.push(isNull(schema.task.completedAt));
   return db.query.task.findMany({
     where: and(...conds),
     orderBy: [asc(schema.task.scheduledAt), asc(schema.task.order)],
@@ -159,6 +164,7 @@ export async function getTasksInRange(
 
 /**
  * Upcoming: task con scheduledAt > fine di oggi, entro `horizonDays` giorni.
+ * Include i completati (restano visibili barrati nella UI per il giorno corrispondente).
  */
 export async function getUpcomingTasks(
   ctx: ListContext & { timezone: string; horizonDays?: number },
@@ -168,7 +174,6 @@ export async function getUpcomingTasks(
   return db.query.task.findMany({
     where: and(
       eq(schema.task.organizationId, ctx.organizationId),
-      isNull(schema.task.completedAt),
       isNull(schema.task.deletedAt),
       gte(schema.task.scheduledAt, endUtc),
       lt(schema.task.scheduledAt, horizonUtc),
@@ -328,6 +333,56 @@ export async function softDeleteTask(opts: {
   await db
     .update(schema.task)
     .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(schema.task.id, opts.taskId),
+        eq(schema.task.organizationId, opts.organizationId),
+      ),
+    );
+}
+
+export async function updateTaskDescription(opts: {
+  taskId: string;
+  organizationId: string;
+  descriptionMarkdown: string | null;
+}): Promise<void> {
+  await db
+    .update(schema.task)
+    .set({ descriptionMarkdown: opts.descriptionMarkdown })
+    .where(
+      and(
+        eq(schema.task.id, opts.taskId),
+        eq(schema.task.organizationId, opts.organizationId),
+      ),
+    );
+}
+
+export async function updateTaskPriority(opts: {
+  taskId: string;
+  organizationId: string;
+  priority: "P1" | "P2" | "P3" | "P4";
+}): Promise<void> {
+  await db
+    .update(schema.task)
+    .set({ priority: opts.priority })
+    .where(
+      and(
+        eq(schema.task.id, opts.taskId),
+        eq(schema.task.organizationId, opts.organizationId),
+      ),
+    );
+}
+
+export async function updateTaskTitle(opts: {
+  taskId: string;
+  organizationId: string;
+  title: string;
+}): Promise<void> {
+  const trimmed = opts.title.trim();
+  if (!trimmed) throw new Error("Titolo vuoto");
+  await db
+    .update(schema.task)
+    .set({ title: trimmed })
     .where(
       and(
         eq(schema.task.id, opts.taskId),

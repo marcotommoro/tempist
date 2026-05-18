@@ -9,14 +9,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { setTaskScheduledAtAction } from "@/lib/actions/tasks";
 import { cn } from "@/lib/utils";
-
-function dateToLocalInputValue(d: Date): string {
-  // yyyy-MM-ddTHH:mm in local tz
-  return format(d, "yyyy-MM-dd'T'HH:mm");
-}
 
 const TODAY_DEFAULT_TIME = "09:00";
 
@@ -29,9 +24,6 @@ export function TaskSchedulePicker({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [customDateTime, setCustomDateTime] = useState<string>(
-    currentScheduledAt ? dateToLocalInputValue(currentScheduledAt) : "",
-  );
   const [error, setError] = useState<string | null>(null);
 
   function applyDate(d: Date | null) {
@@ -73,13 +65,7 @@ export function TaskSchedulePicker({
     d.setHours(Number(h), Number(m), 0, 0);
     applyDate(d);
   }
-  function applyCustom() {
-    if (!customDateTime) return;
-    const d = new Date(customDateTime);
-    if (Number.isNaN(d.getTime())) {
-      setError("Data non valida");
-      return;
-    }
+  function applyCustom(d: Date | null) {
     applyDate(d);
   }
   function clear() {
@@ -138,23 +124,14 @@ export function TaskSchedulePicker({
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
             Data/ora specifica
           </div>
-          <div className="flex items-center gap-1">
-            <Input
-              type="datetime-local"
-              value={customDateTime}
-              onChange={(e) => setCustomDateTime(e.target.value)}
-              disabled={pending}
-              className="h-8 text-xs"
-            />
-            <button
-              type="button"
-              onClick={applyCustom}
-              disabled={pending || !customDateTime}
-              className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              OK
-            </button>
-          </div>
+          <DateTimePicker
+            value={currentScheduledAt}
+            onChange={applyCustom}
+            disabled={pending}
+            placeholder="Scegli data e ora"
+            allowClear={false}
+            className="w-full"
+          />
         </div>
         {hasDate && (
           <>

@@ -7,6 +7,7 @@ import { getProject, getProjectBoard } from "@/lib/domain/projects";
 import { listClients } from "@/lib/domain/clients";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
+import { getCommentCountByTask } from "@/lib/domain/comments";
 import { ProjectClientSelect } from "@/components/features/projects/project-client-select";
 import { TaskItem } from "@/components/features/tasks/task-item";
 import { AddTaskToProject } from "@/components/features/tasks/add-task-to-project";
@@ -25,7 +26,7 @@ export default async function ProjectDetailPage({
   searchParams: Promise<Search>;
 }) {
   const [{ id }, { view }] = await Promise.all([params, searchParams]);
-  const { organizationId } = await requireActiveOrganization();
+  const { user, organizationId } = await requireActiveOrganization();
   const project = await getProject({ projectId: id, organizationId });
   if (!project) notFound();
 
@@ -39,9 +40,10 @@ export default async function ProjectDetailPage({
   for (const arr of tasksBySection.values()) {
     for (const t of arr) allTaskIds.push(t.id);
   }
-  const [trackedByTask, remindersByTask] = await Promise.all([
+  const [trackedByTask, remindersByTask, commentsByTask] = await Promise.all([
     getTrackedSecondsByTask({ organizationId, taskIds: allTaskIds }),
     getPendingReminderCountByTask(allTaskIds),
+    getCommentCountByTask({ taskIds: allTaskIds }),
   ]);
 
   const isBoard = view === "board";
@@ -76,10 +78,14 @@ export default async function ProjectDetailPage({
       ) : (
         <ListView
           projectId={id}
+          projectName={project.name}
+          projectColor={project.color}
+          currentUserId={user.id}
           sections={sections}
           tasksBySection={tasksBySection}
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
+          commentsByTask={commentsByTask}
         />
       )}
     </div>
@@ -113,16 +119,24 @@ function ViewToggle({ isBoard, projectId }: { isBoard: boolean; projectId: strin
 
 function ListView({
   projectId,
+  projectName,
+  projectColor,
+  currentUserId,
   sections,
   tasksBySection,
   trackedByTask,
   remindersByTask,
+  commentsByTask,
 }: {
   projectId: string;
+  projectName: string;
+  projectColor: string;
+  currentUserId: string;
   sections: import("@/lib/db/schema").Section[];
   tasksBySection: Map<string | null, import("@/lib/db/schema").Task[]>;
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
+  commentsByTask: Map<string, number>;
 }) {
   const tasksNoSection = tasksBySection.get(null) ?? [];
 
@@ -132,10 +146,14 @@ function ListView({
         <SectionBlock
           name="Senza sezione"
           projectId={projectId}
+          projectName={projectName}
+          projectColor={projectColor}
+          currentUserId={currentUserId}
           sectionId={null}
           tasks={tasksNoSection}
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
+          commentsByTask={commentsByTask}
         />
       )}
       {sections.map((s) => (
@@ -143,10 +161,14 @@ function ListView({
           key={s.id}
           name={s.name}
           projectId={projectId}
+          projectName={projectName}
+          projectColor={projectColor}
+          currentUserId={currentUserId}
           sectionId={s.id}
           tasks={tasksBySection.get(s.id) ?? []}
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
+          commentsByTask={commentsByTask}
         />
       ))}
       <div>
@@ -159,17 +181,25 @@ function ListView({
 function SectionBlock({
   name,
   projectId,
+  projectName,
+  projectColor,
+  currentUserId,
   sectionId,
   tasks,
   trackedByTask,
   remindersByTask,
+  commentsByTask,
 }: {
   name: string;
   projectId: string;
+  projectName: string;
+  projectColor: string;
+  currentUserId: string;
   sectionId: string | null;
   tasks: import("@/lib/db/schema").Task[];
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
+  commentsByTask: Map<string, number>;
 }) {
   return (
     <section className="space-y-2">
@@ -185,6 +215,10 @@ function SectionBlock({
                 task={t}
                 trackedSeconds={trackedByTask.get(t.id) ?? 0}
                 reminderCount={remindersByTask.get(t.id) ?? 0}
+                commentCount={commentsByTask.get(t.id) ?? 0}
+                projectName={projectName}
+                projectColor={projectColor}
+                currentUserId={currentUserId}
               />
             ))}
           </ul>

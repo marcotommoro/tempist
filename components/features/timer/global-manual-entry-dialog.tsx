@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createManualEntryAction } from "@/lib/actions/timer";
@@ -41,7 +42,7 @@ export function GlobalManualEntryDialog({
 }) {
   const [open, setOpen] = useState(false);
   const today = new Date();
-  const [date, setDate] = useState(format(today, "yyyy-MM-dd"));
+  const [date, setDate] = useState<Date>(today);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
   const [clientId, setClientId] = useState("");
@@ -51,7 +52,8 @@ export function GlobalManualEntryDialog({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function combineDateTime(dateStr: string, timeStr: string): Date {
+  function combineDateTime(d: Date, timeStr: string): Date {
+    const dateStr = format(d, "yyyy-MM-dd");
     // datetime locale: il browser interpreta in tz utente
     return new Date(`${dateStr}T${timeStr}:00`);
   }
@@ -122,15 +124,14 @@ export function GlobalManualEntryDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-3">
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="manual-date">Giorno</Label>
-            <Input
-              id="manual-date"
-              type="date"
+            <DatePicker
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
+              onChange={(d) => d && setDate(d)}
               disabled={pending}
+              allowClear={false}
+              className="w-full"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
