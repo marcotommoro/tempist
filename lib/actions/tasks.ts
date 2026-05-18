@@ -31,6 +31,9 @@ const TASK_VIEW_PATHS = ["/today", "/inbox", "/upcoming"];
 
 function revalidateTaskViews() {
   for (const p of TASK_VIEW_PATHS) revalidatePath(p);
+  // Le project pages mostrano lo stesso task — revalida tutto sotto root layout
+  // (Next ricompila solo le pages effettivamente rese).
+  revalidatePath("/", "layout");
 }
 
 const createTaskSchema = z.object({
@@ -42,6 +45,12 @@ const createTaskSchema = z.object({
     .optional(),
   priority: z.enum(["P1", "P2", "P3", "P4"]).default("P4"),
   projectId: z
+    .string()
+    .min(1)
+    .nullable()
+    .optional()
+    .transform((v) => (v && v !== "null" ? v : null)),
+  sectionId: z
     .string()
     .min(1)
     .nullable()
@@ -59,6 +68,7 @@ export async function createTaskAction(
       scheduledAt: formData.get("scheduledAt") || undefined,
       priority: (formData.get("priority") as string | null) ?? "P4",
       projectId: formData.get("projectId") || undefined,
+      sectionId: formData.get("sectionId") || undefined,
     };
     const parsed = createTaskSchema.safeParse(raw);
     if (!parsed.success) {
@@ -72,8 +82,12 @@ export async function createTaskAction(
       scheduledAt: parsed.data.scheduledAt ?? null,
       priority: parsed.data.priority,
       projectId: parsed.data.projectId ?? null,
+      sectionId: parsed.data.sectionId ?? null,
     });
     revalidateTaskViews();
+    if (parsed.data.projectId) {
+      revalidatePath(`/projects/${parsed.data.projectId}`);
+    }
     return { ok: true, data: { id: task.id } };
   } catch (err) {
     return {
