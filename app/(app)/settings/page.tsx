@@ -8,6 +8,7 @@ import { DigestSection } from "@/components/features/settings/digest-section";
 import { CalendarSection } from "@/components/features/settings/calendar-section";
 import { WeeklyReportSection } from "@/components/features/settings/weekly-report-section";
 import { ThemeSection } from "@/components/features/settings/theme-section";
+import { ImportSection } from "@/components/features/settings/import-section";
 
 type Search = { gcal_connected?: string; gcal_error?: string };
 
@@ -53,6 +54,7 @@ export default async function SettingsPage({
         googleConfigured={googleConfigured}
         flashMessage={flash}
       />
+      <ImportSection />
     </div>
   );
 }
