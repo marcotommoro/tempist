@@ -32,6 +32,24 @@ const C = {
   reset: "\x1b[0m",
 };
 
+/**
+ * E2E test mode: scrive l'URL del magic link in un file leggibile dal test runner.
+ * Attivo solo se E2E_TEST=1 (non in produzione). Vedi tests/e2e/helpers/auth.ts.
+ */
+async function writeE2EMagicLink(email: string, url: string): Promise<void> {
+  if (process.env.E2E_TEST !== "1") return;
+  try {
+    const { mkdir, writeFile } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    const dir = join(process.cwd(), ".e2e-magic-links");
+    await mkdir(dir, { recursive: true });
+    const safe = email.replace(/[^a-zA-Z0-9._-]/g, "_");
+    await writeFile(join(dir, `${safe}.txt`), url, "utf8");
+  } catch (err) {
+    console.error("[auth E2E] errore scrivendo magic link file", err);
+  }
+}
+
 function printMagicLinkBanner(email: string, url: string) {
   const bar = "━".repeat(70);
   console.log(
@@ -99,6 +117,9 @@ export const auth = betterAuth({
   plugins: [
     magicLink({
       sendMagicLink: async ({ email, url }) => {
+        // E2E test runner: scrive il link su filesystem per il setup Playwright
+        await writeE2EMagicLink(email, url);
+
         if (!resend) {
           // Dev fallback: banner colorato con URL cliccabile direttamente nel terminale.
           if (process.env.NODE_ENV === "production") {
