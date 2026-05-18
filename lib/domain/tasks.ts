@@ -117,6 +117,47 @@ export async function getTasksForClient(
 }
 
 /**
+ * Task overdue: scheduledAt < startUtc oggi, non completati.
+ * Ordinati per scheduledAt asc (i più vecchi prima).
+ */
+export async function getOverdueTasks(
+  ctx: ListContext & { timezone: string },
+): Promise<Task[]> {
+  const { startUtc } = todayBoundsUtc(ctx.timezone);
+  return db.query.task.findMany({
+    where: and(
+      eq(schema.task.organizationId, ctx.organizationId),
+      isNull(schema.task.completedAt),
+      isNull(schema.task.deletedAt),
+      isNotNull(schema.task.scheduledAt),
+      lt(schema.task.scheduledAt, startUtc),
+    ),
+    orderBy: [asc(schema.task.scheduledAt)],
+  });
+}
+
+/**
+ * Task in un range [from, to). Ritorna l'array piatto; raggruppamento per
+ * giorno si fa in app per usare la tz utente.
+ */
+export async function getTasksInRange(
+  ctx: ListContext & { from: Date; to: Date; includeCompleted?: boolean },
+): Promise<Task[]> {
+  const conds = [
+    eq(schema.task.organizationId, ctx.organizationId),
+    isNull(schema.task.deletedAt),
+    isNotNull(schema.task.scheduledAt),
+    gte(schema.task.scheduledAt, ctx.from),
+    lt(schema.task.scheduledAt, ctx.to),
+  ];
+  if (!ctx.includeCompleted) conds.push(isNull(schema.task.completedAt));
+  return db.query.task.findMany({
+    where: and(...conds),
+    orderBy: [asc(schema.task.scheduledAt), asc(schema.task.order)],
+  });
+}
+
+/**
  * Upcoming: task con scheduledAt > fine di oggi, entro `horizonDays` giorni.
  */
 export async function getUpcomingTasks(
@@ -226,6 +267,55 @@ export async function toggleTaskComplete(opts: {
   }
 
   return { task: updated, spawned };
+}
+
+/**
+ * Aggiorna scheduledAt + dueDate di un task. null per rimuovere.
+ */
+export async function updateTaskSchedule(opts: {
+  taskId: string;
+  organizationId: string;
+  scheduledAt?: Date | null;
+  dueDate?: Date | null;
+}): Promise<void> {
+  const patch: Partial<{ scheduledAt: Date | null; dueDate: Date | null }> = {};
+  if ("scheduledAt" in opts) patch.scheduledAt = opts.scheduledAt ?? null;
+  if ("dueDate" in opts) patch.dueDate = opts.dueDate ?? null;
+  if (Object.keys(patch).length === 0) return;
+  await db
+    .update(schema.task)
+    .set(patch)
+    .where(
+      and(
+        eq(schema.task.id, opts.taskId),
+        eq(schema.task.organizationId, opts.organizationId),
+      ),
+    );
+}
+
+/**
+ * Sposta tutti i task overdue (scheduledAt < startUtc oggi) a oggi (a startUtc).
+ * Ritorna il numero di task aggiornati. Usato dalla feature "Ripianifica" su /upcoming.
+ */
+export async function rescheduleOverdueToToday(opts: {
+  organizationId: string;
+  timezone: string;
+}): Promise<number> {
+  const { startUtc } = todayBoundsUtc(opts.timezone);
+  const updated = await db
+    .update(schema.task)
+    .set({ scheduledAt: startUtc })
+    .where(
+      and(
+        eq(schema.task.organizationId, opts.organizationId),
+        isNull(schema.task.completedAt),
+        isNull(schema.task.deletedAt),
+        isNotNull(schema.task.scheduledAt),
+        lt(schema.task.scheduledAt, startUtc),
+      ),
+    )
+    .returning({ id: schema.task.id });
+  return updated.length;
 }
 
 /**

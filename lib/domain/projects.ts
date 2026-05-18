@@ -93,6 +93,22 @@ export async function renameProject(opts: {
     );
 }
 
+export async function setProjectClient(opts: {
+  projectId: string;
+  organizationId: string;
+  clientId: string | null;
+}): Promise<void> {
+  await db
+    .update(schema.project)
+    .set({ clientId: opts.clientId })
+    .where(
+      and(
+        eq(schema.project.id, opts.projectId),
+        eq(schema.project.organizationId, opts.organizationId),
+      ),
+    );
+}
+
 export async function archiveProject(opts: {
   projectId: string;
   organizationId: string;

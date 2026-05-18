@@ -4,6 +4,7 @@ import { useRef, useState, useTransition, type FormEvent } from "react";
 import { Plus } from "lucide-react";
 
 import { createProjectAction } from "@/lib/actions/projects";
+import type { Client } from "@/lib/db/schema";
 
 const COLOR_OPTIONS = [
   "#ef4444",
@@ -17,9 +18,14 @@ const COLOR_OPTIONS = [
   "#64748b",
 ];
 
-export function CreateProjectForm() {
+export function CreateProjectForm({
+  clients = [],
+}: {
+  clients?: Pick<Client, "id" | "name">[];
+}) {
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLOR_OPTIONS[5] ?? "#3b82f6");
+  const [clientId, setClientId] = useState<string>("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,12 +39,14 @@ export function CreateProjectForm() {
       const fd = new FormData();
       fd.set("name", trimmed);
       fd.set("color", color);
+      if (clientId) fd.set("clientId", clientId);
       const res = await createProjectAction(fd);
       if (!res.ok) {
         setError(res.error);
         return;
       }
       setName("");
+      setClientId("");
       inputRef.current?.focus();
     });
   }
@@ -66,20 +74,40 @@ export function CreateProjectForm() {
           Crea
         </button>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Colore:</span>
-        {COLOR_OPTIONS.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setColor(c)}
-            aria-label={`Colore ${c}`}
-            className={`w-5 h-5 rounded-full border-2 ${
-              color === c ? "border-foreground" : "border-transparent"
-            }`}
-            style={{ backgroundColor: c }}
-          />
-        ))}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Colore:</span>
+          {COLOR_OPTIONS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              aria-label={`Colore ${c}`}
+              className={`w-5 h-5 rounded-full border-2 ${
+                color === c ? "border-foreground" : "border-transparent"
+              }`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+        {clients.length > 0 && (
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            Cliente:
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              disabled={pending}
+              className="rounded-md border border-input bg-background px-2 py-1 text-xs disabled:opacity-50"
+            >
+              <option value="">— nessuno —</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </form>

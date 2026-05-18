@@ -17,6 +17,7 @@ import {
   type CompleteDecision,
 } from "./complete-with-duration-dialog";
 import { TaskReminderButton } from "./task-reminder-button";
+import { TaskSchedulePicker } from "./task-schedule-picker";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
   P1: "text-red-500",
@@ -146,6 +147,12 @@ export function TaskItem({
         </div>
       </div>
       <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!isDone && (
+          <TaskSchedulePicker
+            taskId={task.id}
+            currentScheduledAt={task.scheduledAt}
+          />
+        )}
         {!isDone && (
           <TaskReminderButton
             taskId={task.id}

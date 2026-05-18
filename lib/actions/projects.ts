@@ -11,6 +11,7 @@ import {
   deleteSection,
   renameProject,
   renameSection,
+  setProjectClient,
   toggleProjectFavorite,
 } from "@/lib/domain/projects";
 import type { ActionResult } from "./tasks";
@@ -28,6 +29,12 @@ const createProjectSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/u, "Colore deve essere hex #RRGGBB")
     .optional(),
+  clientId: z
+    .string()
+    .min(1)
+    .nullable()
+    .optional()
+    .transform((v) => (v && v !== "null" ? v : null)),
 });
 
 export async function createProjectAction(
@@ -38,6 +45,7 @@ export async function createProjectAction(
     const parsed = createProjectSchema.safeParse({
       name: formData.get("name"),
       color: formData.get("color") || undefined,
+      clientId: formData.get("clientId") || undefined,
     });
     if (!parsed.success) {
       const first = parsed.error.issues[0];
@@ -47,6 +55,7 @@ export async function createProjectAction(
       organizationId,
       name: parsed.data.name,
       color: parsed.data.color,
+      clientId: parsed.data.clientId,
     });
     revalidateProjects(project.id);
     return { ok: true, data: { id: project.id } };
@@ -64,6 +73,20 @@ export async function renameProjectAction(
     const name = newName.trim();
     if (!name) return { ok: false, error: "Nome vuoto" };
     await renameProject({ projectId, organizationId, name });
+    revalidateProjects(projectId);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+export async function setProjectClientAction(
+  projectId: string,
+  clientId: string | null,
+): Promise<ActionResult> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    await setProjectClient({ projectId, organizationId, clientId });
     revalidateProjects(projectId);
     return { ok: true, data: undefined };
   } catch (err) {

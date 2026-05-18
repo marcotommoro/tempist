@@ -4,8 +4,10 @@ import { LayoutGrid, List as ListIcon } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getProject, getProjectBoard } from "@/lib/domain/projects";
+import { listClients } from "@/lib/domain/clients";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
+import { ProjectClientSelect } from "@/components/features/projects/project-client-select";
 import { TaskItem } from "@/components/features/tasks/task-item";
 import { AddTaskToProject } from "@/components/features/tasks/add-task-to-project";
 import { CreateSectionForm } from "@/components/features/projects/create-section-form";
@@ -27,10 +29,10 @@ export default async function ProjectDetailPage({
   const project = await getProject({ projectId: id, organizationId });
   if (!project) notFound();
 
-  const { sections, tasksBySection } = await getProjectBoard({
-    projectId: id,
-    organizationId,
-  });
+  const [{ sections, tasksBySection }, clients] = await Promise.all([
+    getProjectBoard({ projectId: id, organizationId }),
+    listClients({ organizationId }),
+  ]);
 
   // Flat list di taskIds da tutte le sezioni (incluso "null" = senza sezione)
   const allTaskIds: string[] = [];
@@ -55,7 +57,14 @@ export default async function ProjectDetailPage({
           />
           <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
         </div>
-        <ViewToggle isBoard={isBoard} projectId={id} />
+        <div className="flex items-center gap-3 flex-wrap">
+          <ViewToggle isBoard={isBoard} projectId={id} />
+          <ProjectClientSelect
+            projectId={id}
+            currentClientId={project.clientId}
+            clients={clients}
+          />
+        </div>
       </header>
 
       {isBoard ? (

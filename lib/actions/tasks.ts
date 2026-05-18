@@ -19,8 +19,10 @@ import { z } from "zod";
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import {
   createTask,
+  rescheduleOverdueToToday,
   softDeleteTask,
   toggleTaskComplete,
+  updateTaskSchedule,
 } from "@/lib/domain/tasks";
 
 export type ActionResult<T = undefined> =
@@ -109,6 +111,66 @@ export async function toggleTaskAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Errore toggle task",
+    };
+  }
+}
+
+export async function setTaskScheduledAtAction(
+  taskId: string,
+  isoDateOrNull: string | null,
+): Promise<ActionResult> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    const scheduledAt = isoDateOrNull ? new Date(isoDateOrNull) : null;
+    if (scheduledAt && Number.isNaN(scheduledAt.getTime())) {
+      return { ok: false, error: "Data non valida" };
+    }
+    await updateTaskSchedule({ taskId, organizationId, scheduledAt });
+    revalidateTaskViews();
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento data",
+    };
+  }
+}
+
+export async function setTaskDueDateAction(
+  taskId: string,
+  isoDateOrNull: string | null,
+): Promise<ActionResult> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    const dueDate = isoDateOrNull ? new Date(isoDateOrNull) : null;
+    if (dueDate && Number.isNaN(dueDate.getTime())) {
+      return { ok: false, error: "Data non valida" };
+    }
+    await updateTaskSchedule({ taskId, organizationId, dueDate });
+    revalidateTaskViews();
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento scadenza",
+    };
+  }
+}
+
+export async function rescheduleOverdueAction(): Promise<
+  ActionResult<{ count: number }>
+> {
+  try {
+    const { user, organizationId } = await requireActiveOrganization();
+    const timezone =
+      (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
+    const count = await rescheduleOverdueToToday({ organizationId, timezone });
+    revalidateTaskViews();
+    return { ok: true, data: { count } };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore riprogrammazione",
     };
   }
 }

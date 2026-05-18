@@ -14,6 +14,7 @@ import {
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listProjects } from "@/lib/domain/projects";
 import { TimerWidget } from "@/components/features/timer/timer-widget";
+import { GlobalManualEntryServer } from "@/components/features/timer/global-manual-entry-server";
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
 import { ThemeSwitcher } from "@/components/features/topbar/theme-switcher";
 import { CommandPalette } from "@/components/features/command-palette/command-palette";
@@ -143,6 +144,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <GlobalManualEntryServer />
           <TimerWidget />
           <NotificationsBellServer />
           <ThemeSwitcher />
