@@ -48,6 +48,65 @@
 
 → **Fase 3 — Integrazione Task ↔ Timer + UI dei collegamenti.**
 
+## Fase 6 — Polish ✅
+
+**Data:** 2026-05-18
+
+### Iterazioni eseguite
+
+- **6.1** Dark mode (next-themes)
+  * ThemeProvider in providers.tsx (attribute=class, system default)
+  * ThemeSwitcher compatto in topbar (cycle light→dark→system)
+  * ThemeSection radio in /settings
+  * `lib/hooks/use-is-client.ts`: useSyncExternalStore per evitare hydration mismatch
+    senza incorrere nella regola `react-hooks/set-state-in-effect`
+- **6.2** Command palette (cmdk)
+  * Cmd+K / Ctrl+K listener globale
+  * Ricerca debouncata (150ms) su task/project/client via PostgreSQL ILIKE
+  * Quick navigation a tutte le viste principali
+  * CommandDialog esteso con title/description sr-only per a11y Radix
+- **6.3** PWA (manifest + service worker)
+  * `public/manifest.webmanifest` installable, theme colors, shortcuts
+  * `public/icon.svg` 512x512 (PNG raster da generare per Lighthouse 100)
+  * `public/sw.js`: cache-first per static, network-first per HTML, bypass API
+  * ServiceWorkerRegister solo in NODE_ENV=production
+  * Metadata + Viewport con themeColor dark/light + appleWebApp config
+- **6.4** Import Todoist + Toggl CSV
+  * Parser RFC 4180 in `lib/utils/csv-parse.ts` (~80 righe, no deps)
+  * Auto-detect source da headers (`detectCsvSource` in lib/utils)
+  * importTodoistTasks: PRIORITY 4→P1 (Todoist invertito), CONTENT→title, DUE→scheduledAt
+  * importTogglTimeEntries: match client/project per nome (no auto-create)
+  * Errori per-row catturati, continua su altri
+  * ImportSection /settings con file upload max 5MB
+- **6.5** A11y pass
+  * Skip link "Salta al contenuto" visible-on-focus
+  * `aria-current="page"` su SidebarLink active (client component dedicated)
+  * `aria-label` su nav landmarks (sidebar/main nav/workspace/tools)
+  * `id="main-content"` + `tabIndex={-1}` su `<main>` per skip target
+  * Esistente review: icon buttons hanno aria-label, form inputs hanno Label
+
+### Test coverage Fase 6
+
+- **106 unit tests** verdi (era 94 a fine Fase 5) — +12 tests
+  * 8 csv-parse (parser RFC 4180 edge cases)
+  * 4 import-detect (Todoist/Toggl/unknown)
+- `pnpm typecheck` zero errori, `pnpm lint` zero warning, `pnpm build` 19 routes
+
+### Decisioni in corso d'opera
+
+- **Web Push (4.6) confermato skipped** anche in Fase 6: notifiche in-app +
+  email digest + report settimanale coprono i casi d'uso. VAPID setup in fase
+  futura quando ci sarà HTTPS reale stabile.
+- **SVG icon invece di PNG raster** per la PWA: copre installation flow ma
+  perde 5-10 punti Lighthouse PWA. Da generare PNG 192/512 quando il design
+  finale sarà disponibile (con tool come `sharp` o servizio esterno).
+- **Parser CSV custom** invece di papaparse: zero dep, ~80 righe per coprire
+  RFC 4180. Se in futuro arrivano CSV con encoding ISO-8859-1 o quoting più
+  liberale, migriamo a papaparse.
+- **A11y baseline raggiunto** ma non audited con axe-core CLI (sarebbe ideale
+  in CI). Skip link + aria-current + landmark labels coprono i fix più
+  impattanti per screen reader. PR follow-up: focus-visible review completa.
+
 ## Fase 5 — Report & Analytics ✅
 
 **Data:** 2026-05-18

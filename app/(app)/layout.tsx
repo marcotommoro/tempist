@@ -17,6 +17,10 @@ import { TimerWidget } from "@/components/features/timer/timer-widget";
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
 import { ThemeSwitcher } from "@/components/features/topbar/theme-switcher";
 import { CommandPalette } from "@/components/features/command-palette/command-palette";
+import {
+  ProjectLink,
+  SidebarLink,
+} from "@/components/features/sidebar/sidebar-link";
 
 const mainNav = [
   { href: "/today", label: "Today", icon: Calendar },
@@ -40,15 +44,31 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex-1 grid grid-cols-[260px_1fr] grid-rows-[56px_1fr] min-h-screen">
+      {/* Skip to main content (accessibility) — visibile solo al focus */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-2 focus:left-2 focus:px-3 focus:py-1.5 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        Salta al contenuto
+      </a>
+
       {/* Sidebar */}
-      <aside className="row-span-2 border-r border-sidebar-border bg-sidebar text-sidebar-foreground py-4 overflow-y-auto">
+      <aside
+        className="row-span-2 border-r border-sidebar-border bg-sidebar text-sidebar-foreground py-4 overflow-y-auto"
+        aria-label="Navigazione principale"
+      >
         <div className="px-4 mb-3">
           <div className="text-sm font-semibold">Todoist+Tracker</div>
         </div>
 
-        <nav className="px-3 space-y-0.5">
+        <nav className="px-3 space-y-0.5" aria-label="Viste task">
           {mainNav.map(({ href, label, icon: Icon }) => (
-            <SidebarLink key={href} href={href} icon={<Icon className="w-4 h-4" />}>
+            <SidebarLink
+              key={href}
+              href={href}
+              icon={<Icon className="w-4 h-4" />}
+              exact
+            >
               {label}
             </SidebarLink>
           ))}
@@ -57,10 +77,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {favorites.length > 0 && (
           <div className="mt-6 px-3">
             <div className="px-2 mb-1 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-              <Star className="w-3 h-3" />
+              <Star className="w-3 h-3" aria-hidden />
               Favorites
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5" role="list">
               {favorites.map((p) => (
                 <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
               ))}
@@ -71,8 +91,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="mt-6 px-3">
           <div className="px-2 mb-1 flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground">
             <span>Projects</span>
-            <Link href="/projects" className="hover:text-foreground" title="Vedi tutti / nuovo">
-              <FolderKanban className="w-3.5 h-3.5" />
+            <Link
+              href="/projects"
+              className="hover:text-foreground"
+              aria-label="Vedi tutti i progetti / nuovo"
+            >
+              <FolderKanban className="w-3.5 h-3.5" aria-hidden />
             </Link>
           </div>
           <div className="space-y-0.5">
@@ -96,9 +120,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="px-2 mb-1 text-xs uppercase tracking-wider text-muted-foreground">
             Workspace
           </div>
-          <nav className="space-y-0.5">
+          <nav className="space-y-0.5" aria-label="Strumenti workspace">
             {bottomNav.map(({ href, label, icon: Icon }) => (
-              <SidebarLink key={href} href={href} icon={<Icon className="w-4 h-4" />}>
+              <SidebarLink
+                key={href}
+                href={href}
+                icon={<Icon className="w-4 h-4" />}
+              >
                 {label}
               </SidebarLink>
             ))}
@@ -110,7 +138,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header className="border-b border-border flex items-center justify-between px-4">
         <div className="text-sm text-muted-foreground">
           Workspace{" "}
-          <span className="font-medium text-foreground">{organizationId.slice(0, 8)}</span>
+          <span className="font-medium text-foreground">
+            {organizationId.slice(0, 8)}
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <TimerWidget />
@@ -121,46 +151,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </header>
 
       {/* Content */}
-      <main className="p-6 overflow-auto">{children}</main>
+      <main id="main-content" className="p-6 overflow-auto" tabIndex={-1}>
+        {children}
+      </main>
 
       {/* Command palette globale (Cmd+K) */}
       <CommandPalette />
     </div>
-  );
-}
-
-function SidebarLink({
-  href,
-  icon,
-  children,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-    >
-      {icon}
-      {children}
-    </Link>
-  );
-}
-
-function ProjectLink({ id, name, color }: { id: string; name: string; color: string }) {
-  return (
-    <Link
-      href={`/projects/${id}`}
-      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-    >
-      <span
-        className="w-2 h-2 rounded-full shrink-0"
-        style={{ backgroundColor: color }}
-        aria-hidden
-      />
-      <span className="truncate">{name}</span>
-    </Link>
   );
 }
