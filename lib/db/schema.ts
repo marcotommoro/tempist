@@ -69,6 +69,13 @@ export const billingRateScopeEnum = pgEnum("billing_rate_scope", [
   "USER",
 ]);
 export const clientStatusEnum = pgEnum("client_status", ["ACTIVE", "ARCHIVED"]);
+export const projectRoleEnum = pgEnum("project_role", ["editor", "viewer"]);
+export const projectInvitationStatusEnum = pgEnum("project_invitation_status", [
+  "pending",
+  "accepted",
+  "declined",
+  "expired",
+]);
 
 // ============================================================================
 // 3. Better Auth tables
@@ -200,6 +207,7 @@ export const invitation = pgTable(
     inviterId: text("inviter_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
   },
   (t) => [
     index("invitation_organization_id_idx").on(t.organizationId),
@@ -219,6 +227,7 @@ export const project = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    descriptionMarkdown: text("description_markdown"),
     color: text("color").default("#808080").notNull(),
     icon: text("icon"),
     viewDefault: viewDefaultEnum("view_default").default("LIST").notNull(),
@@ -255,6 +264,56 @@ export const section = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [index("section_project_id_idx").on(t.projectId)],
+);
+
+// Project membership: utenti esterni al workspace che hanno accesso a UN singolo
+// project. I workspace member hanno accesso implicito a tutti i project del loro
+// workspace via `member` (Better Auth) — non vengono duplicati qui.
+export const projectMember = pgTable(
+  "project_member",
+  {
+    id: id(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: projectRoleEnum("role").default("editor").notNull(),
+    addedById: text("added_by_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("project_member_project_user_unique").on(t.projectId, t.userId),
+    index("project_member_user_idx").on(t.userId),
+  ],
+);
+
+// Project invitation: invito via email a un project specifico. Quando l'invitato
+// accetta, si crea una riga in `project_member` e qui status -> 'accepted'.
+// Token usato in URL pubblico /invitations/project/[token].
+export const projectInvitation = pgTable(
+  "project_invitation",
+  {
+    id: id(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: projectRoleEnum("role").default("editor").notNull(),
+    status: projectInvitationStatusEnum("status").default("pending").notNull(),
+    token: text("token").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
+    inviterId: text("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("project_invitation_token_unique").on(t.token),
+    index("project_invitation_project_idx").on(t.projectId),
+    index("project_invitation_email_idx").on(t.email),
+  ],
 );
 
 export const label = pgTable(
@@ -657,6 +716,10 @@ export type Project = typeof project.$inferSelect;
 export type NewProject = typeof project.$inferInsert;
 export type Section = typeof section.$inferSelect;
 export type NewSection = typeof section.$inferInsert;
+export type ProjectMember = typeof projectMember.$inferSelect;
+export type NewProjectMember = typeof projectMember.$inferInsert;
+export type ProjectInvitation = typeof projectInvitation.$inferSelect;
+export type NewProjectInvitation = typeof projectInvitation.$inferInsert;
 export type Label = typeof label.$inferSelect;
 export type NewLabel = typeof label.$inferInsert;
 export type Task = typeof task.$inferSelect;

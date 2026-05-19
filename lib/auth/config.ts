@@ -139,6 +139,46 @@ export const auth = betterAuth({
     }),
     organization({
       allowUserToCreateOrganization: true,
+      async sendInvitationEmail({ id, email, inviter, organization: org }) {
+        const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+        const acceptUrl = `${base}/invitations/workspace/${id}`;
+        const inviterName = inviter.user.name ?? inviter.user.email;
+
+        // E2E test runner: scrive il link su filesystem (riusa stessa convention dei magic link)
+        await writeE2EMagicLink(`invite-${email}`, acceptUrl);
+
+        if (!resend) {
+          if (process.env.NODE_ENV === "production") {
+            console.error(
+              `${C.red}[auth] CRITICAL: invito workspace non spedito (RESEND mancante) → ${email}${C.reset}`,
+            );
+          }
+          const bar = "━".repeat(70);
+          console.log(
+            [
+              "",
+              `${C.cyan}${bar}`,
+              `${C.bold}📩 WORKSPACE INVITE (dev mode)${C.reset}${C.cyan}`,
+              bar,
+              `${C.reset}From: ${C.bold}${inviterName}${C.reset}`,
+              `To: ${C.bold}${email}${C.reset}`,
+              `Workspace: ${C.bold}${org.name}${C.reset}`,
+              "",
+              acceptUrl,
+              "",
+              `${C.cyan}${bar}${C.reset}`,
+              "",
+            ].join("\n"),
+          );
+          return;
+        }
+
+        await sendEmail(
+          email,
+          `${inviterName} ti ha invitato al workspace "${org.name}"`,
+          `${inviterName} ti ha invitato a unirti al workspace "${org.name}" su Todoist+Tracker.\n\nClicca qui per accettare:\n\n${acceptUrl}\n\nSe non hai un account verrà creato automaticamente con questa email.`,
+        );
+      },
     }),
   ],
 

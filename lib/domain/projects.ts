@@ -5,10 +5,11 @@
  * La action layer aggiunge il guard tramite requireActiveOrganization.
  */
 
-import { and, asc, eq, isNull, max } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, max, ne } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import type { Project, Section, Task } from "@/lib/db/schema";
+import { listSharedProjectIds } from "./project-members";
 
 // ---------------------------------------------------------------------------
 // Projects
@@ -27,6 +28,28 @@ export async function listProjects(opts: {
       isNull(schema.project.deletedAt),
     ),
     orderBy: [asc(schema.project.order), asc(schema.project.name)],
+  });
+}
+
+/**
+ * Project condivisi con l'utente via `project_member`, esclusi quelli dell'org
+ * attiva (che già appaiono in listProjects). Pensati per la sidebar "Shared with me".
+ */
+export async function listSharedProjects(opts: {
+  userId: string;
+  excludeOrganizationId: string;
+}): Promise<ProjectListItem[]> {
+  const sharedIds = await listSharedProjectIds(opts.userId);
+  if (sharedIds.length === 0) return [];
+
+  return db.query.project.findMany({
+    where: and(
+      inArray(schema.project.id, sharedIds),
+      ne(schema.project.organizationId, opts.excludeOrganizationId),
+      isNull(schema.project.archivedAt),
+      isNull(schema.project.deletedAt),
+    ),
+    orderBy: [asc(schema.project.name)],
   });
 }
 
@@ -91,6 +114,18 @@ export async function renameProject(opts: {
         eq(schema.project.organizationId, opts.organizationId),
       ),
     );
+}
+
+export async function setProjectDescription(opts: {
+  projectId: string;
+  /** Nullable: stringa vuota o null → cancella la descrizione. */
+  description: string | null;
+}): Promise<void> {
+  const value = opts.description?.trim() ? opts.description : null;
+  await db
+    .update(schema.project)
+    .set({ descriptionMarkdown: value })
+    .where(eq(schema.project.id, opts.projectId));
 }
 
 export async function setProjectClient(opts: {

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { headers } from "next/headers";
+import { Users } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listActiveTokens } from "@/lib/domain/ical";
@@ -47,6 +49,21 @@ export default async function SettingsPage({
         title="Settings"
         meta={<span>{user.email}</span>}
       />
+      <section className="space-y-3">
+        <header className="space-y-1">
+          <h2 className="font-display text-lg text-foreground">Workspace</h2>
+          <p className="text-sm text-muted-foreground">
+            Gestisci il workspace attivo, i suoi membri e gli inviti.
+          </p>
+        </header>
+        <Link
+          href="/settings/workspace"
+          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-foreground hover:bg-card"
+        >
+          <Users className="size-3.5" />
+          Apri impostazioni workspace
+        </Link>
+      </section>
       <ThemeSection />
       <IcalSection tokens={tokens} baseUrl={baseUrl} />
       <DigestSection userEmail={user.email} />

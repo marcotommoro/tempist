@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
-import { listProjects } from "@/lib/domain/projects";
+import { listProjects, listSharedProjects } from "@/lib/domain/projects";
+import { listMyWorkspaces } from "@/lib/domain/workspaces";
 import { TimerWidget } from "@/components/features/timer/timer-widget";
 import { GlobalManualEntryServer } from "@/components/features/timer/global-manual-entry-server";
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
@@ -22,6 +23,7 @@ import {
   SidebarLink,
 } from "@/components/features/sidebar/sidebar-link";
 import { SidebarAccount } from "@/components/features/sidebar/sidebar-account";
+import { WorkspaceSwitcher } from "@/components/features/workspaces/workspace-switcher";
 
 const mainNav = [
   { href: "/today", label: "Today", icon: Calendar },
@@ -38,7 +40,11 @@ const bottomNav = [
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, organizationId } = await requireActiveOrganization();
-  const projects = await listProjects({ organizationId });
+  const [projects, sharedProjects, workspaces] = await Promise.all([
+    listProjects({ organizationId }),
+    listSharedProjects({ userId: user.id, excludeOrganizationId: organizationId }),
+    listMyWorkspaces(user.id),
+  ]);
 
   const favorites = projects.filter((p) => p.isFavorite);
   const others = projects.filter((p) => !p.isFavorite);
@@ -59,19 +65,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         aria-label="Navigazione principale"
       >
         {/* Workspace switcher */}
-        <div className="flex h-14 shrink-0 items-center gap-2.5 border-b border-sidebar-border px-3.5">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-foreground text-background font-display text-[15px] leading-none italic">
-            T
-          </span>
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate font-display text-[15px] leading-none text-foreground">
-              Todoist+Tracker
-            </span>
-            <span className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              {organizationId.slice(0, 8)}
-            </span>
-          </div>
-        </div>
+        <WorkspaceSwitcher workspaces={workspaces} activeId={organizationId} />
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
           <nav className="space-y-0.5" aria-label="Viste task">
@@ -129,6 +123,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </div>
           </div>
 
+          {sharedProjects.length > 0 && (
+            <div className="mt-6">
+              <div className="px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                Shared with me
+              </div>
+              <div className="space-y-0.5" role="list">
+                {sharedProjects.map((p) => (
+                  <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-6">
             <div className="px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
               Workspace
@@ -152,11 +159,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Topbar — workspace tools only. Pinned by the parent grid row; the row never scrolls. */}
-      <header className="z-20 flex items-center justify-between border-b border-border bg-background px-5">
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          <span>Workspace</span>
-          <span className="text-foreground">{organizationId.slice(0, 8)}</span>
-        </div>
+      <header className="z-20 flex items-center justify-end border-b border-border bg-background px-5">
         <div className="flex items-center gap-2.5">
           <GlobalManualEntryServer />
           <TimerWidget />

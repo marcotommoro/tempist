@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { LayoutGrid, List as ListIcon } from "lucide-react";
 
-import { requireActiveOrganization } from "@/lib/auth/workspace";
-import { getProject, getProjectBoard } from "@/lib/domain/projects";
+import { requireProjectAccess } from "@/lib/auth/project-access";
+import { getProjectBoard } from "@/lib/domain/projects";
+import { listProjectInvitations, listProjectMembers } from "@/lib/domain/project-members";
 import { listClients } from "@/lib/domain/clients";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { ProjectClientSelect } from "@/components/features/projects/project-client-select";
+import { ProjectDescription } from "@/components/features/projects/project-description";
+import { ProjectMembersButton } from "@/components/features/projects/members/project-members-button";
 import { TaskItem } from "@/components/features/tasks/task-item";
 import { AddTaskToProject } from "@/components/features/tasks/add-task-to-project";
 import { CreateSectionForm } from "@/components/features/projects/create-section-form";
@@ -27,14 +29,20 @@ export default async function ProjectDetailPage({
   searchParams: Promise<Search>;
 }) {
   const [{ id }, { view }] = await Promise.all([params, searchParams]);
-  const { user, organizationId } = await requireActiveOrganization();
-  const project = await getProject({ projectId: id, organizationId });
-  if (!project) notFound();
+  const access = await requireProjectAccess(id);
+  const { user, project, accessType, role } = access;
+  const organizationId = project.organizationId;
+  const canEdit = role === "editor";
+  const canManageMembers = accessType === "workspace";
 
-  const [{ sections, tasksBySection }, clients] = await Promise.all([
-    getProjectBoard({ projectId: id, organizationId }),
-    listClients({ organizationId }),
-  ]);
+  const [{ sections, tasksBySection }, clients, projectMembers, pendingInvitations] =
+    await Promise.all([
+      getProjectBoard({ projectId: id, organizationId }),
+      // Per gli esterni non mostriamo i client del workspace (non sono autorizzati a vederli)
+      accessType === "workspace" ? listClients({ organizationId }) : Promise.resolve([]),
+      listProjectMembers(id),
+      accessType === "workspace" ? listProjectInvitations(id) : Promise.resolve([]),
+    ]);
 
   // Flat list di taskIds da tutte le sezioni (incluso "null" = senza sezione)
   const allTaskIds: string[] = [];
@@ -80,11 +88,27 @@ export default async function ProjectDetailPage({
         actions={<ViewToggle isBoard={isBoard} projectId={id} />}
       />
 
+      <ProjectDescription
+        projectId={id}
+        initialDescription={project.descriptionMarkdown}
+        canEdit={canEdit}
+      />
+
       <div className="flex flex-wrap items-center gap-3">
-        <ProjectClientSelect
+        {accessType === "workspace" && (
+          <ProjectClientSelect
+            projectId={id}
+            currentClientId={project.clientId}
+            clients={clients}
+          />
+        )}
+        <ProjectMembersButton
           projectId={id}
-          currentClientId={project.clientId}
-          clients={clients}
+          projectName={project.name}
+          members={projectMembers}
+          invitations={pendingInvitations}
+          canManage={canManageMembers}
+          currentUserId={user.id}
         />
       </div>
 
