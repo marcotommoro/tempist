@@ -1,10 +1,19 @@
 import { notFound } from "next/navigation";
+import {
+  endOfMonth,
+  endOfYear,
+  parseISO,
+  startOfMonth,
+  startOfYear,
+  subMonths,
+} from "date-fns";
 import { Mail, Pencil, Receipt } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getClient, listClients } from "@/lib/domain/clients";
 import { listProjects } from "@/lib/domain/projects";
 import {
+  getProjectAggregatesForClient,
   getTrackedSecondsByTask,
   listTimeEntriesForClient,
 } from "@/lib/domain/time-entries";
@@ -13,31 +22,92 @@ import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { EditClientDialog } from "@/components/features/clients/edit-client-dialog";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
+import { ClientBillingFilters } from "@/components/features/timer/client-billing-filters";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
+import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Params = { id: string };
+type Search = {
+  from?: string;
+  to?: string;
+  preset?: "month" | "last-month" | "all";
+};
+
+type ResolvedRange = {
+  from: Date;
+  to: Date;
+  active: "month" | "last-month" | "all" | "custom";
+};
+
+function safeParse(s: string): Date | null {
+  const d = parseISO(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function resolveRange(s: Search): ResolvedRange {
+  const fromParam = s.from ? safeParse(s.from) : null;
+  const toParam = s.to ? safeParse(s.to) : null;
+  if (fromParam && toParam) {
+    return { from: fromParam, to: toParam, active: "custom" };
+  }
+  const now = new Date();
+  if (s.preset === "last-month") {
+    const lastMonth = subMonths(now, 1);
+    return {
+      from: startOfMonth(lastMonth),
+      to: endOfMonth(lastMonth),
+      active: "last-month",
+    };
+  }
+  if (s.preset === "all") {
+    // 5 anni indietro fino a fine anno corrente — sufficiente come "tutto"
+    return {
+      from: startOfYear(subMonths(now, 60)),
+      to: endOfYear(now),
+      active: "all",
+    };
+  }
+  return {
+    from: startOfMonth(now),
+    to: endOfMonth(now),
+    active: "month",
+  };
+}
 
 export default async function ClientDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<Params>;
+  searchParams: Promise<Search>;
 }) {
   const { id } = await params;
-  const { organizationId } = await requireActiveOrganization();
+  const sp = await searchParams;
+  const { user, organizationId } = await requireActiveOrganization();
+  const tz = userTimezone(user as { timezone?: string | null });
   const client = await getClient({ clientId: id, organizationId });
   if (!client) notFound();
 
-  const [entries, clients, projects] = await Promise.all([
+  const { from, to, active } = resolveRange(sp);
+
+  const [entries, clients, projects, projectAggregates] = await Promise.all([
     listTimeEntriesForClient({
       clientId: id,
       organizationId,
-      limit: 100,
+      from,
+      to,
     }),
     listClients({ organizationId }),
     listProjects({ organizationId }),
+    getProjectAggregatesForClient({
+      organizationId,
+      clientId: id,
+      from,
+      to,
+    }),
   ]);
 
   const clientPicks = clients.map((c) => ({ id: c.id, name: c.name }));
@@ -59,17 +129,32 @@ export default async function ClientDetailPage({
     getPendingReminderCountByTask(taskIds),
   ]);
 
-  // Totali per il cliente
+  // Totali per il cliente — split billable/internal per dare visibilità al non-fatturabile
   const totals = entries.reduce(
     (acc, e) => {
       const dur = e.durationSeconds ?? 0;
       acc.totalSeconds += dur;
-      if (e.isBillable && e.hourlyRateSnapshot) {
-        acc.billable += Number(e.hourlyRateSnapshot) * (dur / 3600);
+      if (e.isBillable) {
+        acc.billableSeconds += dur;
+        if (e.hourlyRateSnapshot) {
+          acc.billableAmount += Number(e.hourlyRateSnapshot) * (dur / 3600);
+        }
+      } else {
+        acc.internalSeconds += dur;
       }
       return acc;
     },
-    { totalSeconds: 0, billable: 0 },
+    {
+      totalSeconds: 0,
+      billableSeconds: 0,
+      internalSeconds: 0,
+      billableAmount: 0,
+    },
+  );
+
+  const projectsById = new Map(projects.map((p) => [p.id, p.name]));
+  const aggregatesSorted = [...projectAggregates].sort(
+    (a, b) => b.totalSeconds - a.totalSeconds,
   );
 
   return (
@@ -128,16 +213,84 @@ export default async function ClientDetailPage({
         }
       />
 
+      <ClientBillingFilters
+        clientId={id}
+        from={from}
+        to={to}
+        presetActive={active}
+      />
+
       {/* Totali — editorial KPI grid */}
-      <section className="grid grid-cols-3 gap-px overflow-hidden rounded-md border border-border bg-border">
+      <section className="grid grid-cols-4 gap-px overflow-hidden rounded-md border border-border bg-border">
         <Stat label="Hours" value={formatDuration(totals.totalSeconds)} />
         <Stat
-          label={`Billable (${client.currency})`}
-          value={totals.billable.toFixed(2)}
+          label="Billable"
+          value={formatDuration(totals.billableSeconds)}
+        />
+        <Stat
+          label="Internal"
+          value={formatDuration(totals.internalSeconds)}
+        />
+        <Stat
+          label={`Amount (${client.currency})`}
+          value={totals.billableAmount.toFixed(2)}
           accent
         />
-        <Stat label="Entries" value={String(entries.length)} />
       </section>
+
+      {aggregatesSorted.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between border-b border-border pb-1.5">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              Breakdown per progetto
+            </h2>
+            <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+              {String(aggregatesSorted.length).padStart(2, "0")}
+            </span>
+          </div>
+          <div className="overflow-hidden rounded-md border border-border bg-card">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  <th className="px-4 py-2 font-normal">Progetto</th>
+                  <th className="px-4 py-2 text-right font-normal">Ore</th>
+                  <th className="px-4 py-2 text-right font-normal">Voci</th>
+                  <th className="px-4 py-2 text-right font-normal">
+                    Importo ({client.currency})
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {aggregatesSorted.map((agg) => (
+                  <tr
+                    key={agg.projectId ?? "__no_project__"}
+                    className="border-b border-border last:border-0"
+                  >
+                    <td className="px-4 py-2 text-foreground">
+                      {agg.projectId
+                        ? (projectsById.get(agg.projectId) ?? "—")
+                        : (
+                          <span className="font-display italic text-muted-foreground">
+                            Senza progetto
+                          </span>
+                        )}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-foreground">
+                      {formatDuration(agg.totalSeconds)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                      {agg.entryCount}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono tabular-nums text-foreground">
+                      {agg.billableAmount.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <ManualEntryForm clientId={id} />
 
@@ -176,6 +329,7 @@ export default async function ClientDetailPage({
                   entry={e}
                   clients={clientPicks}
                   projects={projectPicks}
+                  userTimezone={tz}
                 />
               ))}
             </ul>

@@ -7,24 +7,45 @@ import { listProjects } from "@/lib/domain/projects";
 import { listTimeEntriesForUser } from "@/lib/domain/time-entries";
 import { TimesheetFilters } from "@/components/features/timer/timesheet-filters";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
+import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { PageHeader } from "@/components/features/page-header/page-header";
 import { formatDuration } from "@/lib/utils/format-duration";
+import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 import {
   formatWeekLabel,
-  getWeekRange,
-  parseWeekFromParam,
+  resolveTimesheetRange,
 } from "@/lib/utils/timesheet-week";
 import type { TimeEntry } from "@/lib/db/schema";
 
-type Search = { from?: string; clientId?: string };
+type Search = {
+  from?: string;
+  to?: string;
+  clientId?: string;
+  projectId?: string;
+};
 
-function groupByDay(entries: TimeEntry[]): Map<string, TimeEntry[]> {
-  const groups = new Map<string, TimeEntry[]>();
+type DayBucket = {
+  entries: TimeEntry[];
+  totalSeconds: number;
+  billableAmount: number;
+};
+
+function groupByDay(entries: TimeEntry[]): Map<string, DayBucket> {
+  const groups = new Map<string, DayBucket>();
   for (const e of entries) {
     const key = format(e.startedAt, "yyyy-MM-dd");
-    const list = groups.get(key) ?? [];
-    list.push(e);
-    groups.set(key, list);
+    const bucket = groups.get(key) ?? {
+      entries: [],
+      totalSeconds: 0,
+      billableAmount: 0,
+    };
+    bucket.entries.push(e);
+    const dur = e.durationSeconds ?? 0;
+    bucket.totalSeconds += dur;
+    if (e.isBillable && e.hourlyRateSnapshot) {
+      bucket.billableAmount += Number(e.hourlyRateSnapshot) * (dur / 3600);
+    }
+    groups.set(key, bucket);
   }
   return groups;
 }
@@ -34,11 +55,16 @@ export default async function TimesheetPage({
 }: {
   searchParams: Promise<Search>;
 }) {
-  const { from: fromParam, clientId } = await searchParams;
+  const {
+    from: fromParam,
+    to: toParam,
+    clientId,
+    projectId,
+  } = await searchParams;
   const { user, organizationId } = await requireActiveOrganization();
+  const tz = userTimezone(user as { timezone?: string | null });
 
-  const anchor = parseWeekFromParam(fromParam);
-  const { from, to } = getWeekRange(anchor);
+  const { from, to, isCustom } = resolveTimesheetRange(fromParam, toParam);
   const weekLabel = formatWeekLabel(from, to);
 
   const [entries, clients, projects] = await Promise.all([
@@ -48,6 +74,7 @@ export default async function TimesheetPage({
       from,
       to,
       clientId: clientId || undefined,
+      projectId: projectId || undefined,
     }),
     listClients({ organizationId }),
     listProjects({ organizationId }),
@@ -85,10 +112,15 @@ export default async function TimesheetPage({
             weekFrom={from}
             weekLabel={weekLabel}
             clients={clientPicks}
+            projects={projectPicks}
             clientId={clientId}
+            projectId={projectId}
+            isCustomRange={isCustom}
           />
         }
       />
+
+      <ManualEntryForm />
 
       <section className="grid grid-cols-3 gap-px overflow-hidden rounded-md border border-border bg-border">
         <Stat label="Hours" value={formatDuration(totals.totalSeconds)} />
@@ -99,21 +131,32 @@ export default async function TimesheetPage({
       <section className="space-y-6">
         {dayKeys.length > 0 ? (
           dayKeys.map((dayKey) => {
-            const dayEntries = byDay.get(dayKey) ?? [];
-            const dayDate = dayEntries[0]!.startedAt;
+            const bucket = byDay.get(dayKey)!;
+            const dayDate = bucket.entries[0]!.startedAt;
             return (
               <div key={dayKey} className="space-y-2">
-                <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                  {format(dayDate, "EEEE d MMMM yyyy", { locale: it })}
-                </h2>
+                <div className="flex items-baseline justify-between border-b border-border pb-1">
+                  <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    {format(dayDate, "EEEE d MMMM yyyy", { locale: it })}
+                  </h2>
+                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                    {formatDuration(bucket.totalSeconds)}
+                    {bucket.billableAmount > 0 && (
+                      <span className="ml-2 text-coral">
+                        · {bucket.billableAmount.toFixed(2)}
+                      </span>
+                    )}
+                  </span>
+                </div>
                 <div className="overflow-hidden rounded-md border border-border bg-card">
                   <ul className="divide-y divide-border">
-                    {dayEntries.map((e) => (
+                    {bucket.entries.map((e) => (
                       <TimeEntryRow
                         key={e.id}
                         entry={e}
                         clients={clientPicks}
                         projects={projectPicks}
+                        userTimezone={tz}
                       />
                     ))}
                   </ul>
@@ -122,9 +165,14 @@ export default async function TimesheetPage({
             );
           })
         ) : (
-          <p className="rounded-md border border-dashed px-4 py-12 text-center font-display text-base italic text-muted-foreground">
-            Nessuna voce in questa settimana.
-          </p>
+          <div className="rounded-md border border-dashed px-4 py-12 text-center">
+            <p className="font-display text-base italic text-muted-foreground">
+              Nessuna voce in questo periodo.
+            </p>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              Avvia un timer dalla command palette o aggiungi una voce manuale qui sopra.
+            </p>
+          </div>
         )}
       </section>
     </div>

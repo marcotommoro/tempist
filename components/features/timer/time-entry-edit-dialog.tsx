@@ -2,6 +2,7 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { format } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,26 +23,41 @@ import type { Client, Project, TimeEntry } from "@/lib/db/schema";
 type ClientPick = Pick<Client, "id" | "name">;
 type ProjectPick = Pick<Project, "id" | "name" | "clientId">;
 
-function combineDateTime(d: Date, timeStr: string): Date {
-  const dateStr = format(d, "yyyy-MM-dd");
-  return new Date(`${dateStr}T${timeStr}:00`);
+/**
+ * Compone una data calendariale (Date) + un time string "HH:mm" in un istante UTC,
+ * interpretando il tempo nel fuso dell'utente (non in quello del browser).
+ *
+ * Senza la conversione esplicita via fromZonedTime, `new Date('YYYY-MM-DDTHH:mm:00')`
+ * userebbe il fuso locale del browser → bug quando l'utente è in viaggio.
+ */
+function combineDateTime(dateLocal: Date, timeStr: string, tz: string): Date {
+  const dateStr = format(dateLocal, "yyyy-MM-dd");
+  return fromZonedTime(`${dateStr}T${timeStr}:00`, tz);
 }
 
 function TimeEntryEditForm({
   entry,
   clients,
   projects,
+  userTimezone,
   onClose,
 }: {
   entry: TimeEntry;
   clients: ClientPick[];
   projects: ProjectPick[];
+  userTimezone: string;
   onClose: () => void;
 }) {
-  const end = entry.endedAt ?? entry.startedAt;
-  const [date, setDate] = useState(entry.startedAt);
-  const [startTime, setStartTime] = useState(format(entry.startedAt, "HH:mm"));
-  const [endTime, setEndTime] = useState(format(end, "HH:mm"));
+  // Converte gli istanti UTC dell'entry nel fuso dell'utente per popolare i form,
+  // così quello che l'utente vede combacia col fuso del suo profilo.
+  const startLocal = toZonedTime(entry.startedAt, userTimezone);
+  const endLocal = toZonedTime(
+    entry.endedAt ?? entry.startedAt,
+    userTimezone,
+  );
+  const [date, setDate] = useState(startLocal);
+  const [startTime, setStartTime] = useState(format(startLocal, "HH:mm"));
+  const [endTime, setEndTime] = useState(format(endLocal, "HH:mm"));
   const [description, setDescription] = useState(entry.description ?? "");
   const [clientId, setClientId] = useState(entry.clientId ?? "");
   const [projectId, setProjectId] = useState(entry.projectId ?? "");
@@ -60,8 +76,8 @@ function TimeEntryEditForm({
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const startedAt = combineDateTime(date, startTime);
-    const endedAt = combineDateTime(date, endTime);
+    const startedAt = combineDateTime(date, startTime, userTimezone);
+    const endedAt = combineDateTime(date, endTime, userTimezone);
     if (endedAt.getTime() <= startedAt.getTime()) {
       setError("Ora fine deve essere dopo ora inizio");
       return;
@@ -198,12 +214,14 @@ export function TimeEntryEditDialog({
   entry,
   clients,
   projects,
+  userTimezone,
   open,
   onOpenChange,
 }: {
   entry: TimeEntry;
   clients: ClientPick[];
   projects: ProjectPick[];
+  userTimezone: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -225,6 +243,7 @@ export function TimeEntryEditDialog({
             entry={entry}
             clients={clients}
             projects={projects}
+            userTimezone={userTimezone}
             onClose={() => onOpenChange(false)}
           />
         ) : null}

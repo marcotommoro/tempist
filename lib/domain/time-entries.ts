@@ -76,15 +76,21 @@ export async function getRunningTimer(opts: {
 export async function listTimeEntriesForClient(opts: {
   clientId: string;
   organizationId: string;
+  from?: Date;
+  to?: Date;
   limit?: number;
 }): Promise<TimeEntry[]> {
+  const conds = [
+    eq(schema.timeEntry.organizationId, opts.organizationId),
+    eq(schema.timeEntry.clientId, opts.clientId),
+  ];
+  if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
+  if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
+
   return db.query.timeEntry.findMany({
-    where: and(
-      eq(schema.timeEntry.organizationId, opts.organizationId),
-      eq(schema.timeEntry.clientId, opts.clientId),
-    ),
+    where: and(...conds),
     orderBy: [desc(schema.timeEntry.startedAt)],
-    limit: opts.limit ?? 100,
+    limit: opts.limit ?? 1000,
   });
 }
 
@@ -107,6 +113,7 @@ export async function listTimeEntriesForUser(opts: {
   from?: Date;
   to?: Date;
   clientId?: string | null;
+  projectId?: string | null;
   limit?: number;
 }): Promise<TimeEntry[]> {
   const conds = [
@@ -116,6 +123,7 @@ export async function listTimeEntriesForUser(opts: {
   if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
   if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
   if (opts.clientId) conds.push(eq(schema.timeEntry.clientId, opts.clientId));
+  if (opts.projectId) conds.push(eq(schema.timeEntry.projectId, opts.projectId));
 
   return db.query.timeEntry.findMany({
     where: and(...conds),
@@ -207,6 +215,58 @@ export async function getClientAggregates(opts: {
     });
   }
   return out;
+}
+
+/**
+ * Aggregato per progetto su un singolo cliente. Usato per il breakdown
+ * nella pagina cliente / billing run.
+ *
+ * Include un bucket con projectId=null per le entries senza progetto:
+ * in fatturazione vogliamo vedere TUTTE le ore del cliente.
+ */
+export async function getProjectAggregatesForClient(opts: {
+  organizationId: string;
+  clientId: string;
+  from?: Date;
+  to?: Date;
+}): Promise<
+  Array<{
+    projectId: string | null;
+    totalSeconds: number;
+    billableAmount: number;
+    entryCount: number;
+  }>
+> {
+  const conds = [
+    eq(schema.timeEntry.organizationId, opts.organizationId),
+    eq(schema.timeEntry.clientId, opts.clientId),
+    eq(schema.timeEntry.isRunning, false),
+  ];
+  if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
+  if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
+
+  const rows = await db
+    .select({
+      projectId: schema.timeEntry.projectId,
+      totalSeconds: sql<number>`COALESCE(SUM(${schema.timeEntry.durationSeconds}), 0)::int`,
+      billableAmount: sql<string>`COALESCE(SUM(
+        CASE WHEN ${schema.timeEntry.isBillable} = true AND ${schema.timeEntry.hourlyRateSnapshot} IS NOT NULL
+          THEN ${schema.timeEntry.hourlyRateSnapshot} * (${schema.timeEntry.durationSeconds}::numeric / 3600)
+          ELSE 0
+        END
+      ), 0)::numeric`,
+      entryCount: sql<number>`COUNT(*)::int`,
+    })
+    .from(schema.timeEntry)
+    .where(and(...conds))
+    .groupBy(schema.timeEntry.projectId);
+
+  return rows.map((r) => ({
+    projectId: r.projectId,
+    totalSeconds: Number(r.totalSeconds),
+    billableAmount: Number(r.billableAmount),
+    entryCount: Number(r.entryCount),
+  }));
 }
 
 // ---------------------------------------------------------------------------

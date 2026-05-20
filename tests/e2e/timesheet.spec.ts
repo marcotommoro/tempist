@@ -57,4 +57,60 @@ test.describe("timesheet", () => {
     await expect(page.getByRole("heading", { name: /timesheet/i })).toBeVisible();
     await expect(page.getByText(description)).toBeVisible({ timeout: 5_000 });
   });
+
+  test("quick-add voce direttamente dal /timesheet", async ({ page }) => {
+    const description = `Quick add ${uniqueSuffix()}`;
+
+    await page.goto("/timesheet");
+    await expect(page.getByRole("heading", { name: /timesheet/i })).toBeVisible();
+
+    // ManualEntryForm in cima alla pagina (senza clientId, sopra le stats)
+    await page.getByRole("button", { name: /aggiungi voce manuale/i }).first().click();
+    await page.getByPlaceholder(/cosa hai fatto/i).fill(description);
+    await page.getByRole("button", { name: /salva voce/i }).click();
+
+    await expect(page.getByText(description)).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("export CSV cliente restituisce CSV con voci", async ({ page, request }) => {
+    const clientName = `CSV Export ${uniqueSuffix()}`;
+    const description = `Voce CSV ${uniqueSuffix()}`;
+
+    await page.goto("/clients");
+    await page.getByLabel(/^Nome \*/).fill(clientName);
+    await page.getByRole("button", { name: /crea cliente/i }).click();
+    await page
+      .locator("#main-content")
+      .getByRole("link", { name: new RegExp(clientName) })
+      .first()
+      .click();
+
+    // Estrai clientId dall'URL della pagina cliente
+    const clientUrl = page.url();
+    const clientId = clientUrl.match(/\/clients\/([^/?]+)/)?.[1];
+    expect(clientId).toBeDefined();
+
+    await page.getByRole("button", { name: /aggiungi voce manuale/i }).click();
+    await page.getByPlaceholder(/cosa hai fatto/i).fill(description);
+    await page.getByRole("button", { name: /salva voce/i }).click();
+    await expect(page.getByText(description)).toBeVisible({ timeout: 5_000 });
+
+    // Cliente carica già il preset "Questo mese", quindi la voce manuale è inclusa.
+    const csvHref = await page
+      .getByRole("link", { name: /export csv/i })
+      .getAttribute("href");
+    expect(csvHref).toBeTruthy();
+
+    // Fai la richiesta CSV reusando il cookie di sessione del context
+    const res = await request.get(csvHref!);
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("text/csv");
+
+    const body = await res.text();
+    // Verifica header colonne aggiornato + presenza descrizione + nome cliente
+    expect(body).toContain("client_name");
+    expect(body).toContain("project_name");
+    expect(body).toContain(clientName);
+    expect(body).toContain(description);
+  });
 });

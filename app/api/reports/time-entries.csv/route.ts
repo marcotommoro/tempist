@@ -12,6 +12,7 @@ import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { db, schema } from "@/lib/db";
 import { buildCsv } from "@/lib/utils/csv";
 import { computeReportRange, type Range } from "@/lib/utils/report-range";
+import { getClient } from "@/lib/domain/clients";
 
 export const dynamic = "force-dynamic";
 
@@ -76,8 +77,14 @@ export async function GET(req: Request): Promise<Response> {
       clientId: schema.timeEntry.clientId,
       projectId: schema.timeEntry.projectId,
       taskId: schema.timeEntry.taskId,
+      clientName: schema.client.name,
+      projectName: schema.project.name,
+      taskTitle: schema.task.title,
     })
     .from(schema.timeEntry)
+    .leftJoin(schema.client, eq(schema.timeEntry.clientId, schema.client.id))
+    .leftJoin(schema.project, eq(schema.timeEntry.projectId, schema.project.id))
+    .leftJoin(schema.task, eq(schema.timeEntry.taskId, schema.task.id))
     .where(and(...conds))
     .orderBy(asc(schema.timeEntry.startedAt));
 
@@ -94,8 +101,11 @@ export async function GET(req: Request): Promise<Response> {
       "currency",
       "billable_amount",
       "client_id",
+      "client_name",
       "project_id",
+      "project_name",
       "task_id",
+      "task_title",
     ],
     entries.map((e) => {
       const hours = (e.durationSeconds ?? 0) / 3600;
@@ -113,17 +123,30 @@ export async function GET(req: Request): Promise<Response> {
         e.currencySnapshot ?? "",
         amount,
         e.clientId ?? "",
+        e.clientName ?? "",
         e.projectId ?? "",
+        e.projectName ?? "",
         e.taskId ?? "",
+        e.taskTitle ?? "",
       ];
     }),
   );
+
+  // Quando si esporta per un cliente specifico, usa il suo nome nel filename
+  let filename = `time-entries-${label}.csv`;
+  if (clientId) {
+    const client = await getClient({ clientId, organizationId });
+    if (client) {
+      const slug = client.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      filename = `timesheet-${slug}-${label}.csv`;
+    }
+  }
 
   return new Response(csv, {
     status: 200,
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="time-entries-${label}.csv"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "private, no-store",
     },
   });

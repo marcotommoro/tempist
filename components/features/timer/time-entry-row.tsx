@@ -27,10 +27,12 @@ export function TimeEntryRow({
   entry,
   clients = [],
   projects = [],
+  userTimezone = "Europe/Rome",
 }: {
   entry: TimeEntry;
   clients?: ClientPick[];
   projects?: ProjectPick[];
+  userTimezone?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -159,6 +161,7 @@ export function TimeEntryRow({
           entry={entry}
           clients={clients}
           projects={projects}
+          userTimezone={userTimezone}
           open={editing}
           onOpenChange={setEditing}
         />
