@@ -10,6 +10,7 @@ export function LinkedTimeRangeFields({
   onStartChange,
   onEndChange,
   onDurationChange,
+  onDurationBlur,
   disabled,
   startId = "time-start",
   endId = "time-end",
@@ -21,6 +22,7 @@ export function LinkedTimeRangeFields({
   onStartChange: (value: string) => void;
   onEndChange: (value: string) => void;
   onDurationChange: (value: string) => void;
+  onDurationBlur?: () => void;
   disabled?: boolean;
   startId?: string;
   endId?: string;
@@ -60,6 +62,7 @@ export function LinkedTimeRangeFields({
           inputMode="text"
           value={durationText}
           onChange={(e) => onDurationChange(e.target.value)}
+          onBlur={onDurationBlur}
           placeholder="es. 1h30m"
           required
           disabled={disabled}

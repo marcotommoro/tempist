@@ -44,10 +44,16 @@ export function useLinkedTimeRange(initialStart: string, initialEnd: string) {
   );
 
   const applySync = useCallback(
-    (result: ReturnType<typeof syncTimeRangeAfterEdit>) => {
+    (
+      result: ReturnType<typeof syncTimeRangeAfterEdit>,
+      opts?: { durationText?: string },
+    ) => {
       setStartTime(minutesToTimeString(result.startMinutes));
       setEndTime(minutesToTimeString(result.endMinutes));
-      setDurationText(formatDurationMinutes(Math.max(0, result.durationMinutes)));
+      setDurationText(
+        opts?.durationText ??
+          formatDurationMinutes(Math.max(0, result.durationMinutes)),
+      );
       anchorRef.current = result.anchor;
     },
     [],
@@ -99,10 +105,18 @@ export function useLinkedTimeRange(initialStart: string, initialEnd: string) {
         syncTimeRangeAfterEdit("duration", anchorRef.current, current, {
           durationMinutes: newDuration,
         }),
+        { durationText: value },
       );
     },
     [startTime, endTime, durationText, applySync],
   );
+
+  const onDurationBlur = useCallback(() => {
+    const parsed = parseDurationToMinutes(durationText);
+    if (parsed != null) {
+      setDurationText(formatDurationMinutes(parsed));
+    }
+  }, [durationText]);
 
   const reset = useCallback((start: string, end: string) => {
     anchorRef.current = null;
@@ -142,6 +156,7 @@ export function useLinkedTimeRange(initialStart: string, initialEnd: string) {
     onStartChange,
     onEndChange,
     onDurationChange,
+    onDurationBlur,
     reset,
     getResolvedRange,
   };

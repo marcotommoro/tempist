@@ -148,6 +148,7 @@ export function GlobalManualEntryDialog({
             onStartChange={timeRange.onStartChange}
             onEndChange={timeRange.onEndChange}
             onDurationChange={timeRange.onDurationChange}
+            onDurationBlur={timeRange.onDurationBlur}
             disabled={pending}
           />
           <div className="grid grid-cols-2 gap-3">
