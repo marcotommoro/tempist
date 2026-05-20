@@ -73,6 +73,207 @@ export async function getRunningTimer(opts: {
   return entry ?? null;
 }
 
+// ---------------------------------------------------------------------------
+// Quick-entry grid (timesheet a tabella per cliente)
+// ---------------------------------------------------------------------------
+
+/**
+ * Una "quick entry" è una time_entry ancorata a mezzanotte locale (00:00:00.000)
+ * per uno specifico user×client×projectId. Un timer reale non produce mai un
+ * startedAt esattamente a quel valore: usiamo questo come euristica per
+ * separare le celle modificabili dalla griglia dalle voci di tracking.
+ */
+export type QuickGridEntry = {
+  id: string;
+  dayKey: string;
+  projectId: string | null;
+  durationSeconds: number;
+};
+
+export type QuickGridSummaryCell = {
+  dayKey: string;
+  projectId: string | null;
+  totalSeconds: number;
+};
+
+export async function listQuickGridDataForClient(opts: {
+  organizationId: string;
+  userId: string;
+  clientId: string;
+  weekStart: Date;
+  weekEnd: Date;
+}): Promise<{ managed: QuickGridEntry[]; summary: QuickGridSummaryCell[] }> {
+  const rows = await db.query.timeEntry.findMany({
+    where: and(
+      eq(schema.timeEntry.organizationId, opts.organizationId),
+      eq(schema.timeEntry.userId, opts.userId),
+      eq(schema.timeEntry.clientId, opts.clientId),
+      gte(schema.timeEntry.startedAt, opts.weekStart),
+      lt(schema.timeEntry.startedAt, opts.weekEnd),
+    ),
+    columns: {
+      id: true,
+      startedAt: true,
+      projectId: true,
+      durationSeconds: true,
+      isRunning: true,
+    },
+  });
+
+  const summaryMap = new Map<string, QuickGridSummaryCell>();
+  const managed: QuickGridEntry[] = [];
+
+  for (const r of rows) {
+    if (r.isRunning) continue;
+    const dur = r.durationSeconds ?? 0;
+    const dayKey = formatDayKey(r.startedAt);
+    const sumKey = `${dayKey}::${r.projectId ?? ""}`;
+    const cell = summaryMap.get(sumKey) ?? {
+      dayKey,
+      projectId: r.projectId,
+      totalSeconds: 0,
+    };
+    cell.totalSeconds += dur;
+    summaryMap.set(sumKey, cell);
+    if (isAnchorDate(r.startedAt)) {
+      managed.push({
+        id: r.id,
+        dayKey,
+        projectId: r.projectId,
+        durationSeconds: dur,
+      });
+    }
+  }
+
+  return { managed, summary: [...summaryMap.values()] };
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function formatDayKey(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function isAnchorDate(d: Date): boolean {
+  return (
+    d.getHours() === 0 &&
+    d.getMinutes() === 0 &&
+    d.getSeconds() === 0 &&
+    d.getMilliseconds() === 0
+  );
+}
+
+function anchorDateForDayKey(dayKey: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dayKey);
+  if (!match) throw new Error(`dayKey non valido: ${dayKey}`);
+  const y = Number(match[1]);
+  const m = Number(match[2]);
+  const d = Number(match[3]);
+  return new Date(y, m - 1, d, 0, 0, 0, 0);
+}
+
+export type UpsertQuickEntryInput = {
+  organizationId: string;
+  userId: string;
+  clientId: string;
+  projectId: string | null;
+  dayKey: string;
+  hours: number;
+};
+
+/**
+ * Upsert/elimina la "managed" entry della griglia per (user, client, projectId, dayKey).
+ * hours == 0 → elimina la entry se esiste.
+ */
+export async function upsertQuickEntry(
+  input: UpsertQuickEntryInput,
+): Promise<TimeEntry | null> {
+  if (!Number.isFinite(input.hours) || input.hours < 0) {
+    throw new Error("Ore non valide");
+  }
+  if (input.hours > 24) {
+    throw new Error("Massimo 24 ore al giorno");
+  }
+  const anchor = anchorDateForDayKey(input.dayKey);
+  const projectMatch = input.projectId
+    ? eq(schema.timeEntry.projectId, input.projectId)
+    : sql`${schema.timeEntry.projectId} IS NULL`;
+  const existing = await db.query.timeEntry.findFirst({
+    where: and(
+      eq(schema.timeEntry.organizationId, input.organizationId),
+      eq(schema.timeEntry.userId, input.userId),
+      eq(schema.timeEntry.clientId, input.clientId),
+      eq(schema.timeEntry.startedAt, anchor),
+      projectMatch,
+    ),
+  });
+
+  if (input.hours === 0) {
+    if (!existing) return null;
+    await writeAudit({
+      timeEntryId: existing.id,
+      actorId: input.userId,
+      action: "DELETE",
+      before: existing,
+    });
+    await db.delete(schema.timeEntry).where(eq(schema.timeEntry.id, existing.id));
+    return null;
+  }
+
+  const durationSeconds = Math.round(input.hours * 3600);
+  const endedAt = new Date(anchor.getTime() + durationSeconds * 1000);
+
+  if (existing) {
+    const [updated] = await db
+      .update(schema.timeEntry)
+      .set({ endedAt, durationSeconds, updatedAt: new Date() })
+      .where(eq(schema.timeEntry.id, existing.id))
+      .returning();
+    if (!updated) throw new Error("Aggiornamento quick entry fallito");
+    await writeAudit({
+      timeEntryId: updated.id,
+      actorId: input.userId,
+      action: "UPDATE",
+      before: existing,
+      after: updated,
+    });
+    return updated;
+  }
+
+  const { rate, currency } = await resolveRateSnapshot({
+    organizationId: input.organizationId,
+    projectId: input.projectId,
+    clientId: input.clientId,
+    userId: input.userId,
+  });
+  const [created] = await db
+    .insert(schema.timeEntry)
+    .values({
+      organizationId: input.organizationId,
+      userId: input.userId,
+      clientId: input.clientId,
+      projectId: input.projectId,
+      startedAt: anchor,
+      endedAt,
+      durationSeconds,
+      isRunning: false,
+      isBillable: true,
+      hourlyRateSnapshot: rate,
+      currencySnapshot: currency,
+    })
+    .returning();
+  if (!created) throw new Error("Insert quick entry fallito");
+  await writeAudit({
+    timeEntryId: created.id,
+    actorId: input.userId,
+    action: "CREATE",
+    after: created,
+  });
+  return created;
+}
+
 export async function listTimeEntriesForClient(opts: {
   clientId: string;
   organizationId: string;

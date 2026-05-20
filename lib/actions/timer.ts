@@ -13,6 +13,7 @@ import {
   startTimerFromTask,
   stopTimer,
   updateTimeEntry,
+  upsertQuickEntry,
 } from "@/lib/domain/time-entries";
 import { validateTimeEntryRange } from "@/lib/utils/compute-duration-seconds";
 import type { ActionResult } from "./tasks";
@@ -155,6 +156,44 @@ export async function updateTimeEntryAction(input: {
     });
     revalidateAll();
     return { ok: true, data: { id: entry.id } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+export async function upsertQuickEntryAction(input: {
+  clientId: string;
+  projectId: string | null;
+  dayKey: string;
+  hours: number;
+}): Promise<ActionResult<{ id: string | null; durationSeconds: number }>> {
+  try {
+    const { user, organizationId } = await requireActiveOrganization();
+    if (!input.clientId) {
+      return { ok: false, error: "Cliente mancante" };
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dayKey)) {
+      return { ok: false, error: "Giorno non valido" };
+    }
+    if (!Number.isFinite(input.hours) || input.hours < 0 || input.hours > 24) {
+      return { ok: false, error: "Ore non valide (0–24)" };
+    }
+    const result = await upsertQuickEntry({
+      organizationId,
+      userId: user.id,
+      clientId: input.clientId,
+      projectId: input.projectId,
+      dayKey: input.dayKey,
+      hours: input.hours,
+    });
+    revalidateAll();
+    return {
+      ok: true,
+      data: {
+        id: result?.id ?? null,
+        durationSeconds: result?.durationSeconds ?? 0,
+      },
+    };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Errore" };
   }
