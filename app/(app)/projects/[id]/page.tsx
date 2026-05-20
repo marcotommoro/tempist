@@ -10,6 +10,7 @@ import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { ProjectClientSelect } from "@/components/features/projects/project-client-select";
 import { ProjectDescription } from "@/components/features/projects/project-description";
+import { ProjectEditableTitle } from "@/components/features/projects/project-editable-title";
 import { ProjectMembersButton } from "@/components/features/projects/members/project-members-button";
 import { TaskItem } from "@/components/features/tasks/task-item";
 import { AddTaskToProject } from "@/components/features/tasks/add-task-to-project";
@@ -62,17 +63,13 @@ export default async function ProjectDetailPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow={
-          <span className="inline-flex items-center gap-2">
-            <span
-              className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
-              style={{ backgroundColor: project.color }}
-              aria-hidden
-            />
-            Project
-          </span>
+        title={
+          <ProjectEditableTitle
+            projectId={id}
+            initialName={project.name}
+            canEdit={canEdit}
+          />
         }
-        title={project.name}
         meta={
           <>
             <span>
@@ -259,7 +256,7 @@ function SectionBlock({
   return (
     <section className="space-y-3">
       <div className="flex items-baseline justify-between border-b border-border pb-1.5">
-        <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+        <h2 className="section-heading text-muted-foreground">
           {name}
         </h2>
         <span className="font-mono text-[10px] tabular-nums text-muted-foreground">

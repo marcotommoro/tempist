@@ -17,6 +17,7 @@ import {
 import { HoursByDayChart } from "@/components/features/reports/hours-by-day-chart";
 import { ClientPieChart } from "@/components/features/reports/client-pie-chart";
 import { cn } from "@/lib/utils";
+import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Search = { range?: string };
@@ -197,7 +198,7 @@ export default async function ReportsPage({
       {/* Tabella per cliente */}
       <section className="space-y-3">
         <div className="flex items-baseline justify-between border-b border-border pb-1.5">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          <h2 className="section-heading text-muted-foreground">
             By client
           </h2>
           <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
@@ -232,11 +233,7 @@ export default async function ReportsPage({
                           href={`/clients/${r.id}`}
                           className="inline-flex items-center gap-2 text-[13px] hover:text-coral"
                         >
-                          <span
-                            className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
-                            style={{ backgroundColor: r.color }}
-                            aria-hidden
-                          />
+                          <EntityColorMarker kind="client" color={r.color} size="sm" />
                           {r.name}
                         </Link>
                       ) : (
@@ -275,7 +272,7 @@ export default async function ReportsPage({
       {/* Tabella per progetto */}
       <section className="space-y-3">
         <div className="flex items-baseline justify-between border-b border-border pb-1.5">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          <h2 className="section-heading text-muted-foreground">
             By project
           </h2>
           <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
@@ -308,11 +305,7 @@ export default async function ReportsPage({
                         href={`/projects/${p.id}`}
                         className="inline-flex items-center gap-2 text-[13px] hover:text-coral"
                       >
-                        <span
-                          className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
-                          style={{ backgroundColor: p.color }}
-                          aria-hidden
-                        />
+                        <EntityColorMarker kind="project" color={p.color} size="sm" />
                         {p.name}
                       </Link>
                     </td>
@@ -373,7 +366,7 @@ function ChartCard({
 }) {
   return (
     <div className="rounded-md border border-border bg-card p-4">
-      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+      <h3 className="section-heading-sm mb-3 text-muted-foreground">
         {title}
       </h3>
       {children}

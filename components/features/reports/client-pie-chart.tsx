@@ -1,5 +1,7 @@
 "use client";
 
+import { EntityColorMarker } from "@/components/features/entity-color-marker";
+
 export type ClientSlice = {
   name: string;
   hours: number;
@@ -53,11 +55,7 @@ export function ClientPieChart({ data }: { data: ClientSlice[] }) {
               key={i}
               className="grid grid-cols-[12px_1fr_auto_64px] items-center gap-2 text-[12px]"
             >
-              <span
-                aria-hidden
-                className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
-                style={{ backgroundColor: s.color }}
-              />
+              <EntityColorMarker kind="client" color={s.color} size="sm" />
               <span className="truncate text-foreground">{s.name}</span>
               <span className="font-mono tabular-nums text-muted-foreground">
                 {s.hours.toFixed(2)}h

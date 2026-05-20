@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import type { ClientForEdit } from "@/components/features/clients/edit-client-dialog";
 import { EditClientDialogButton } from "@/components/features/clients/edit-client-dialog";
+import { EntityColorMarker } from "@/components/features/entity-color-marker";
 
 export function ClientList({ clients }: { clients: ClientForEdit[] }) {
   return (
@@ -14,11 +15,7 @@ export function ClientList({ clients }: { clients: ClientForEdit[] }) {
             href={`/clients/${c.id}`}
             className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 transition-colors duration-[var(--dur-fast)] hover:bg-accent/40"
           >
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
-              style={{ backgroundColor: c.color }}
-              aria-hidden
-            />
+            <EntityColorMarker kind="client" color={c.color} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[14px] font-medium text-foreground">
                 {c.name}

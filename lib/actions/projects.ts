@@ -87,10 +87,16 @@ export async function renameProjectAction(
   newName: string,
 ): Promise<ActionResult> {
   try {
-    const { organizationId } = await requireActiveOrganization();
+    const { role, project } = await requireProjectAccess(projectId);
+    assertProjectRole(role, ["editor"]);
     const name = newName.trim();
     if (!name) return { ok: false, error: "Nome vuoto" };
-    await renameProject({ projectId, organizationId, name });
+    if (name.length > 80) return { ok: false, error: "Nome troppo lungo (max 80)" };
+    await renameProject({
+      projectId,
+      organizationId: project.organizationId,
+      name,
+    });
     revalidateProjects(projectId);
     return { ok: true, data: undefined };
   } catch (err) {

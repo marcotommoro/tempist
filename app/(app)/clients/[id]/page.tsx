@@ -27,6 +27,7 @@ import { TaskList } from "@/components/features/tasks/task-list";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
+import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Params = { id: string };
@@ -162,11 +163,7 @@ export default async function ClientDetailPage({
       <PageHeader
         eyebrow={
           <span className="inline-flex items-center gap-2">
-            <span
-              className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
-              style={{ backgroundColor: client.color }}
-              aria-hidden
-            />
+            <EntityColorMarker kind="client" color={client.color} size="sm" />
             Client
           </span>
         }
@@ -241,7 +238,7 @@ export default async function ClientDetailPage({
       {aggregatesSorted.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-baseline justify-between border-b border-border pb-1.5">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            <h2 className="section-heading text-muted-foreground">
               Breakdown per progetto
             </h2>
             <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
@@ -296,7 +293,7 @@ export default async function ClientDetailPage({
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between border-b border-border pb-1.5">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          <h2 className="section-heading text-muted-foreground">
             Tasks
           </h2>
           <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
@@ -313,7 +310,7 @@ export default async function ClientDetailPage({
 
       <section className="space-y-3">
         <div className="flex items-baseline justify-between border-b border-border pb-1.5">
-          <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          <h2 className="section-heading text-muted-foreground">
             Time entries
           </h2>
           <span className="font-mono text-[10px] tabular-nums text-muted-foreground">

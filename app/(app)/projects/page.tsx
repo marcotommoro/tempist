@@ -5,6 +5,7 @@ import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listProjects } from "@/lib/domain/projects";
 import { listClients } from "@/lib/domain/clients";
 import { CreateProjectForm } from "@/components/features/projects/create-project-form";
+import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
 export default async function ProjectsPage() {
@@ -56,22 +57,14 @@ export default async function ProjectsPage() {
                   href={`/projects/${p.id}`}
                   className="flex items-center gap-3 px-4 py-3 transition-colors duration-[var(--dur-fast)] hover:bg-accent/40"
                 >
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
-                    style={{ backgroundColor: p.color }}
-                    aria-hidden
-                  />
+                  <EntityColorMarker kind="project" color={p.color} />
                   <span className="text-[14px] font-medium text-foreground">{p.name}</span>
                   {p.isFavorite && (
                     <Star className="h-3 w-3 fill-coral text-coral" aria-hidden />
                   )}
                   {cli && (
                     <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ backgroundColor: cli.color }}
-                        aria-hidden
-                      />
+                      <EntityColorMarker kind="client" color={cli.color} size="sm" />
                       {cli.name}
                     </span>
                   )}

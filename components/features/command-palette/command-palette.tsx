@@ -23,6 +23,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { searchAction } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/domain/search";
 
@@ -123,11 +124,7 @@ export function CommandPalette() {
                       value={`project ${r.name}`}
                       onSelect={() => go(`/projects/${r.id}`)}
                     >
-                      <span
-                        className="size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
-                        style={{ backgroundColor: r.color }}
-                        aria-hidden
-                      />
+                      <EntityColorMarker kind="project" color={r.color} />
                       <span className="truncate">{r.name}</span>
                       <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                         Project
@@ -141,11 +138,7 @@ export function CommandPalette() {
                     value={`client ${r.name}`}
                     onSelect={() => go(`/clients/${r.id}`)}
                   >
-                    <span
-                      className="size-2.5 shrink-0 rounded-full ring-1 ring-inset ring-black/10"
-                      style={{ backgroundColor: r.color }}
-                      aria-hidden
-                    />
+                    <EntityColorMarker kind="client" color={r.color} />
                     <span className="truncate">{r.name}</span>
                     <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                       Client

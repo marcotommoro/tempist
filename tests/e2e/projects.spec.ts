@@ -49,6 +49,32 @@ test.describe("projects + sections", () => {
     await expect(page).toHaveURL(/\/projects\/[\w-]+$/);
   });
 
+  test("rinomina progetto inline dal titolo", async ({ page }) => {
+    const projectName = `Rename ${uniqueSuffix()}`;
+    const renamed = `${projectName} updated`;
+    await page.goto("/projects");
+
+    await page.getByPlaceholder(/Nome nuovo progetto/i).fill(projectName);
+    await page.getByRole("button", { name: /^crea$/i }).click();
+    await page
+      .locator("#main-content")
+      .getByRole("link", { name: new RegExp(projectName) })
+      .click();
+
+    await page.getByRole("button", { name: /rinomina progetto/i }).click();
+    const nameInput = page.getByLabel(/nome progetto/i);
+    await expect(nameInput).toBeVisible();
+    await nameInput.fill(renamed);
+    await nameInput.press("Enter");
+
+    await expect(page.getByRole("heading", { name: renamed })).toBeVisible({
+      timeout: 5_000,
+    });
+    await expect(
+      page.locator("aside").getByRole("link", { name: new RegExp(renamed) }),
+    ).toBeVisible({ timeout: 5_000 });
+  });
+
   test("crea sezione nel progetto", async ({ page }) => {
     const projectName = `Proj sec ${uniqueSuffix()}`;
     await page.goto("/projects");

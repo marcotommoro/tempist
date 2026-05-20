@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { setProjectClientAction } from "@/lib/actions/projects";
 import type { Client } from "@/lib/db/schema";
 
@@ -36,13 +37,7 @@ export function ProjectClientSelect({
     <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
       Cliente:
       <span className="inline-flex items-center gap-1.5">
-        {current && (
-          <span
-            className="w-2.5 h-2.5 rounded-full"
-            style={{ backgroundColor: current.color }}
-            aria-hidden
-          />
-        )}
+        {current && <EntityColorMarker kind="client" color={current.color} />}
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
