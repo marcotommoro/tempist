@@ -20,6 +20,9 @@ import { Label } from "@/components/ui/label";
 import { updateTimeEntryAction } from "@/lib/actions/timer";
 import type { Client, Project, TimeEntry } from "@/lib/db/schema";
 
+import { LinkedTimeRangeFields } from "./linked-time-range-fields";
+import { useLinkedTimeRange } from "./use-linked-time-range";
+
 type ClientPick = Pick<Client, "id" | "name">;
 type ProjectPick = Pick<Project, "id" | "name" | "clientId">;
 
@@ -56,8 +59,10 @@ function TimeEntryEditForm({
     userTimezone,
   );
   const [date, setDate] = useState(startLocal);
-  const [startTime, setStartTime] = useState(format(startLocal, "HH:mm"));
-  const [endTime, setEndTime] = useState(format(endLocal, "HH:mm"));
+  const timeRange = useLinkedTimeRange(
+    format(startLocal, "HH:mm"),
+    format(endLocal, "HH:mm"),
+  );
   const [description, setDescription] = useState(entry.description ?? "");
   const [clientId, setClientId] = useState(entry.clientId ?? "");
   const [projectId, setProjectId] = useState(entry.projectId ?? "");
@@ -76,12 +81,13 @@ function TimeEntryEditForm({
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const startedAt = combineDateTime(date, startTime, userTimezone);
-    const endedAt = combineDateTime(date, endTime, userTimezone);
-    if (endedAt.getTime() <= startedAt.getTime()) {
-      setError("Ora fine deve essere dopo ora inizio");
+    const range = timeRange.getResolvedRange();
+    if (!range.ok) {
+      setError(range.error);
       return;
     }
+    const startedAt = combineDateTime(date, timeRange.startTime, userTimezone);
+    const endedAt = combineDateTime(date, timeRange.endTime, userTimezone);
     startTransition(async () => {
       const res = await updateTimeEntryAction({
         timeEntryId: entry.id,
@@ -113,32 +119,18 @@ function TimeEntryEditForm({
           className="w-full"
         />
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label htmlFor="edit-start">Ora inizio</Label>
-          <Input
-            id="edit-start"
-            type="time"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            step={60}
-            required
-            disabled={pending || entry.isRunning}
-          />
-        </div>
-        <div>
-          <Label htmlFor="edit-end">Ora fine</Label>
-          <Input
-            id="edit-end"
-            type="time"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            step={60}
-            required
-            disabled={pending || entry.isRunning}
-          />
-        </div>
-      </div>
+      <LinkedTimeRangeFields
+        startId="edit-start"
+        endId="edit-end"
+        durationId="edit-duration"
+        startTime={timeRange.startTime}
+        endTime={timeRange.endTime}
+        durationText={timeRange.durationText}
+        onStartChange={timeRange.onStartChange}
+        onEndChange={timeRange.onEndChange}
+        onDurationChange={timeRange.onDurationChange}
+        disabled={pending || entry.isRunning}
+      />
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="edit-project">Progetto</Label>

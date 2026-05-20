@@ -20,6 +20,9 @@ import { Label } from "@/components/ui/label";
 import { createManualEntryAction } from "@/lib/actions/timer";
 import type { Client, Project } from "@/lib/db/schema";
 
+import { LinkedTimeRangeFields } from "./linked-time-range-fields";
+import { useLinkedTimeRange } from "./use-linked-time-range";
+
 /**
  * Inserimento manuale ore globale (button in topbar).
  *
@@ -27,6 +30,7 @@ import type { Client, Project } from "@/lib/db/schema";
  *   - data (un solo giorno, default oggi)
  *   - ora inizio (HH:MM)
  *   - ora fine (HH:MM)
+ *   - ore effettive (es. 1h30m) — l'ultimo campo modificato aggiorna gli altri due
  *   - cliente (opzionale)
  *   - progetto (opzionale)
  *   - descrizione (opzionale)
@@ -43,8 +47,7 @@ export function GlobalManualEntryDialog({
   const [open, setOpen] = useState(false);
   const today = new Date();
   const [date, setDate] = useState<Date>(today);
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("10:00");
+  const timeRange = useLinkedTimeRange("09:00", "10:00");
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [description, setDescription] = useState("");
@@ -66,12 +69,13 @@ export function GlobalManualEntryDialog({
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const startedAt = combineDateTime(date, startTime);
-    const endedAt = combineDateTime(date, endTime);
-    if (endedAt.getTime() <= startedAt.getTime()) {
-      setError("Ora fine deve essere dopo ora inizio");
+    const range = timeRange.getResolvedRange();
+    if (!range.ok) {
+      setError(range.error);
       return;
     }
+    const startedAt = combineDateTime(date, timeRange.startTime);
+    const endedAt = combineDateTime(date, timeRange.endTime);
     startTransition(async () => {
       const res = await createManualEntryAction({
         startedAt: startedAt.toISOString(),
@@ -134,32 +138,18 @@ export function GlobalManualEntryDialog({
               className="w-full"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="manual-start">Ora inizio</Label>
-              <Input
-                id="manual-start"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                step={60}
-                required
-                disabled={pending}
-              />
-            </div>
-            <div>
-              <Label htmlFor="manual-end">Ora fine</Label>
-              <Input
-                id="manual-end"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                step={60}
-                required
-                disabled={pending}
-              />
-            </div>
-          </div>
+          <LinkedTimeRangeFields
+            startId="manual-start"
+            endId="manual-end"
+            durationId="manual-duration"
+            startTime={timeRange.startTime}
+            endTime={timeRange.endTime}
+            durationText={timeRange.durationText}
+            onStartChange={timeRange.onStartChange}
+            onEndChange={timeRange.onEndChange}
+            onDurationChange={timeRange.onDurationChange}
+            disabled={pending}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="manual-project">Progetto</Label>
