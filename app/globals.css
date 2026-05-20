@@ -88,6 +88,7 @@
 /* Chrome scale — drives html font-size, so every rem-based size in the app
    (sidebar, header, dialogs, command palette, content text via Tailwind) scales. */
 html[data-font-size="sm"]  { --font-size-base: 16px; }
+html[data-font-size="smd"] { --font-size-base: 18px; }
 html[data-font-size="md"]  { --font-size-base: 20px; }
 html[data-font-size="lg"]  { --font-size-base: 22px; }
 html[data-font-size="xl"]  { --font-size-base: 24px; }
@@ -96,6 +97,7 @@ html[data-font-size="xxl"] { --font-size-base: 28px; }
 /* Content scale — independent axis for the main page content container.
    Applied only inside elements marked [data-content-scope]. */
 html[data-content-size="sm"]  { --content-base: 16px; }
+html[data-content-size="smd"] { --content-base: 18px; }
 html[data-content-size="md"]  { --content-base: 20px; }
 html[data-content-size="lg"]  { --content-base: 22px; }
 html[data-content-size="xl"]  { --content-base: 24px; }

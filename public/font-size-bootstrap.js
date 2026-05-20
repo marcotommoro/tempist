@@ -1,6 +1,13 @@
 (function () {
   var valid = function (s) {
-    return s === "sm" || s === "md" || s === "lg" || s === "xl" || s === "xxl";
+    return (
+      s === "sm" ||
+      s === "smd" ||
+      s === "md" ||
+      s === "lg" ||
+      s === "xl" ||
+      s === "xxl"
+    );
   };
   try {
     var chrome = localStorage.getItem("font-size");

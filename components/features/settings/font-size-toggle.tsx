@@ -8,6 +8,7 @@ import { useIsClient } from "@/lib/hooks/use-is-client";
 // utente — così il toggle mostra sempre la scala relativa reale tra le opzioni.
 const OPTIONS = [
   { value: "sm", label: "sm", previewPx: 11 },
+  { value: "smd", label: "smd", previewPx: 12 },
   { value: "md", label: "md", previewPx: 13 },
   { value: "lg", label: "lg", previewPx: 15 },
   { value: "xl", label: "xl", previewPx: 17 },

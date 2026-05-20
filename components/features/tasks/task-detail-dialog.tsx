@@ -115,11 +115,14 @@ export function TaskDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0 sm:rounded-lg">
+      <DialogContent
+        data-content-scope
+        className="max-w-5xl gap-0 overflow-hidden p-0 sm:rounded-lg"
+      >
         <DialogTitle className="sr-only">{title}</DialogTitle>
-        <div className="grid md:grid-cols-[1fr_260px]">
+        <div className="grid md:grid-cols-[1fr_280px]">
           {/* Sinistra: contenuto principale */}
-          <div className="max-h-[80vh] space-y-5 overflow-y-auto p-6">
+          <div className="max-h-[85vh] space-y-5 overflow-y-auto p-6">
             <div className="flex items-start gap-3">
               <label className="relative mt-1.5 inline-flex shrink-0 cursor-pointer items-center justify-center">
                 <input
@@ -226,7 +229,7 @@ export function TaskDetailDialog({
           </div>
 
           {/* Destra: sidebar metadata */}
-          <aside className="max-h-[80vh] space-y-5 overflow-y-auto border-t border-border bg-muted/40 p-5 md:border-l md:border-t-0">
+          <aside className="max-h-[85vh] space-y-5 overflow-y-auto border-t border-border bg-muted/40 p-5 md:border-l md:border-t-0">
             <Field label="Project">
               {projectName ? (
                 <div className="inline-flex items-center gap-2 text-[0.8125em]">

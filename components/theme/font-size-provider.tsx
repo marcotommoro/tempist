@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type FontSize = "sm" | "md" | "lg" | "xl" | "xxl";
+export type FontSize = "sm" | "smd" | "md" | "lg" | "xl" | "xxl";
 
 const STORAGE_KEY_CHROME = "font-size";
 const STORAGE_KEY_CONTENT = "content-font-size";
@@ -26,7 +26,14 @@ interface FontSizeContextValue {
 const FontSizeContext = createContext<FontSizeContextValue | null>(null);
 
 function isFontSize(v: unknown): v is FontSize {
-  return v === "sm" || v === "md" || v === "lg" || v === "xl" || v === "xxl";
+  return (
+    v === "sm" ||
+    v === "smd" ||
+    v === "md" ||
+    v === "lg" ||
+    v === "xl" ||
+    v === "xxl"
+  );
 }
 
 // One independent pub/sub per key — keeps subscribers from re-rendering on the
