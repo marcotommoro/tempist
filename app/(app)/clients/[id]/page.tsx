@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Mail, Receipt } from "lucide-react";
+import { Mail, Pencil, Receipt } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getClient, listClients } from "@/lib/domain/clients";
@@ -10,9 +10,11 @@ import {
 } from "@/lib/domain/time-entries";
 import { getTasksForClient } from "@/lib/domain/tasks";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
+import { EditClientDialog } from "@/components/features/clients/edit-client-dialog";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { TaskList } from "@/components/features/tasks/task-list";
+import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
@@ -84,6 +86,17 @@ export default async function ClientDetailPage({
           </span>
         }
         title={client.name}
+        actions={
+          <EditClientDialog
+            client={client}
+            trigger={
+              <Button type="button" variant="outline" size="sm" className="gap-1.5">
+                <Pencil className="size-3.5" />
+                Modifica
+              </Button>
+            }
+          />
+        }
         meta={
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 normal-case tracking-normal">
             {client.email && (
