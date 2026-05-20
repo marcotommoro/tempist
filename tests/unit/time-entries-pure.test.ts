@@ -9,10 +9,10 @@
 
 import { describe, it, expect } from "vitest";
 
-// Helper-stub: la stessa logica di calcolo che startTimer/createManualEntry usano
-function computeDurationSeconds(startedAt: Date, endedAt: Date): number {
-  return Math.max(0, Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000));
-}
+import {
+  computeDurationSeconds,
+  validateTimeEntryRange,
+} from "@/lib/utils/compute-duration-seconds";
 
 describe("computeDurationSeconds", () => {
   it("clamps to zero when endedAt <= startedAt", () => {
@@ -39,6 +39,22 @@ describe("computeDurationSeconds", () => {
     const start = new Date("2026-05-15T10:00:00Z");
     const end = new Date("2026-05-15T13:25:42Z");
     expect(computeDurationSeconds(start, end)).toBe(3 * 3600 + 25 * 60 + 42);
+  });
+});
+
+describe("validateTimeEntryRange", () => {
+  it("throws when endedAt <= startedAt", () => {
+    const t = new Date("2026-05-15T10:00:00Z");
+    expect(() => validateTimeEntryRange(t, t)).toThrow(/endedAt/);
+    expect(() => validateTimeEntryRange(t, new Date(t.getTime() - 1000))).toThrow(
+      /endedAt/,
+    );
+  });
+
+  it("does not throw for valid range", () => {
+    const start = new Date("2026-05-15T10:00:00Z");
+    const end = new Date("2026-05-15T11:00:00Z");
+    expect(() => validateTimeEntryRange(start, end)).not.toThrow();
   });
 });
 

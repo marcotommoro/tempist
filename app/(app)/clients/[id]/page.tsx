@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { Mail, Receipt } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
-import { getClient } from "@/lib/domain/clients";
+import { getClient, listClients } from "@/lib/domain/clients";
+import { listProjects } from "@/lib/domain/projects";
 import {
   getTrackedSecondsByTask,
   listTimeEntriesForClient,
@@ -27,11 +28,22 @@ export default async function ClientDetailPage({
   const client = await getClient({ clientId: id, organizationId });
   if (!client) notFound();
 
-  const entries = await listTimeEntriesForClient({
-    clientId: id,
-    organizationId,
-    limit: 100,
-  });
+  const [entries, clients, projects] = await Promise.all([
+    listTimeEntriesForClient({
+      clientId: id,
+      organizationId,
+      limit: 100,
+    }),
+    listClients({ organizationId }),
+    listProjects({ organizationId }),
+  ]);
+
+  const clientPicks = clients.map((c) => ({ id: c.id, name: c.name }));
+  const projectPicks = projects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    clientId: p.clientId,
+  }));
 
   const tasks = await getTasksForClient({
     organizationId,
@@ -146,7 +158,12 @@ export default async function ClientDetailPage({
           {entries.length > 0 ? (
             <ul className="divide-y divide-border">
               {entries.map((e) => (
-                <TimeEntryRow key={e.id} entry={e} />
+                <TimeEntryRow
+                  key={e.id}
+                  entry={e}
+                  clients={clientPicks}
+                  projects={projectPicks}
+                />
               ))}
             </ul>
           ) : (

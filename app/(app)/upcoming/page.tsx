@@ -64,8 +64,10 @@ export default async function UpcomingPage({
       ? parseISO(cursorParam)
       : todayLocal;
 
-  // Mostriamo 14 giorni dalla settimana che contiene cursor (lunedì → +13)
-  const rangeStartLocal = startOfWeek(cursorLocal, { weekStartsOn: 1 });
+  // 14 giorni: da oggi se il cursore è oggi, altrimenti dal lunedì della settimana del cursore
+  const rangeStartLocal = isSameDay(cursorLocal, todayLocal)
+    ? todayLocal
+    : startOfWeek(cursorLocal, { weekStartsOn: 1 });
   const rangeEndLocal = addDays(rangeStartLocal, 14);
 
   const rangeStartUtc = fromZonedTime(rangeStartLocal, timezone);

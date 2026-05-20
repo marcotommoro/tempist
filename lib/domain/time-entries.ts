@@ -14,13 +14,17 @@ import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import type { Task, TimeEntry } from "@/lib/db/schema";
+import {
+  computeDurationSeconds,
+  validateTimeEntryRange,
+} from "@/lib/utils/compute-duration-seconds";
 import { resolveRate } from "./billing";
 
 // ---------------------------------------------------------------------------
 // Audit log helpers
 // ---------------------------------------------------------------------------
 
-type AuditAction = "CREATE" | "UPDATE" | "STOP" | "RESUME";
+type AuditAction = "CREATE" | "UPDATE" | "STOP" | "RESUME" | "DELETE";
 
 async function writeAudit(opts: {
   timeEntryId: string;
@@ -84,18 +88,39 @@ export async function listTimeEntriesForClient(opts: {
   });
 }
 
+export async function getTimeEntry(opts: {
+  timeEntryId: string;
+  organizationId: string;
+}): Promise<TimeEntry | null> {
+  const entry = await db.query.timeEntry.findFirst({
+    where: and(
+      eq(schema.timeEntry.id, opts.timeEntryId),
+      eq(schema.timeEntry.organizationId, opts.organizationId),
+    ),
+  });
+  return entry ?? null;
+}
+
 export async function listTimeEntriesForUser(opts: {
   userId: string;
   organizationId: string;
+  from?: Date;
+  to?: Date;
+  clientId?: string | null;
   limit?: number;
 }): Promise<TimeEntry[]> {
+  const conds = [
+    eq(schema.timeEntry.organizationId, opts.organizationId),
+    eq(schema.timeEntry.userId, opts.userId),
+  ];
+  if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
+  if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
+  if (opts.clientId) conds.push(eq(schema.timeEntry.clientId, opts.clientId));
+
   return db.query.timeEntry.findMany({
-    where: and(
-      eq(schema.timeEntry.organizationId, opts.organizationId),
-      eq(schema.timeEntry.userId, opts.userId),
-    ),
+    where: and(...conds),
     orderBy: [desc(schema.timeEntry.startedAt)],
-    limit: opts.limit ?? 100,
+    limit: opts.limit ?? 200,
   });
 }
 
@@ -285,7 +310,7 @@ export async function stopTimer(opts: {
   const running = await getRunningTimer(opts);
   if (!running) return null;
   const now = new Date();
-  const duration = Math.max(0, Math.floor((now.getTime() - running.startedAt.getTime()) / 1000));
+  const duration = computeDurationSeconds(running.startedAt, now);
   const [updated] = await db
     .update(schema.timeEntry)
     .set({
@@ -320,10 +345,8 @@ export type CreateManualEntryInput = {
 };
 
 export async function createManualEntry(input: CreateManualEntryInput): Promise<TimeEntry> {
-  if (input.endedAt.getTime() <= input.startedAt.getTime()) {
-    throw new Error("endedAt deve essere > startedAt");
-  }
-  const duration = Math.floor((input.endedAt.getTime() - input.startedAt.getTime()) / 1000);
+  validateTimeEntryRange(input.startedAt, input.endedAt);
+  const duration = computeDurationSeconds(input.startedAt, input.endedAt);
   const { rate, currency } = await resolveRateSnapshot({
     organizationId: input.organizationId,
     taskId: input.taskId,
@@ -381,10 +404,87 @@ export async function startTimerFromTask(opts: {
   });
 }
 
+export type UpdateTimeEntryInput = {
+  timeEntryId: string;
+  organizationId: string;
+  actorId: string;
+  description?: string | null;
+  startedAt: Date;
+  endedAt: Date;
+  clientId?: string | null;
+  projectId?: string | null;
+  taskId?: string | null;
+  isBillable?: boolean;
+};
+
+export async function updateTimeEntry(input: UpdateTimeEntryInput): Promise<TimeEntry> {
+  const existing = await getTimeEntry({
+    timeEntryId: input.timeEntryId,
+    organizationId: input.organizationId,
+  });
+  if (!existing) throw new Error("Voce non trovata");
+  if (existing.userId !== input.actorId) {
+    throw new Error("Non puoi modificare voci di altri utenti");
+  }
+  if (existing.isRunning) {
+    throw new Error("Ferma il timer prima di modificare la voce");
+  }
+  validateTimeEntryRange(input.startedAt, input.endedAt);
+  const durationSeconds = computeDurationSeconds(input.startedAt, input.endedAt);
+
+  const [updated] = await db
+    .update(schema.timeEntry)
+    .set({
+      description: input.description ?? null,
+      startedAt: input.startedAt,
+      endedAt: input.endedAt,
+      durationSeconds,
+      clientId: input.clientId ?? null,
+      projectId: input.projectId ?? null,
+      taskId: input.taskId ?? null,
+      isBillable: input.isBillable ?? existing.isBillable,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(schema.timeEntry.id, input.timeEntryId),
+        eq(schema.timeEntry.organizationId, input.organizationId),
+      ),
+    )
+    .returning();
+  if (!updated) throw new Error("Aggiornamento voce fallito");
+  await writeAudit({
+    timeEntryId: updated.id,
+    actorId: input.actorId,
+    action: "UPDATE",
+    before: existing,
+    after: updated,
+  });
+  return updated;
+}
+
 export async function deleteTimeEntry(opts: {
   timeEntryId: string;
   organizationId: string;
+  actorId: string;
 }): Promise<void> {
+  const existing = await getTimeEntry({
+    timeEntryId: opts.timeEntryId,
+    organizationId: opts.organizationId,
+  });
+  if (!existing) throw new Error("Voce non trovata");
+  if (existing.userId !== opts.actorId) {
+    throw new Error("Non puoi eliminare voci di altri utenti");
+  }
+  if (existing.isRunning) {
+    throw new Error("Ferma il timer prima di eliminare la voce");
+  }
+  await writeAudit({
+    timeEntryId: existing.id,
+    actorId: opts.actorId,
+    action: "DELETE",
+    before: existing,
+  });
   await db
     .delete(schema.timeEntry)
     .where(

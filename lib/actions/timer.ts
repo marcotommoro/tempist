@@ -12,7 +12,9 @@ import {
   startTimer,
   startTimerFromTask,
   stopTimer,
+  updateTimeEntry,
 } from "@/lib/domain/time-entries";
+import { validateTimeEntryRange } from "@/lib/utils/compute-duration-seconds";
 import type { ActionResult } from "./tasks";
 
 function revalidateAll() {
@@ -101,10 +103,58 @@ export async function deleteTimeEntryAction(
   timeEntryId: string,
 ): Promise<ActionResult> {
   try {
-    const { organizationId } = await requireActiveOrganization();
-    await deleteTimeEntry({ timeEntryId, organizationId });
+    const { user, organizationId } = await requireActiveOrganization();
+    await deleteTimeEntry({
+      timeEntryId,
+      organizationId,
+      actorId: user.id,
+    });
     revalidateAll();
     return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+export async function updateTimeEntryAction(input: {
+  timeEntryId: string;
+  startedAt: string;
+  endedAt: string;
+  description?: string;
+  clientId?: string | null;
+  projectId?: string | null;
+  taskId?: string | null;
+  isBillable?: boolean;
+}): Promise<ActionResult<{ id: string }>> {
+  try {
+    const { user, organizationId } = await requireActiveOrganization();
+    const startedAt = new Date(input.startedAt);
+    const endedAt = new Date(input.endedAt);
+    if (Number.isNaN(startedAt.getTime()) || Number.isNaN(endedAt.getTime())) {
+      return { ok: false, error: "Date non valide" };
+    }
+    try {
+      validateTimeEntryRange(startedAt, endedAt);
+    } catch (e) {
+      return {
+        ok: false,
+        error: e instanceof Error ? e.message : "Intervallo non valido",
+      };
+    }
+    const entry = await updateTimeEntry({
+      timeEntryId: input.timeEntryId,
+      organizationId,
+      actorId: user.id,
+      startedAt,
+      endedAt,
+      description: input.description ?? null,
+      clientId: input.clientId ?? null,
+      projectId: input.projectId ?? null,
+      taskId: input.taskId ?? null,
+      isBillable: input.isBillable,
+    });
+    revalidateAll();
+    return { ok: true, data: { id: entry.id } };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Errore" };
   }
