@@ -1,27 +1,32 @@
 /**
- * One-shot cleanup: soft-delete every task in Edoardo's workspaces
+ * One-shot cleanup: soft-delete every task in the target user's workspaces
  * WITHOUT pushing deletes to Google Calendar.
  *
  * Sequence:
- *   1. Find user by USER_EMAIL.
+ *   1. Find user by USER_EMAILS (comma-separated).
  *   2. Find all organizations where they're a member.
  *   3. Drop calendarEventLink rows for tasks in those orgs (so the next
  *      calendar.sync tick does NOT call deleteEvent on Google).
  *   4. Soft-delete the tasks (set deletedAt where deletedAt IS NULL).
  *
  * Usage:
- *   tsx scripts/cleanup-tasks.ts           # dry-run, prints counts
- *   tsx scripts/cleanup-tasks.ts --apply   # actually mutates
+ *   USER_EMAILS="me@example.com" tsx scripts/cleanup-tasks.ts           # dry-run
+ *   USER_EMAILS="me@example.com" tsx scripts/cleanup-tasks.ts --apply   # mutates
  */
 
 import "dotenv/config";
 import { and, inArray, isNull } from "drizzle-orm";
 import { db, schema } from "../lib/db";
 
-const USER_EMAILS = (process.env.USER_EMAILS ?? "REDACTED@example.com,REDACTED@example.com")
+const USER_EMAILS = (process.env.USER_EMAILS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+
+if (USER_EMAILS.length === 0) {
+  console.error("USER_EMAILS env var is required (comma-separated list of emails)");
+  process.exit(1);
+}
 const APPLY = process.argv.includes("--apply");
 
 async function main() {
