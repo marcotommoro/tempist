@@ -13,7 +13,7 @@ export function parseDurationToMinutes(s: string): number | null {
 
   if (/^\d+$/.test(normalized)) {
     const n = Number(normalized);
-    return Number.isFinite(n) && n >= 0 ? n : null;
+    return Number.isFinite(n) && n > 0 ? n * 60 : null;
   }
 
   const colon = normalized.match(/^(\d+):(\d{1,2})$/);

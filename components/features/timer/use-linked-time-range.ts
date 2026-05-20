@@ -133,7 +133,7 @@ export function useLinkedTimeRange(initialStart: string, initialEnd: string) {
       return { ok: false as const, error: "Orari non validi" };
     }
     if (durationMinutes == null) {
-      return { ok: false as const, error: "Durata non valida (es. 1h, 1h30m, 90)" };
+      return { ok: false as const, error: "Durata non valida (es. 2, 1h30m, 1:30)" };
     }
     if (durationMinutes <= 0) {
       return { ok: false as const, error: "La durata deve essere maggiore di zero" };
