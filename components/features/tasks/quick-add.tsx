@@ -21,7 +21,13 @@ import { cn } from "@/lib/utils";
  *   #project   @label   p1..p4   !cliente:Nome   60min / 1h / 1h30m
  *   chrono-node: "tomorrow at 3pm", "domani 15:00", "next monday", ecc.
  */
-export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) {
+export function QuickAdd({
+  defaultScheduledAt,
+  timezone = "Europe/Rome",
+}: {
+  defaultScheduledAt?: Date;
+  timezone?: string;
+}) {
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -29,8 +35,8 @@ export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) 
 
   const parsed = useMemo(() => {
     if (!input.trim()) return null;
-    return parseQuickAdd(input);
-  }, [input]);
+    return parseQuickAdd(input, { timezone });
+  }, [input, timezone]);
 
   const effectiveScheduledAt =
     parsed?.scheduledAt ?? defaultScheduledAt ?? null;
@@ -127,7 +133,7 @@ function Chip({
   );
 }
 
-function ParsedPreview(props: {
+export function ParsedPreview(props: {
   title: string;
   scheduledAt: Date | null;
   priority: "P1" | "P2" | "P3" | "P4";

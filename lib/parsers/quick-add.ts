@@ -29,6 +29,12 @@
 
 import * as chrono from "chrono-node";
 
+import { applyDefaultTaskTime } from "@/lib/utils/apply-default-task-time";
+import {
+  normalizeItalianDateText,
+  parseItalianDateSupplement,
+  removeMatchedText,
+} from "./italian-date-supplement";
 import { parseRecurrence } from "./recurrence";
 
 export type Priority = "P1" | "P2" | "P3" | "P4";
@@ -129,29 +135,99 @@ function extractDuration(text: string): { minutes: number | null; rest: string }
   return { minutes: null, rest: text };
 }
 
+const DEFAULT_TIMEZONE = "Europe/Rome";
+
+function findInsensitiveIndex(text: string, needle: string): number {
+  return text.toLowerCase().indexOf(needle.toLowerCase());
+}
+
+function removeDateSpan(text: string, matchedText: string, hintIndex?: number): string {
+  const index =
+    hintIndex !== undefined && hintIndex >= 0
+      ? hintIndex
+      : findInsensitiveIndex(text, matchedText);
+  if (index < 0) {
+    return text.replace(new RegExp(escapeRegExp(matchedText), "i"), " ");
+  }
+  return removeMatchedText(text, matchedText, index);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function finalizeDate(
+  date: Date,
+  timezone: string,
+  hasExplicitHour: boolean,
+): Date {
+  return hasExplicitHour ? date : applyDefaultTaskTime(date, timezone);
+}
+
 function extractDate(
   text: string,
   refDate: Date,
+  timezone: string,
 ): { date: Date | null; rest: string } {
-  const results = chrono.parse(text, refDate, { forwardDate: true });
-  if (results.length === 0) return { date: null, rest: text };
-  const r = results[0];
-  if (!r) return { date: null, rest: text };
-  const date = r.start.date();
-  const before = text.slice(0, r.index);
-  const after = text.slice(r.index + r.text.length);
-  return { date, rest: `${before} ${after}` };
+  const normalized = normalizeItalianDateText(text);
+
+  const supplement = parseItalianDateSupplement(normalized, timezone, refDate);
+  if (supplement) {
+    const date = finalizeDate(
+      supplement.date,
+      timezone,
+      supplement.hasExplicitHour,
+    );
+    const index = findInsensitiveIndex(text, supplement.matchedText);
+    const rest = removeDateSpan(text, supplement.matchedText, index >= 0 ? index : undefined);
+    return { date, rest };
+  }
+
+  const ref = { instant: refDate, timezone };
+  const opts = { forwardDate: true as const };
+
+  const chronoResults = [
+    ...chrono.it.parse(normalized, ref, opts),
+    ...chrono.en.parse(normalized, ref, opts),
+  ];
+  if (chronoResults.length === 0) return { date: null, rest: text };
+
+  chronoResults.sort((a, b) => {
+    const indexA = a.index ?? 0;
+    const indexB = b.index ?? 0;
+    if (indexA !== indexB) return indexA - indexB;
+    return b.text.length - a.text.length;
+  });
+  const result = chronoResults[0];
+  if (!result) return { date: null, rest: text };
+
+  const hasExplicitHour = result.start.isCertain("hour");
+  const date = finalizeDate(result.start.date(), timezone, hasExplicitHour);
+
+  const indexInOriginal = findInsensitiveIndex(text, result.text);
+  const rest = removeDateSpan(
+    text,
+    result.text,
+    indexInOriginal >= 0 ? indexInOriginal : result.index,
+  );
+  return { date, rest };
 }
 
 function cleanWhitespace(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
+export type ParseQuickAddOptions = {
+  now?: Date;
+  timezone?: string;
+};
+
 export function parseQuickAdd(
   input: string,
-  options: { now?: Date } = {},
+  options: ParseQuickAddOptions = {},
 ): ParsedQuickAdd {
   const now = options.now ?? new Date();
+  const timezone = options.timezone ?? DEFAULT_TIMEZONE;
 
   let working = input;
 
@@ -173,7 +249,7 @@ export function parseQuickAdd(
   const dur = extractDuration(working);
   working = dur.rest;
 
-  const date = extractDate(working, now);
+  const date = extractDate(working, now, timezone);
   working = date.rest;
 
   const title = cleanWhitespace(working);

@@ -13,7 +13,8 @@ import {
 
 export default async function InboxPage() {
   const { user, organizationId } = await requireActiveOrganization();
-  const defaultScheduledAt = defaultTaskScheduledAt(userTimezone(user));
+  const timezone = userTimezone(user);
+  const defaultScheduledAt = defaultTaskScheduledAt(timezone);
   const tasks = await getInboxTasks({ organizationId });
   const taskIds = tasks.map((t) => t.id);
   const [trackedByTask, remindersByTask, commentsByTask] = await Promise.all([
@@ -39,7 +40,7 @@ export default async function InboxPage() {
         description="Task non assegnati a nessun progetto. Aggiungi qui le idee veloci."
       />
 
-      <QuickAdd defaultScheduledAt={defaultScheduledAt} />
+      <QuickAdd defaultScheduledAt={defaultScheduledAt} timezone={timezone} />
 
       <TaskList
         tasks={tasks}

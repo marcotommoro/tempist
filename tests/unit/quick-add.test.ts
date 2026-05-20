@@ -1,12 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { parseQuickAdd } from "@/lib/parsers/quick-add";
 
-// Fixed reference: friday 2026-05-15 12:00 UTC
-const NOW = new Date("2026-05-15T12:00:00Z");
+// Fixed reference: Wednesday 2026-05-20 12:00 UTC (14:00 Europe/Rome CEST)
+const NOW = new Date("2026-05-20T12:00:00Z");
+const TZ = "Europe/Rome";
+
+const parse = (input: string) => parseQuickAdd(input, { now: NOW, timezone: TZ });
 
 describe("parseQuickAdd", () => {
   it("returns plain title when no tokens", () => {
-    const r = parseQuickAdd("Comprare il pane", { now: NOW });
+    const r = parse("Comprare il pane");
     expect(r.title).toBe("Comprare il pane");
     expect(r.scheduledAt).toBeNull();
     expect(r.priority).toBe("P4");
@@ -17,64 +20,93 @@ describe("parseQuickAdd", () => {
   });
 
   it("extracts #project (last one wins)", () => {
-    const r = parseQuickAdd("Task #Acme another #Foo", { now: NOW });
+    const r = parse("Task #Acme another #Foo");
     expect(r.projectName).toBe("Foo");
     expect(r.title).toBe("Task another");
   });
 
   it("extracts multiple @labels", () => {
-    const r = parseQuickAdd("Task @urgent @client", { now: NOW });
+    const r = parse("Task @urgent @client");
     expect(r.labelNames).toEqual(["urgent", "client"]);
     expect(r.title).toBe("Task");
   });
 
   it("extracts priority case-insensitive", () => {
-    expect(parseQuickAdd("Task P1", { now: NOW }).priority).toBe("P1");
-    expect(parseQuickAdd("Task p2", { now: NOW }).priority).toBe("P2");
-    expect(parseQuickAdd("Task p3 then more text", { now: NOW }).priority).toBe(
-      "P3",
-    );
+    expect(parse("Task P1").priority).toBe("P1");
+    expect(parse("Task p2").priority).toBe("P2");
+    expect(parse("Task p3 then more text").priority).toBe("P3");
   });
 
   it("ignores p-letter-not-priority", () => {
     // "pizza" non deve essere priority
-    const r = parseQuickAdd("pizza p4", { now: NOW });
+    const r = parse("pizza p4");
     expect(r.title).toBe("pizza");
     expect(r.priority).toBe("P4");
   });
 
   it("extracts !cliente:Name and !client:Name", () => {
-    expect(parseQuickAdd("Task !cliente:Rossi", { now: NOW }).clientName).toBe(
-      "Rossi",
-    );
-    expect(parseQuickAdd("Task !client:Acme_Inc", { now: NOW }).clientName).toBe(
-      "Acme_Inc",
-    );
+    expect(parse("Task !cliente:Rossi").clientName).toBe("Rossi");
+    expect(parse("Task !client:Acme_Inc").clientName).toBe("Acme_Inc");
   });
 
   it("extracts duration in minutes only", () => {
-    expect(parseQuickAdd("Task 60min", { now: NOW }).estimatedMinutes).toBe(60);
-    expect(parseQuickAdd("Task 30mins", { now: NOW }).estimatedMinutes).toBe(30);
-    expect(parseQuickAdd("Task 15m", { now: NOW }).estimatedMinutes).toBe(15);
+    expect(parse("Task 60min").estimatedMinutes).toBe(60);
+    expect(parse("Task 30mins").estimatedMinutes).toBe(30);
+    expect(parse("Task 15m").estimatedMinutes).toBe(15);
   });
 
   it("extracts duration in hours and combined", () => {
-    expect(parseQuickAdd("Task 2h", { now: NOW }).estimatedMinutes).toBe(120);
-    expect(parseQuickAdd("Task 1h30m", { now: NOW }).estimatedMinutes).toBe(90);
-    expect(parseQuickAdd("Task 1h30", { now: NOW }).estimatedMinutes).toBe(90);
+    expect(parse("Task 2h").estimatedMinutes).toBe(120);
+    expect(parse("Task 1h30m").estimatedMinutes).toBe(90);
+    expect(parse("Task 1h30").estimatedMinutes).toBe(90);
   });
 
-  it("parses relative date with chrono (tomorrow)", () => {
-    const r = parseQuickAdd("Chiamare Mario tomorrow at 3pm", { now: NOW });
-    expect(r.scheduledAt).not.toBeNull();
-    // tomorrow 15:00 in some timezone (chrono usa local server tz)
+  it("parses relative date with chrono (tomorrow EN)", () => {
+    const r = parse("Chiamare Mario tomorrow at 3pm");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-21T13:00:00.000Z");
     expect(r.title).toBe("Chiamare Mario");
   });
 
+  it("parses domani at 09:00 when no time given", () => {
+    const r = parse("Chiamare Mario domani");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-21T07:00:00.000Z");
+    expect(r.title).toBe("Chiamare Mario");
+  });
+
+  it("parses domani alle 10", () => {
+    const r = parse("Task domani alle 10");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-21T08:00:00.000Z");
+    expect(r.title).toBe("Task");
+  });
+
+  it("parses dopodomani alle 9", () => {
+    const r = parse("Task dopodomani alle 9");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-22T07:00:00.000Z");
+  });
+
+  it("parses la settimana prossima as next Monday 09:00", () => {
+    const r = parse("Riunione la settimana prossima");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-25T07:00:00.000Z");
+    expect(r.title).toBe("Riunione");
+  });
+
+  it("parses lunedì della settimana prossima", () => {
+    const r = parse("Call lunedì della settimana prossima");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-25T07:00:00.000Z");
+    expect(r.title).toBe("Call");
+  });
+
+  it("parses mixed tokens with domani", () => {
+    const r = parse("Task domani #Acme p1");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-21T07:00:00.000Z");
+    expect(r.projectName).toBe("Acme");
+    expect(r.priority).toBe("P1");
+    expect(r.title).toBe("Task");
+  });
+
   it("handles the full spec example", () => {
-    const r = parseQuickAdd(
+    const r = parse(
       "Chiamare Mario tomorrow 15:00 #ProjectAcme @urgent p1 60min !cliente:Rossi",
-      { now: NOW },
     );
     expect(r.title).toBe("Chiamare Mario");
     expect(r.scheduledAt).not.toBeNull();
@@ -86,8 +118,8 @@ describe("parseQuickAdd", () => {
   });
 
   it("token order does not matter", () => {
-    const a = parseQuickAdd("Task p1 #Proj @lbl 30min", { now: NOW });
-    const b = parseQuickAdd("Task 30min @lbl #Proj p1", { now: NOW });
+    const a = parse("Task p1 #Proj @lbl 30min");
+    const b = parse("Task 30min @lbl #Proj p1");
     expect(a.title).toBe(b.title);
     expect(a.priority).toBe(b.priority);
     expect(a.projectName).toBe(b.projectName);
@@ -96,26 +128,26 @@ describe("parseQuickAdd", () => {
   });
 
   it("supports unicode names (italian accents)", () => {
-    const r = parseQuickAdd("Riunione #Città @riunioni", { now: NOW });
+    const r = parse("Riunione #Città @riunioni");
     expect(r.projectName).toBe("Città");
     expect(r.labelNames).toEqual(["riunioni"]);
   });
 
   it("collapses extra whitespace in title", () => {
-    const r = parseQuickAdd("  Task   with    spaces  #P  ", { now: NOW });
+    const r = parse("  Task   with    spaces  #P  ");
     expect(r.title).toBe("Task with spaces");
   });
 
   it("extracts repeats:VALUE → RRULE string", () => {
-    expect(parseQuickAdd("Daily standup repeats:daily", { now: NOW })).toMatchObject({
+    expect(parse("Daily standup repeats:daily")).toMatchObject({
       title: "Daily standup",
       recurrenceRule: "FREQ=DAILY",
     });
-    expect(parseQuickAdd("Weekly review repeats:weekly", { now: NOW })).toMatchObject({
+    expect(parse("Weekly review repeats:weekly")).toMatchObject({
       title: "Weekly review",
       recurrenceRule: "FREQ=WEEKLY",
     });
-    expect(parseQuickAdd("Stand up repeats:every monday p1", { now: NOW })).toMatchObject({
+    expect(parse("Stand up repeats:every monday p1")).toMatchObject({
       title: "Stand up",
       priority: "P1",
       recurrenceRule: "FREQ=WEEKLY;BYDAY=MO",
@@ -123,7 +155,7 @@ describe("parseQuickAdd", () => {
   });
 
   it("repeats with unknown keyword → recurrenceRule null but token still extracted", () => {
-    const r = parseQuickAdd("Task repeats:nonsense", { now: NOW });
+    const r = parse("Task repeats:nonsense");
     expect(r.title).toBe("Task");
     expect(r.recurrenceRule).toBeNull();
   });

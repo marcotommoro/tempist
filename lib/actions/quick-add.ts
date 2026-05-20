@@ -34,7 +34,10 @@ export async function createTaskFromQuickAddAction(
     const input = String(formData.get("input") ?? "").trim();
     if (!input) return { ok: false, error: "Input vuoto" };
 
-    const parsed = parseQuickAdd(input);
+    const parsed = parseQuickAdd(input, {
+      now: new Date(),
+      timezone: userTimezone(user),
+    });
     if (!parsed.title) {
       return { ok: false, error: "Il titolo non puo' essere vuoto dopo i token" };
     }

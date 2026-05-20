@@ -17,6 +17,7 @@ import { CreateSectionForm } from "@/components/features/projects/create-section
 import { ProjectBoard } from "@/components/features/projects/board/board";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 
 type Params = { id: string };
 type Search = { view?: string };
@@ -124,6 +125,7 @@ export default async function ProjectDetailPage({
           projectName={project.name}
           projectColor={project.color}
           currentUserId={user.id}
+          timezone={userTimezone(user)}
           sections={sections}
           tasksBySection={tasksBySection}
           trackedByTask={trackedByTask}
@@ -169,6 +171,7 @@ function ListView({
   projectName,
   projectColor,
   currentUserId,
+  timezone,
   sections,
   tasksBySection,
   trackedByTask,
@@ -179,6 +182,7 @@ function ListView({
   projectName: string;
   projectColor: string;
   currentUserId: string;
+  timezone: string;
   sections: import("@/lib/db/schema").Section[];
   tasksBySection: Map<string | null, import("@/lib/db/schema").Task[]>;
   trackedByTask: Map<string, number>;
@@ -196,6 +200,7 @@ function ListView({
           projectName={projectName}
           projectColor={projectColor}
           currentUserId={currentUserId}
+          timezone={timezone}
           sectionId={null}
           tasks={tasksNoSection}
           trackedByTask={trackedByTask}
@@ -211,6 +216,7 @@ function ListView({
           projectName={projectName}
           projectColor={projectColor}
           currentUserId={currentUserId}
+          timezone={timezone}
           sectionId={s.id}
           tasks={tasksBySection.get(s.id) ?? []}
           trackedByTask={trackedByTask}
@@ -231,6 +237,7 @@ function SectionBlock({
   projectName,
   projectColor,
   currentUserId,
+  timezone,
   sectionId,
   tasks,
   trackedByTask,
@@ -242,6 +249,7 @@ function SectionBlock({
   projectName: string;
   projectColor: string;
   currentUserId: string;
+  timezone: string;
   sectionId: string | null;
   tasks: import("@/lib/db/schema").Task[];
   trackedByTask: Map<string, number>;
@@ -280,7 +288,11 @@ function SectionBlock({
           </p>
         )}
         <div className="border-t border-border">
-          <AddTaskToProject projectId={projectId} sectionId={sectionId} />
+          <AddTaskToProject
+            projectId={projectId}
+            sectionId={sectionId}
+            timezone={timezone}
+          />
         </div>
       </div>
     </section>

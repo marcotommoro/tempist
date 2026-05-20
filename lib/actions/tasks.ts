@@ -17,6 +17,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
+import { resolveTaskFromTitle } from "@/lib/parsers/resolve-task-from-title";
 import {
   defaultTaskScheduledAt,
   userTimezone,
@@ -85,16 +86,35 @@ export async function createTaskAction(
       const first = parsed.error.issues[0];
       return { ok: false, error: first?.message ?? "Input non valido" };
     }
-    const scheduledAt =
-      parsed.data.scheduledAt ??
-      defaultTaskScheduledAt(userTimezone(user));
+
+    const timezone = userTimezone(user);
+    const hasExplicitSchedule = formData.get("scheduledAt") != null;
+
+    let title = parsed.data.title;
+    let scheduledAt = parsed.data.scheduledAt ?? null;
+    let priority = parsed.data.priority;
+    let estimatedMinutes: number | null = null;
+
+    if (!hasExplicitSchedule) {
+      const resolved = resolveTaskFromTitle(parsed.data.title, {
+        timezone,
+        now: new Date(),
+      });
+      title = resolved.title;
+      if (resolved.scheduledAt) scheduledAt = resolved.scheduledAt;
+      if (priority === "P4") priority = resolved.priority;
+      estimatedMinutes = resolved.estimatedMinutes;
+    }
+
+    scheduledAt = scheduledAt ?? defaultTaskScheduledAt(timezone);
 
     const task = await createTask({
       organizationId,
       createdById: user.id,
-      title: parsed.data.title,
+      title,
       scheduledAt,
-      priority: parsed.data.priority,
+      priority,
+      estimatedMinutes,
       projectId: parsed.data.projectId ?? null,
       sectionId: parsed.data.sectionId ?? null,
     });

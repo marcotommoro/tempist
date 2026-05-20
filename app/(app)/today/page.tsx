@@ -109,7 +109,7 @@ export default async function TodayPage({
         actions={<TaskListViewToggle basePath="/today" group={group} />}
       />
 
-      <QuickAdd defaultScheduledAt={defaultScheduledAt} />
+      <QuickAdd defaultScheduledAt={defaultScheduledAt} timezone={timezone} />
 
       {overdueTasks.length === 0 && todayTasks.length === 0 ? (
         <p className="px-1 font-display text-sm italic text-muted-foreground">

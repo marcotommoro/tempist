@@ -1,26 +1,31 @@
 "use client";
 
-import { useRef, useState, useTransition, type FormEvent } from "react";
+import { useMemo, useRef, useState, useTransition, type FormEvent } from "react";
 import { Plus } from "lucide-react";
 
 import { createTaskAction } from "@/lib/actions/tasks";
+import { parseQuickAdd } from "@/lib/parsers/quick-add";
+import { ParsedPreview } from "./quick-add";
 
-/**
- * Form minimale per aggiungere un task dentro un project/section specifici.
- * Usa createTaskAction passando projectId/sectionId via formData (no NLP).
- */
 export function AddTaskToProject({
   projectId,
   sectionId,
+  timezone = "Europe/Rome",
 }: {
   projectId: string;
   sectionId?: string | null;
+  timezone?: string;
 }) {
   const [title, setTitle] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
+
+  const parsed = useMemo(() => {
+    if (!title.trim()) return null;
+    return parseQuickAdd(title, { timezone });
+  }, [title, timezone]);
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -58,7 +63,7 @@ export function AddTaskToProject({
   }
 
   return (
-    <form onSubmit={onSubmit} className="px-3 py-2 space-y-1">
+    <form onSubmit={onSubmit} className="space-y-1 px-3 py-2">
       <div className="flex items-center gap-2">
         <input
           ref={inputRef}
@@ -75,7 +80,7 @@ export function AddTaskToProject({
             }
           }}
           disabled={pending}
-          placeholder="Titolo task..."
+          placeholder='Titolo… "domani alle 10" p1 60min'
           autoComplete="off"
           maxLength={500}
           className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
@@ -88,6 +93,18 @@ export function AddTaskToProject({
           Aggiungi
         </button>
       </div>
+      {parsed && (
+        <ParsedPreview
+          title={parsed.title}
+          scheduledAt={parsed.scheduledAt}
+          priority={parsed.priority}
+          projectName={null}
+          labelNames={parsed.labelNames}
+          estimatedMinutes={parsed.estimatedMinutes}
+          clientName={parsed.clientName}
+          recurrenceRule={parsed.recurrenceRule}
+        />
+      )}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </form>
   );
