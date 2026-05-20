@@ -48,7 +48,7 @@ async function main() {
 
   const orgIds = [...new Set(memberships.map((m) => m.organizationId))];
   if (orgIds.length === 0) {
-    console.log(`No workspaces for ${USER_EMAIL}.`);
+    console.log(`No workspaces for ${USER_EMAILS.join(", ")}.`);
     return;
   }
 

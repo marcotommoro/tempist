@@ -187,8 +187,8 @@ function extractDate(
   const opts = { forwardDate: true as const };
 
   const chronoResults = [
-    ...chrono.it.parse(normalized, ref, opts),
-    ...chrono.en.parse(normalized, ref, opts),
+    ...chrono.it.casual.parse(normalized, ref, opts),
+    ...chrono.en.casual.parse(normalized, ref, opts),
   ];
   if (chronoResults.length === 0) return { date: null, rest: text };
 

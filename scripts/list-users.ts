@@ -7,7 +7,6 @@ async function main() {
   for (const u of users) console.log(`  ${u.email}  (${u.id})  ${u.name ?? ""}`);
 
   const tasksByOrg = await db.execute<{ organization_id: string; n: number }>(
-    // @ts-expect-error raw is fine for one-shot
     "select organization_id, count(*)::int as n from \"task\" where deleted_at is null group by organization_id order by n desc",
   );
   console.log("\nLive tasks per organization:");
