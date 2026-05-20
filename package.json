@@ -19,6 +19,7 @@
     "db:check": "drizzle-kit check",
     "worker:dev": "tsx watch worker/index.ts",
     "worker:build": "tsup worker/index.ts --out-dir dist/worker --format cjs --target node20",
+    "migrate:build": "tsup --config tsup.migrate.config.ts",
     "auth:generate": "better-auth generate"
   },
   "dependencies": {

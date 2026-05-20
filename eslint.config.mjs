@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bundle output (tsup): worker + migrator.
+    "dist/**",
   ]),
 ]);
 

@@ -36,7 +36,7 @@ RUN sh -eu -c '\
       export DATABASE_URL="${DATABASE_URL:-postgresql://placeholder@localhost:5432/placeholder}"; \
       export BETTER_AUTH_SECRET="${BETTER_AUTH_SECRET:-build-only-placeholder-secret-32chars-min}"; \
       export BETTER_AUTH_URL="${BETTER_AUTH_URL:-http://localhost:3000}"; \
-      pnpm build \
+      pnpm build && pnpm migrate:build \
     '
 
 # ---- runtime ----
@@ -56,7 +56,13 @@ COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/public ./public
 
+# Migrator + SQL: applicate dall'entrypoint prima di avviare il server.
+COPY --from=build --chown=nextjs:nodejs /app/dist/migrate/migrate.js ./migrate.js
+COPY --from=build --chown=nextjs:nodejs /app/drizzle ./drizzle
+COPY --chown=nextjs:nodejs scripts/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
+
 USER nextjs
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["./docker-entrypoint.sh"]
