@@ -84,14 +84,14 @@ export function TimeEntryRow({
         )}
       >
         <div className="min-w-0">
-          <p className="truncate text-[0.8125rem] text-foreground">
+          <p className="truncate text-[0.8125em] text-foreground">
             {entry.description ?? (
               <span className="font-display italic text-muted-foreground">
                 — senza descrizione —
               </span>
             )}
           </p>
-          <p className="mt-0.5 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="mt-0.5 font-mono text-[0.625em] uppercase tracking-[0.12em] text-muted-foreground">
             {format(entry.startedAt, "EEE d LLL · HH:mm", { locale: it })}
             {entry.endedAt && (
               <span> → {format(entry.endedAt, "HH:mm")}</span>
@@ -107,7 +107,7 @@ export function TimeEntryRow({
             )}
           </p>
           {(clientName || projectName) && (
-            <p className="mt-0.5 truncate text-[0.6875rem] text-muted-foreground">
+            <p className="mt-0.5 truncate text-[0.6875em] text-muted-foreground">
               {[clientName, projectName].filter(Boolean).join(" · ")}
             </p>
           )}
@@ -115,16 +115,16 @@ export function TimeEntryRow({
         <span className="font-display text-base leading-none tabular-nums text-foreground">
           {formatDuration(duration)}
         </span>
-        <span className="w-24 text-right font-mono text-[0.75rem] tabular-nums text-muted-foreground">
+        <span className="w-24 text-right font-mono text-[0.75em] tabular-nums text-muted-foreground">
           {billableValue ? `${billableValue} ${entry.currencySnapshot}` : "—"}
         </span>
         <div className="flex items-center gap-1">
           {entry.isBillable ? (
-            <span className="font-mono text-[0.625rem] uppercase tracking-wider text-sage">
+            <span className="font-mono text-[0.625em] uppercase tracking-wider text-sage">
               billable
             </span>
           ) : (
-            <span className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+            <span className="font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
               internal
             </span>
           )}
@@ -150,7 +150,7 @@ export function TimeEntryRow({
           </button>
         </div>
         {error && (
-          <span className="col-span-4 font-mono text-[0.6875rem] text-destructive">
+          <span className="col-span-4 font-mono text-[0.6875em] text-destructive">
             {error}
           </span>
         )}

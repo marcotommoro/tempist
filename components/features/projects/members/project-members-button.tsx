@@ -42,13 +42,13 @@ export function ProjectMembersButton({
               <span
                 key={m.id}
                 aria-hidden
-                className="grid h-5 w-5 place-items-center rounded-full bg-foreground/10 font-mono text-[0.5625rem] uppercase text-foreground ring-2 ring-card"
+                className="grid h-5 w-5 place-items-center rounded-full bg-foreground/10 font-mono text-[0.5625em] uppercase text-foreground ring-2 ring-card"
               >
                 {(m.name ?? m.email).slice(0, 1)}
               </span>
             ))}
             {extra > 0 && (
-              <span className="grid h-5 w-5 place-items-center rounded-full bg-muted font-mono text-[0.5625rem] text-muted-foreground ring-2 ring-card">
+              <span className="grid h-5 w-5 place-items-center rounded-full bg-muted font-mono text-[0.5625em] text-muted-foreground ring-2 ring-card">
                 +{extra}
               </span>
             )}
@@ -56,7 +56,7 @@ export function ProjectMembersButton({
         ) : (
           <Users className="size-3.5 text-muted-foreground" />
         )}
-        <span className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+        <span className="font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
           {count === 0 ? "Invita" : count === 1 ? "1 esterno" : `${count} esterni`}
         </span>
       </button>

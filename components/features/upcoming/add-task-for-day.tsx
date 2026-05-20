@@ -41,7 +41,7 @@ export function AddTaskForDay({ day }: { day: Date }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
+        className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
       >
         <Plus className="size-3" /> Aggiungi attività
       </button>
@@ -62,7 +62,7 @@ export function AddTaskForDay({ day }: { day: Date }) {
       <button
         type="submit"
         disabled={pending || !title.trim()}
-        className="inline-flex h-7 items-center rounded bg-foreground px-2.5 font-mono text-[0.625rem] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="inline-flex h-7 items-center rounded bg-foreground px-2.5 font-mono text-[0.625em] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         Add
       </button>
@@ -73,12 +73,12 @@ export function AddTaskForDay({ day }: { day: Date }) {
           setTitle("");
         }}
         disabled={pending}
-        className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+        className="font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
       >
         Cancel
       </button>
       {error && (
-        <span className="font-mono text-[0.625rem] text-destructive">{error}</span>
+        <span className="font-mono text-[0.625em] text-destructive">{error}</span>
       )}
     </form>
   );

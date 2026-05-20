@@ -45,13 +45,13 @@ function SignInForm() {
   return (
     <div className="rounded-lg border border-border bg-card/80 p-8 shadow-sm backdrop-blur-sm">
       <div className="mb-6 space-y-2">
-        <p className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="font-mono text-[0.625em] uppercase tracking-[0.18em] text-muted-foreground">
           Sign in
         </p>
         <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-foreground">
           Welcome <span className="italic text-muted-foreground/90">back.</span>
         </h1>
-        <p className="text-[0.8125rem] text-muted-foreground">
+        <p className="text-[0.8125em] text-muted-foreground">
           Inserisci la tua email per ricevere il magic link.
         </p>
       </div>
@@ -69,7 +69,7 @@ function SignInForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex w-full items-center justify-center rounded-md bg-foreground px-3 py-2.5 font-mono text-[0.6875rem] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center rounded-md bg-foreground px-3 py-2.5 font-mono text-[0.6875em] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {submitting ? "Sending…" : "Send magic link"}
         </button>
@@ -80,7 +80,7 @@ function SignInForm() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-card px-3 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="bg-card px-3 font-mono text-[0.625em] uppercase tracking-[0.18em] text-muted-foreground">
             or
           </span>
         </div>
@@ -106,7 +106,7 @@ function SignInForm() {
       </div>
 
       {error && (
-        <p className="mt-4 font-mono text-[0.6875rem] text-destructive">{error}</p>
+        <p className="mt-4 font-mono text-[0.6875em] text-destructive">{error}</p>
       )}
     </div>
   );

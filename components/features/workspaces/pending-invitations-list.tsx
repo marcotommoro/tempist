@@ -42,7 +42,7 @@ export function PendingInvitationsList({
         <li key={i.id} className="flex items-center gap-3 px-3 py-2.5">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm text-foreground">{i.email}</p>
-            <p className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
+            <p className="font-mono text-[0.625em] uppercase tracking-[0.14em] text-muted-foreground">
               {i.role} · scade {fmtDate(i.expiresAt)}
             </p>
           </div>

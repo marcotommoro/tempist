@@ -143,7 +143,7 @@ function EditClientForm({
         </div>
       </div>
       <div className="space-y-2">
-        <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
+        <span className="font-mono text-[0.625em] uppercase tracking-[0.14em] text-muted-foreground">
           Colore
         </span>
         <div className="flex flex-wrap items-center gap-2">

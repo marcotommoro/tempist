@@ -202,11 +202,11 @@ export function TaskDetailDialog({
 
             <div>
               <div className="mb-2 flex items-baseline justify-between">
-                <h3 className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
+                <h3 className="font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
                   Comments
                 </h3>
                 {comments && comments.length > 0 && (
-                  <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+                  <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
                     {String(comments.length).padStart(2, "0")}
                   </span>
                 )}
@@ -229,7 +229,7 @@ export function TaskDetailDialog({
           <aside className="max-h-[80vh] space-y-5 overflow-y-auto border-t border-border bg-muted/40 p-5 md:border-l md:border-t-0">
             <Field label="Project">
               {projectName ? (
-                <div className="inline-flex items-center gap-2 text-[0.8125rem]">
+                <div className="inline-flex items-center gap-2 text-[0.8125em]">
                   <span
                     aria-hidden
                     className="inline-block h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
@@ -261,7 +261,7 @@ export function TaskDetailDialog({
                 placeholder="Imposta scadenza"
               />
               {scheduledAt && dueDate && (
-                <p className="font-mono text-[0.625rem] uppercase tracking-[0.12em] text-muted-foreground">
+                <p className="font-mono text-[0.625em] uppercase tracking-[0.12em] text-muted-foreground">
                   {format(scheduledAt, "d LLL HH:mm")} →{" "}
                   {format(dueDate, "d LLL")}
                 </p>
@@ -276,7 +276,7 @@ export function TaskDetailDialog({
               <div className="space-y-2.5">
                 <div className="flex items-baseline justify-between gap-3">
                   <div className="flex flex-col">
-                    <span className="font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-muted-foreground">
+                    <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em] text-muted-foreground">
                       tracked
                     </span>
                     <span className="font-mono text-base tabular-nums text-foreground">
@@ -284,7 +284,7 @@ export function TaskDetailDialog({
                     </span>
                   </div>
                   <div className="flex flex-col items-end">
-                    <span className="font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-muted-foreground">
+                    <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em] text-muted-foreground">
                       estimate
                     </span>
                     <span className="font-mono text-base tabular-nums text-muted-foreground">
@@ -310,7 +310,7 @@ export function TaskDetailDialog({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <p className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </p>
       {children}

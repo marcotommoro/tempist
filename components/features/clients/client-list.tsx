@@ -17,17 +17,17 @@ export function ClientList({ clients }: { clients: ClientForEdit[] }) {
           >
             <EntityColorMarker kind="client" color={c.color} />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[0.875rem] font-medium text-foreground">
+              <div className="truncate text-[0.875em] font-medium text-foreground">
                 {c.name}
               </div>
               {c.email && (
-                <div className="truncate text-[0.75rem] text-muted-foreground">
+                <div className="truncate text-[0.75em] text-muted-foreground">
                   {c.email}
                 </div>
               )}
             </div>
             {c.hourlyRateDefault && (
-              <span className="font-mono text-[0.6875rem] tabular-nums text-muted-foreground">
+              <span className="font-mono text-[0.6875em] tabular-nums text-muted-foreground">
                 {c.hourlyRateDefault} {c.currency}/h
               </span>
             )}

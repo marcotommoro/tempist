@@ -147,7 +147,7 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn(
-      "px-2 py-1.5 font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground",
+      "px-2 py-1.5 font-mono text-[0.625em] uppercase tracking-[0.14em] text-muted-foreground",
       inset && "pl-8",
       className
     )}
@@ -175,7 +175,7 @@ const DropdownMenuShortcut = ({
   return (
     <span
       className={cn(
-        "ml-auto inline-flex h-5 items-center rounded border border-border bg-muted/40 px-1.5 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground",
+        "ml-auto inline-flex h-5 items-center rounded border border-border bg-muted/40 px-1.5 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground",
         className
       )}
       {...props}

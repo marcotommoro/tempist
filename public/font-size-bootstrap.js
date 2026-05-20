@@ -1,10 +1,20 @@
 (function () {
+  var valid = function (s) {
+    return s === "sm" || s === "md" || s === "lg" || s === "xl" || s === "xxl";
+  };
   try {
-    var k = "font-size";
-    var s = localStorage.getItem(k);
-    var v = s === "sm" || s === "md" || s === "lg" || s === "xl" || s === "xxl" ? s : "md";
-    document.documentElement.setAttribute("data-font-size", v);
+    var chrome = localStorage.getItem("font-size");
+    var content = localStorage.getItem("content-font-size");
+    document.documentElement.setAttribute(
+      "data-font-size",
+      valid(chrome) ? chrome : "md",
+    );
+    document.documentElement.setAttribute(
+      "data-content-size",
+      valid(content) ? content : "md",
+    );
   } catch {
     document.documentElement.setAttribute("data-font-size", "md");
+    document.documentElement.setAttribute("data-content-size", "md");
   }
 })();

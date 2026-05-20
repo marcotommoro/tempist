@@ -76,7 +76,7 @@ function ProjectTaskSection({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex min-w-0 items-center gap-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
+          className="inline-flex min-w-0 items-center gap-1.5 font-mono text-[0.6875em] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
           aria-expanded={open}
         >
           {open ? (
@@ -92,7 +92,7 @@ function ProjectTaskSection({
             />
           ) : null}
           <span className="truncate text-foreground">{meta?.name ?? "Senza progetto"}</span>
-          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
             {String(openCount).padStart(2, "0")}
           </span>
         </button>

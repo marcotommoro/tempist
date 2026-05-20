@@ -136,10 +136,10 @@ export default async function TimesheetPage({
             return (
               <div key={dayKey} className="space-y-2">
                 <div className="flex items-baseline justify-between border-b border-border pb-1">
-                  <h2 className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-muted-foreground">
+                  <h2 className="font-mono text-[0.6875em] uppercase tracking-[0.16em] text-muted-foreground">
                     {format(dayDate, "EEEE d MMMM yyyy", { locale: it })}
                   </h2>
-                  <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+                  <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
                     {formatDuration(bucket.totalSeconds)}
                     {bucket.billableAmount > 0 && (
                       <span className="ml-2 text-coral">
@@ -169,7 +169,7 @@ export default async function TimesheetPage({
             <p className="font-display text-base italic text-muted-foreground">
               Nessuna voce in questo periodo.
             </p>
-            <p className="mt-2 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+            <p className="mt-2 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
               Avvia un timer dalla command palette o aggiungi una voce manuale qui sopra.
             </p>
           </div>

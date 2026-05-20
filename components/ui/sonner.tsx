@@ -34,13 +34,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border group-[.toaster]:border-border group-[.toaster]:shadow-md group-[.toaster]:rounded-md group-[.toaster]:px-3.5 group-[.toaster]:py-2.5 group-[.toaster]:text-[0.8125rem]",
-          title: "group-[.toast]:font-medium group-[.toast]:text-[0.8125rem]",
-          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-[0.75rem]",
+            "group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border group-[.toaster]:border-border group-[.toaster]:shadow-md group-[.toaster]:rounded-md group-[.toaster]:px-3.5 group-[.toaster]:py-2.5 group-[.toaster]:text-[0.8125em]",
+          title: "group-[.toast]:font-medium group-[.toast]:text-[0.8125em]",
+          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-[0.75em]",
           actionButton:
-            "group-[.toast]:font-mono group-[.toast]:text-[0.6875rem] group-[.toast]:uppercase group-[.toast]:tracking-wider group-[.toast]:bg-coral group-[.toast]:text-coral-foreground group-[.toast]:rounded group-[.toast]:px-2 group-[.toast]:py-1",
+            "group-[.toast]:font-mono group-[.toast]:text-[0.6875em] group-[.toast]:uppercase group-[.toast]:tracking-wider group-[.toast]:bg-coral group-[.toast]:text-coral-foreground group-[.toast]:rounded group-[.toast]:px-2 group-[.toast]:py-1",
           cancelButton:
-            "group-[.toast]:font-mono group-[.toast]:text-[0.6875rem] group-[.toast]:uppercase group-[.toast]:tracking-wider group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group-[.toast]:font-mono group-[.toast]:text-[0.6875em] group-[.toast]:uppercase group-[.toast]:tracking-wider group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
           closeButton:
             "group-[.toast]:border-border group-[.toast]:bg-card group-[.toast]:text-muted-foreground hover:group-[.toast]:bg-accent",
         },

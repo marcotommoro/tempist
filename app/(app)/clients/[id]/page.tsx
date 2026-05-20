@@ -241,7 +241,7 @@ export default async function ClientDetailPage({
             <h2 className="section-heading text-muted-foreground">
               Breakdown per progetto
             </h2>
-            <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+            <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
               {String(aggregatesSorted.length).padStart(2, "0")}
             </span>
           </div>
@@ -296,7 +296,7 @@ export default async function ClientDetailPage({
           <h2 className="section-heading text-muted-foreground">
             Tasks
           </h2>
-          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
             {String(tasks.length).padStart(2, "0")}
           </span>
         </div>
@@ -313,7 +313,7 @@ export default async function ClientDetailPage({
           <h2 className="section-heading text-muted-foreground">
             Time entries
           </h2>
-          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
             {String(entries.length).padStart(2, "0")}
           </span>
         </div>

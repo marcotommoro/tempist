@@ -146,7 +146,7 @@ export function ProjectMembersDialog({
                   <button
                     type="submit"
                     disabled={pending || !email.trim()}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 font-mono text-[0.625rem] uppercase tracking-wider text-background hover:opacity-90 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 font-mono text-[0.625em] uppercase tracking-wider text-background hover:opacity-90 disabled:opacity-50"
                   >
                     <Send className="size-3" />
                     Invita
@@ -156,8 +156,8 @@ export function ProjectMembersDialog({
                   <p
                     className={
                       feedback.kind === "ok"
-                        ? "font-mono text-[0.625rem] text-coral"
-                        : "font-mono text-[0.625rem] text-destructive"
+                        ? "font-mono text-[0.625em] text-coral"
+                        : "font-mono text-[0.625em] text-destructive"
                     }
                   >
                     {feedback.text}
@@ -179,7 +179,7 @@ export function ProjectMembersDialog({
                       <li key={m.id} className="flex items-center gap-3 px-3 py-2">
                         <span
                           aria-hidden
-                          className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-foreground/10 font-mono text-[0.625rem] uppercase text-foreground"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-foreground/10 font-mono text-[0.625em] uppercase text-foreground"
                         >
                           {(m.name ?? m.email).slice(0, 2)}
                         </span>
@@ -187,13 +187,13 @@ export function ProjectMembersDialog({
                           <p className="truncate text-sm">
                             {m.name ?? m.email}
                             {isMe && (
-                              <span className="ml-1.5 font-mono text-[0.5625rem] uppercase tracking-wider text-muted-foreground">
+                              <span className="ml-1.5 font-mono text-[0.5625em] uppercase tracking-wider text-muted-foreground">
                                 (tu)
                               </span>
                             )}
                           </p>
                           {m.name && (
-                            <p className="truncate font-mono text-[0.625rem] text-muted-foreground">
+                            <p className="truncate font-mono text-[0.625em] text-muted-foreground">
                               {m.email}
                             </p>
                           )}
@@ -211,7 +211,7 @@ export function ProjectMembersDialog({
                             <option value="viewer">Viewer</option>
                           </select>
                         ) : (
-                          <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
+                          <span className="font-mono text-[0.625em] uppercase tracking-[0.14em] text-muted-foreground">
                             {m.role}
                           </span>
                         )}
@@ -245,7 +245,7 @@ export function ProjectMembersDialog({
                   <li key={i.id} className="flex items-center gap-3 px-3 py-2">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">{i.email}</p>
-                      <p className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
+                      <p className="font-mono text-[0.625em] uppercase tracking-[0.14em] text-muted-foreground">
                         {i.role} · scade {fmtDate(i.expiresAt)}
                       </p>
                     </div>

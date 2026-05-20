@@ -55,11 +55,11 @@ export function TaskPrioritySelect({
         <button
           type="button"
           disabled={pending}
-          className="inline-flex h-9 w-full items-center gap-2.5 rounded-md border border-input bg-background px-3 text-[0.8125rem] transition-colors hover:border-foreground/20 hover:bg-accent disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+          className="inline-flex h-9 w-full items-center gap-2.5 rounded-md border border-input bg-background px-3 text-[0.8125em] transition-colors hover:border-foreground/20 hover:bg-accent disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         >
           <Flag className={cn("size-3.5", current.color)} />
           <span className="font-mono tracking-wider">{current.value}</span>
-          <span className="ml-auto font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+          <span className="ml-auto font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
             Change
           </span>
         </button>
@@ -73,7 +73,7 @@ export function TaskPrioritySelect({
                 onClick={() => apply(p.value)}
                 disabled={pending}
                 className={cn(
-                  "inline-flex w-full items-center gap-2.5 rounded px-2 py-1.5 text-left text-[0.8125rem] transition-colors hover:bg-accent disabled:opacity-50",
+                  "inline-flex w-full items-center gap-2.5 rounded px-2 py-1.5 text-left text-[0.8125em] transition-colors hover:bg-accent disabled:opacity-50",
                   p.value === currentPriority && "bg-accent",
                 )}
               >
@@ -84,7 +84,7 @@ export function TaskPrioritySelect({
           ))}
         </ul>
         {error && (
-          <p className="px-2 pt-2 font-mono text-[0.6875rem] text-destructive">
+          <p className="px-2 pt-2 font-mono text-[0.6875em] text-destructive">
             {error}
           </p>
         )}

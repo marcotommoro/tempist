@@ -50,7 +50,7 @@ export function OverdueSection({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-destructive hover:opacity-80"
+          className="inline-flex items-center gap-1.5 font-mono text-[0.6875em] uppercase tracking-[0.16em] text-destructive hover:opacity-80"
           aria-expanded={open}
         >
           {open ? (
@@ -59,7 +59,7 @@ export function OverdueSection({
             <ChevronRight className="size-3" />
           )}
           {title}
-          <span className="ml-1 font-mono text-[0.625rem] tabular-nums text-destructive/70">
+          <span className="ml-1 font-mono text-[0.625em] tabular-nums text-destructive/70">
             {String(tasks.length).padStart(2, "0")}
           </span>
         </button>
@@ -67,7 +67,7 @@ export function OverdueSection({
           type="button"
           onClick={reschedule}
           disabled={pending}
-          className="font-mono text-[0.625rem] uppercase tracking-wider text-destructive transition-colors hover:underline disabled:opacity-50"
+          className="font-mono text-[0.625em] uppercase tracking-wider text-destructive transition-colors hover:underline disabled:opacity-50"
         >
           {pending ? "…" : "Reschedule all"}
         </button>
@@ -86,7 +86,7 @@ export function OverdueSection({
             emptyMessage="Nessuna scadenza in arretrato."
           />
           {error && (
-            <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>
+            <p className="font-mono text-[0.6875em] text-destructive">{error}</p>
           )}
         </>
       )}

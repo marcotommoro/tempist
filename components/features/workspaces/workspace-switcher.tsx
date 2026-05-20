@@ -51,15 +51,15 @@ export function WorkspaceSwitcher({
           >
             <span
               aria-hidden
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-foreground font-display text-[0.9375rem] leading-none italic text-background"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-foreground font-display text-[0.9375em] leading-none italic text-background"
             >
               {initial}
             </span>
             <div className="flex min-w-0 flex-1 flex-col text-left">
-              <span className="truncate font-display text-[0.9375rem] leading-none text-foreground">
+              <span className="truncate font-display text-[0.9375em] leading-none text-foreground">
                 {active?.name ?? "Seleziona workspace"}
               </span>
-              <span className="mt-0.5 truncate font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
+              <span className="mt-0.5 truncate font-mono text-[0.625em] uppercase tracking-[0.14em] text-muted-foreground">
                 {active?.role ?? "—"}
                 {active?.slug ? ` · ${active.slug}` : ""}
               </span>
@@ -80,7 +80,7 @@ export function WorkspaceSwitcher({
             >
               <span
                 aria-hidden
-                className="grid h-5 w-5 shrink-0 place-items-center rounded bg-foreground/10 font-mono text-[0.5625rem] uppercase text-foreground"
+                className="grid h-5 w-5 shrink-0 place-items-center rounded bg-foreground/10 font-mono text-[0.5625em] uppercase text-foreground"
               >
                 {w.name.slice(0, 1)}
               </span>

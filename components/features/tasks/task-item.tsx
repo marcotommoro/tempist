@@ -187,14 +187,14 @@ export function TaskItem({
             type="button"
             onClick={() => setDetailOpen(true)}
             className={cn(
-              "block w-full break-words text-left text-[0.875rem] leading-snug transition-colors cursor-pointer hover:text-coral",
+              "block w-full break-words text-left text-[0.875em] leading-snug transition-colors cursor-pointer hover:text-coral",
               isDone && "text-muted-foreground line-through",
             )}
           >
             {task.title}
           </button>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875rem] tabular-nums text-muted-foreground">
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875em] tabular-nums text-muted-foreground">
           {projectName && (
             <span className="inline-flex items-center gap-1.5 normal-case">
               {projectColor && (
@@ -219,7 +219,7 @@ export function TaskItem({
                   : "text-amber-600 dark:text-amber-400",
               )}
             >
-              <span className="font-mono text-[0.5625rem] uppercase tracking-[0.16em]">due</span>{" "}
+              <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em]">due</span>{" "}
               {format(task.dueDate, "d LLL")}
             </span>
           )}

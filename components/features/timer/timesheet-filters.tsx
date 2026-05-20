@@ -66,7 +66,7 @@ export function TimesheetFilters({
         >
           <ChevronLeft className="size-4" />
         </Link>
-        <span className="min-w-[10rem] px-3 text-center font-mono text-[0.6875rem] uppercase tracking-wider text-foreground">
+        <span className="min-w-[10rem] px-3 text-center font-mono text-[0.6875em] uppercase tracking-wider text-foreground">
           {weekLabel}
           {isCustomRange && (
             <span className="ml-1.5 text-coral">·custom</span>
@@ -122,7 +122,7 @@ export function TimesheetFilters({
       </select>
       <Link
         href={hrefFor({ from: new Date() })}
-        className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground hover:text-foreground"
+        className="font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground hover:text-foreground"
       >
         Questa settimana
       </Link>

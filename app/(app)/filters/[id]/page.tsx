@@ -46,7 +46,7 @@ export default async function FilterDetailPage({
       />
 
       <div className="overflow-hidden rounded-md border border-border bg-muted/30 px-3.5 py-2.5">
-        <div className="mb-1 font-mono text-[0.5625rem] uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="mb-1 font-mono text-[0.5625em] uppercase tracking-[0.18em] text-muted-foreground">
           Query
         </div>
         <code className="block font-mono text-xs leading-relaxed text-foreground">

@@ -40,15 +40,15 @@ export function SidebarAccount({ email }: { email: string }) {
             >
               <span
                 aria-hidden
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-foreground font-mono text-[0.625rem] font-medium uppercase tracking-wider text-background"
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-foreground font-mono text-[0.625em] font-medium uppercase tracking-wider text-background"
               >
                 {initials}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.75rem] font-medium text-foreground">
+                <span className="block truncate text-[0.75em] font-medium text-foreground">
                   {email}
                 </span>
-                <span className="block font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-muted-foreground">
+                <span className="block font-mono text-[0.5625em] uppercase tracking-[0.14em] text-muted-foreground">
                   Account
                 </span>
               </span>
@@ -56,7 +56,7 @@ export function SidebarAccount({ email }: { email: string }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" sideOffset={6} className="w-56">
             <DropdownMenuLabel>Signed in as</DropdownMenuLabel>
-            <div className="px-2 pb-1.5 text-[0.75rem] text-foreground">
+            <div className="px-2 pb-1.5 text-[0.75em] text-foreground">
               <span className="block truncate" title={email}>
                 {email}
               </span>
@@ -78,7 +78,7 @@ export function SidebarAccount({ email }: { email: string }) {
               {pending ? "Signing out…" : "Sign out"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <div className="flex items-center justify-between px-2 py-1.5 text-[0.6875rem] text-muted-foreground">
+            <div className="flex items-center justify-between px-2 py-1.5 text-[0.6875em] text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <UserIcon className="size-3" />
                 You

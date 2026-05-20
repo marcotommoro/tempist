@@ -89,7 +89,7 @@ export function TaskSchedulePicker({
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 p-2">
         <div className="space-y-0.5">
-          <div className="px-2 py-1 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="px-2 py-1 font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
             Pianifica per
           </div>
           <PresetButton onClick={presetToday} disabled={pending} label="Oggi">
@@ -115,7 +115,7 @@ export function TaskSchedulePicker({
         </div>
         <div className="my-2 border-t border-border" />
         <div className="space-y-1.5 px-1">
-          <div className="px-1 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="px-1 font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
             Data/ora specifica
           </div>
           <DateTimePicker
@@ -134,14 +134,14 @@ export function TaskSchedulePicker({
               type="button"
               onClick={clear}
               disabled={pending}
-              className="inline-flex w-full items-center gap-2 rounded px-2 py-1.5 text-[0.75rem] text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed"
+              className="inline-flex w-full items-center gap-2 rounded px-2 py-1.5 text-[0.75em] text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed"
             >
               <X className="size-3.5" /> Rimuovi data
             </button>
           </>
         )}
         {error && (
-          <p className="px-2 pt-2 font-mono text-[0.6875rem] text-destructive">
+          <p className="px-2 pt-2 font-mono text-[0.6875em] text-destructive">
             {error}
           </p>
         )}
@@ -166,11 +166,11 @@ function PresetButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[0.8125rem] transition-colors hover:bg-accent disabled:cursor-not-allowed"
+      className="inline-flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-[0.8125em] transition-colors hover:bg-accent disabled:cursor-not-allowed"
     >
       <CalendarIcon className="size-3.5 text-muted-foreground" />
       <span>{label}</span>
-      <span className="ml-auto font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+      <span className="ml-auto font-mono text-[0.625em] tabular-nums text-muted-foreground">
         {children}
       </span>
     </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useFontSize, type FontSize } from "@/components/theme/font-size-provider";
+import type { FontSize } from "@/components/theme/font-size-provider";
 import { cn } from "@/lib/utils";
 import { useIsClient } from "@/lib/hooks/use-is-client";
 
@@ -14,30 +14,35 @@ const OPTIONS = [
   { value: "xxl", label: "xxl", previewPx: 19 },
 ] as const satisfies ReadonlyArray<{ value: FontSize; label: string; previewPx: number }>;
 
-export function FontSizeToggle() {
-  const { fontSize, setFontSize } = useFontSize();
+interface FontSizeToggleProps {
+  value: FontSize;
+  onChange: (next: FontSize) => void;
+  ariaLabel: string;
+}
+
+export function FontSizeToggle({ value, onChange, ariaLabel }: FontSizeToggleProps) {
   const isClient = useIsClient();
 
   // Pre-hydration: mostra "md" per evitare hydration mismatch sui marker aria-checked.
-  const current: FontSize = isClient ? fontSize : "md";
+  const current: FontSize = isClient ? value : "md";
 
   return (
     <div
       className="inline-flex items-end gap-0.5 rounded-md border bg-card p-1"
       role="radiogroup"
-      aria-label="Dimensione testo"
+      aria-label={ariaLabel}
     >
-      {OPTIONS.map(({ value, label, previewPx }) => (
+      {OPTIONS.map(({ value: optValue, label, previewPx }) => (
         <button
-          key={value}
+          key={optValue}
           type="button"
           role="radio"
-          aria-checked={current === value}
+          aria-checked={current === optValue}
           aria-label={`Dimensione ${label}`}
-          onClick={() => setFontSize(value)}
+          onClick={() => onChange(optValue)}
           className={cn(
             "inline-flex w-12 flex-col items-center justify-end gap-0.5 rounded px-1.5 py-1 transition-colors",
-            current === value
+            current === optValue
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
@@ -49,7 +54,7 @@ export function FontSizeToggle() {
           >
             Aa
           </span>
-          <span className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] leading-none">
+          <span className="font-mono text-[0.5625em] uppercase tracking-[0.14em] leading-none">
             {label}
           </span>
         </button>

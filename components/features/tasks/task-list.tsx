@@ -69,10 +69,10 @@ export function TaskList({
       {completed.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-baseline justify-between border-b border-border pb-1.5">
-            <h3 className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
+            <h3 className="font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
               Completed
             </h3>
-            <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+            <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
               {String(completed.length).padStart(2, "0")}
             </span>
           </div>

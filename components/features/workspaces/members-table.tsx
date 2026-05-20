@@ -51,7 +51,7 @@ export function MembersTable({
               <li key={m.memberId} className="flex items-center gap-3 px-3 py-2.5">
                 <span
                   aria-hidden
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-foreground/10 font-mono text-[0.625rem] uppercase tracking-wider text-foreground"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-foreground/10 font-mono text-[0.625em] uppercase tracking-wider text-foreground"
                 >
                   {(m.name ?? m.email).slice(0, 2)}
                 </span>
@@ -59,13 +59,13 @@ export function MembersTable({
                   <p className="truncate text-sm text-foreground">
                     {m.name ?? m.email}
                     {isMe && (
-                      <span className="ml-1.5 font-mono text-[0.5625rem] uppercase tracking-wider text-muted-foreground">
+                      <span className="ml-1.5 font-mono text-[0.5625em] uppercase tracking-wider text-muted-foreground">
                         (tu)
                       </span>
                     )}
                   </p>
                   {m.name && (
-                    <p className="truncate font-mono text-[0.625rem] text-muted-foreground">
+                    <p className="truncate font-mono text-[0.625em] text-muted-foreground">
                       {m.email}
                     </p>
                   )}
@@ -82,7 +82,7 @@ export function MembersTable({
                     <option value="owner">Owner</option>
                   </select>
                 ) : (
-                  <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
+                  <span className="font-mono text-[0.625em] uppercase tracking-[0.14em] text-muted-foreground">
                     {m.role}
                   </span>
                 )}

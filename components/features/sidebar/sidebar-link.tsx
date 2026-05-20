@@ -24,7 +24,7 @@ export function SidebarLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[0.8125rem] transition-colors duration-[var(--dur-fast)]",
+        "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[0.8125em] transition-colors duration-[var(--dur-fast)]",
         active
           ? "bg-sidebar-accent text-foreground font-medium shadow-xs"
           : "text-sidebar-foreground hover:bg-sidebar-accent/80 hover:text-foreground",
@@ -67,7 +67,7 @@ export function ProjectLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[0.8125rem] transition-colors duration-[var(--dur-fast)]",
+        "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[0.8125em] transition-colors duration-[var(--dur-fast)]",
         active
           ? "bg-sidebar-accent text-foreground font-medium shadow-xs"
           : "text-sidebar-foreground hover:bg-sidebar-accent/80 hover:text-foreground",

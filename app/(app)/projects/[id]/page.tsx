@@ -136,7 +136,7 @@ export default async function ProjectDetailPage({
 
 function ViewToggle({ isBoard, projectId }: { isBoard: boolean; projectId: string }) {
   return (
-    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[0.625rem] uppercase tracking-wider">
+    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[0.625em] uppercase tracking-wider">
       <Link
         href={`/projects/${projectId}`}
         className={cn(
@@ -259,7 +259,7 @@ function SectionBlock({
         <h2 className="section-heading text-muted-foreground">
           {name}
         </h2>
-        <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+        <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
           {String(tasks.length).padStart(2, "0")}
         </span>
       </div>

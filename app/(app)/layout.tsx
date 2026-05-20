@@ -172,6 +172,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Content — the ONLY scrollable region. Topbar + sidebar stay fixed. */}
       <main
         id="main-content"
+        data-content-scope
         className="min-h-0 overflow-y-auto overflow-x-hidden"
         tabIndex={-1}
       >

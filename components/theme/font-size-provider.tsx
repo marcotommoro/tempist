@@ -12,12 +12,15 @@ import {
 
 export type FontSize = "sm" | "md" | "lg" | "xl" | "xxl";
 
-const STORAGE_KEY = "font-size";
+const STORAGE_KEY_CHROME = "font-size";
+const STORAGE_KEY_CONTENT = "content-font-size";
 const DEFAULT: FontSize = "md";
 
 interface FontSizeContextValue {
-  fontSize: FontSize;
-  setFontSize: (next: FontSize) => void;
+  chromeFontSize: FontSize;
+  contentFontSize: FontSize;
+  setChromeFontSize: (next: FontSize) => void;
+  setContentFontSize: (next: FontSize) => void;
 }
 
 const FontSizeContext = createContext<FontSizeContextValue | null>(null);
@@ -26,43 +29,76 @@ function isFontSize(v: unknown): v is FontSize {
   return v === "sm" || v === "md" || v === "lg" || v === "xl" || v === "xxl";
 }
 
-const listeners = new Set<() => void>();
-function subscribe(cb: () => void) {
-  listeners.add(cb);
-  const onStorage = (e: StorageEvent) => {
-    if (e.key === STORAGE_KEY) cb();
+// One independent pub/sub per key — keeps subscribers from re-rendering on the
+// other axis change. StorageEvent fires across tabs for free.
+function makeStore(key: string) {
+  const listeners = new Set<() => void>();
+  return {
+    subscribe(cb: () => void) {
+      listeners.add(cb);
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === key) cb();
+      };
+      window.addEventListener("storage", onStorage);
+      return () => {
+        listeners.delete(cb);
+        window.removeEventListener("storage", onStorage);
+      };
+    },
+    emit() {
+      for (const cb of listeners) cb();
+    },
+    snapshot(): FontSize {
+      if (typeof window === "undefined") return DEFAULT;
+      const v = window.localStorage.getItem(key);
+      return isFontSize(v) ? v : DEFAULT;
+    },
+    serverSnapshot(): FontSize {
+      return DEFAULT;
+    },
+    write(next: FontSize) {
+      window.localStorage.setItem(key, next);
+    },
   };
-  window.addEventListener("storage", onStorage);
-  return () => {
-    listeners.delete(cb);
-    window.removeEventListener("storage", onStorage);
-  };
 }
-function emit() {
-  for (const cb of listeners) cb();
-}
-function getSnapshot(): FontSize {
-  if (typeof window === "undefined") return DEFAULT;
-  const v = window.localStorage.getItem(STORAGE_KEY);
-  return isFontSize(v) ? v : DEFAULT;
-}
-const getServerSnapshot = (): FontSize => DEFAULT;
+
+const chromeStore = makeStore(STORAGE_KEY_CHROME);
+const contentStore = makeStore(STORAGE_KEY_CONTENT);
 
 export function FontSizeProvider({ children }: { children: ReactNode }) {
-  const fontSize = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const chromeFontSize = useSyncExternalStore(
+    chromeStore.subscribe,
+    chromeStore.snapshot,
+    chromeStore.serverSnapshot,
+  );
+  const contentFontSize = useSyncExternalStore(
+    contentStore.subscribe,
+    contentStore.snapshot,
+    contentStore.serverSnapshot,
+  );
 
-  // Mirror onto <html data-font-size>. The bootstrap script already sets this
-  // before hydration; this effect keeps it in sync on subsequent changes.
   useEffect(() => {
-    document.documentElement.setAttribute("data-font-size", fontSize);
-  }, [fontSize]);
+    document.documentElement.setAttribute("data-font-size", chromeFontSize);
+  }, [chromeFontSize]);
 
-  const setFontSize = useCallback((next: FontSize) => {
-    window.localStorage.setItem(STORAGE_KEY, next);
-    emit();
+  useEffect(() => {
+    document.documentElement.setAttribute("data-content-size", contentFontSize);
+  }, [contentFontSize]);
+
+  const setChromeFontSize = useCallback((next: FontSize) => {
+    chromeStore.write(next);
+    chromeStore.emit();
   }, []);
 
-  const value = useMemo(() => ({ fontSize, setFontSize }), [fontSize, setFontSize]);
+  const setContentFontSize = useCallback((next: FontSize) => {
+    contentStore.write(next);
+    contentStore.emit();
+  }, []);
+
+  const value = useMemo(
+    () => ({ chromeFontSize, contentFontSize, setChromeFontSize, setContentFontSize }),
+    [chromeFontSize, contentFontSize, setChromeFontSize, setContentFontSize],
+  );
 
   return <FontSizeContext.Provider value={value}>{children}</FontSizeContext.Provider>;
 }
@@ -70,7 +106,12 @@ export function FontSizeProvider({ children }: { children: ReactNode }) {
 export function useFontSize() {
   const ctx = useContext(FontSizeContext);
   if (!ctx) {
-    return { fontSize: DEFAULT, setFontSize: () => {} } satisfies FontSizeContextValue;
+    return {
+      chromeFontSize: DEFAULT,
+      contentFontSize: DEFAULT,
+      setChromeFontSize: () => {},
+      setContentFontSize: () => {},
+    } satisfies FontSizeContextValue;
   }
   return ctx;
 }

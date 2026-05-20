@@ -22,7 +22,7 @@ export function TaskProgress({
     if (trackedSeconds === 0) return null;
     return (
       <span className="inline-flex items-center gap-1 text-muted-foreground">
-        <span className="font-mono text-[0.5625rem] uppercase tracking-[0.16em]">
+        <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em]">
           done
         </span>
         <span className="tabular-nums">{trackedMin}m</span>
@@ -33,7 +33,7 @@ export function TaskProgress({
   if (trackedSeconds === 0) {
     return (
       <span className="inline-flex items-center gap-1 text-muted-foreground">
-        <span className="font-mono text-[0.5625rem] uppercase tracking-[0.16em]">
+        <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em]">
           est
         </span>
         <span className="tabular-nums">{estimatedMinutes}m</span>
