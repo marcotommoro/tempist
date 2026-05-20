@@ -49,9 +49,11 @@ function cellKey(dayKey: string, projectId: string | null): string {
 
 function secondsToInput(secs: number): string {
   if (secs <= 0) return "";
-  const hours = secs / 3600;
-  if (Number.isInteger(hours)) return String(hours);
-  return hours.toFixed(2).replace(/\.?0+$/, "");
+  const totalMinutes = Math.round(secs / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (m === 0) return String(h);
+  return `${h}:${pad2(m)}`;
 }
 
 function formatHours(secs: number): string {

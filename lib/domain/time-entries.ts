@@ -222,7 +222,18 @@ export async function upsertQuickEntry(
     return null;
   }
 
-  const durationSeconds = Math.round(input.hours * 3600);
+  const durationSeconds = Math.round(input.hours * 60) * 60;
+  if (durationSeconds === 0) {
+    if (!existing) return null;
+    await writeAudit({
+      timeEntryId: existing.id,
+      actorId: input.userId,
+      action: "DELETE",
+      before: existing,
+    });
+    await db.delete(schema.timeEntry).where(eq(schema.timeEntry.id, existing.id));
+    return null;
+  }
   const endedAt = new Date(anchor.getTime() + durationSeconds * 1000);
 
   if (existing) {
