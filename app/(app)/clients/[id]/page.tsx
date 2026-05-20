@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import {
+  addDays,
   endOfMonth,
   endOfYear,
   parseISO,
   startOfMonth,
+  startOfWeek,
   startOfYear,
   subMonths,
 } from "date-fns";
@@ -15,6 +17,7 @@ import { listProjects } from "@/lib/domain/projects";
 import {
   getProjectAggregatesForClient,
   getTrackedSecondsByTask,
+  listQuickGridDataForClient,
   listTimeEntriesForClient,
 } from "@/lib/domain/time-entries";
 import { getTasksForClient } from "@/lib/domain/tasks";
@@ -23,6 +26,7 @@ import { EditClientDialog } from "@/components/features/clients/edit-client-dial
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { ClientBillingFilters } from "@/components/features/timer/client-billing-filters";
+import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-entry-grid";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
@@ -35,6 +39,7 @@ type Search = {
   from?: string;
   to?: string;
   preset?: "month" | "last-month" | "all";
+  week?: string;
 };
 
 type ResolvedRange = {
@@ -94,22 +99,51 @@ export default async function ClientDetailPage({
 
   const { from, to, active } = resolveRange(sp);
 
-  const [entries, clients, projects, projectAggregates] = await Promise.all([
-    listTimeEntriesForClient({
-      clientId: id,
-      organizationId,
-      from,
-      to,
-    }),
-    listClients({ organizationId }),
-    listProjects({ organizationId }),
-    getProjectAggregatesForClient({
-      organizationId,
-      clientId: id,
-      from,
-      to,
-    }),
-  ]);
+  const weekStart = sp.week
+    ? (safeParse(sp.week) ?? startOfWeek(new Date(), { weekStartsOn: 1 }))
+    : startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 7);
+
+  const [entries, clients, projects, projectAggregates, quickGrid] =
+    await Promise.all([
+      listTimeEntriesForClient({
+        clientId: id,
+        organizationId,
+        from,
+        to,
+      }),
+      listClients({ organizationId }),
+      listProjects({ organizationId }),
+      getProjectAggregatesForClient({
+        organizationId,
+        clientId: id,
+        from,
+        to,
+      }),
+      listQuickGridDataForClient({
+        organizationId,
+        userId: user.id,
+        clientId: id,
+        weekStart,
+        weekEnd,
+      }),
+    ]);
+
+  const clientProjects: { id: string | null; name: string }[] = projects
+    .filter((p) => p.clientId === id)
+    .map((p) => ({ id: p.id, name: p.name }));
+
+  const managedByCell = new Map<string, number>();
+  for (const m of quickGrid.managed) {
+    const key = `${m.dayKey}::${m.projectId ?? ""}`;
+    managedByCell.set(key, (managedByCell.get(key) ?? 0) + m.durationSeconds);
+  }
+  const gridCells = quickGrid.summary.map((s) => ({
+    dayKey: s.dayKey,
+    projectId: s.projectId,
+    totalSeconds: s.totalSeconds,
+    managedSeconds: managedByCell.get(`${s.dayKey}::${s.projectId ?? ""}`) ?? 0,
+  }));
 
   const clientPicks = clients.map((c) => ({ id: c.id, name: c.name }));
   const projectPicks = projects.map((p) => ({
@@ -234,6 +268,19 @@ export default async function ClientDetailPage({
           accent
         />
       </section>
+
+      <ClientQuickEntryGrid
+        clientId={id}
+        projects={clientProjects}
+        weekStart={weekStart}
+        cells={gridCells}
+        basePath={`/clients/${id}`}
+        preservedParams={{
+          ...(sp.from ? { from: sp.from } : {}),
+          ...(sp.to ? { to: sp.to } : {}),
+          ...(sp.preset ? { preset: sp.preset } : {}),
+        }}
+      />
 
       {aggregatesSorted.length > 0 && (
         <section className="space-y-3">
