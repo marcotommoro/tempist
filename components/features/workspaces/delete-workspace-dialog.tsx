@@ -57,7 +57,7 @@ export function DeleteWorkspaceDialog({
         <DialogTrigger asChild>
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-destructive hover:bg-destructive/10"
+            className="inline-flex items-center gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="size-3.5" />
             Elimina workspace
@@ -86,20 +86,20 @@ export function DeleteWorkspaceDialog({
             autoComplete="off"
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive disabled:opacity-50"
           />
-          {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+          {error && <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>}
           <DialogFooter>
             <button
               type="button"
               onClick={() => setOpen(false)}
               disabled={pending}
-              className="rounded-md border border-input bg-background px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground disabled:opacity-50"
+              className="rounded-md border border-input bg-background px-3 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-muted-foreground hover:text-foreground disabled:opacity-50"
             >
               Annulla
             </button>
             <button
               type="submit"
               disabled={pending || !canDelete}
-              className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-3 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-destructive-foreground hover:opacity-90 disabled:opacity-50"
             >
               <Trash2 className="size-3.5" />
               {pending ? "Eliminazione…" : "Elimina per sempre"}

@@ -58,12 +58,12 @@ export default async function ProjectsPage() {
                   className="flex items-center gap-3 px-4 py-3 transition-colors duration-[var(--dur-fast)] hover:bg-accent/40"
                 >
                   <EntityColorMarker kind="project" color={p.color} />
-                  <span className="text-[14px] font-medium text-foreground">{p.name}</span>
+                  <span className="text-sm font-medium text-foreground">{p.name}</span>
                   {p.isFavorite && (
                     <Star className="h-3 w-3 fill-coral text-coral" aria-hidden />
                   )}
                   {cli && (
-                    <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                    <span className="ml-auto inline-flex items-center gap-1.5 text-eyebrow">
                       <EntityColorMarker kind="client" color={cli.color} size="sm" />
                       {cli.name}
                     </span>

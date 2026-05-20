@@ -40,13 +40,13 @@ export default async function WorkspaceSettingsPage() {
       <div className="flex flex-col gap-2">
         <Link
           href="/settings"
-          className="inline-flex w-fit items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground"
+          className="inline-flex w-fit items-center gap-1 text-eyebrow hover:text-foreground"
         >
           <ChevronLeft className="size-3" /> Settings
         </Link>
         <PageHeader
           eyebrow={
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="text-eyebrow">
               {role}
             </span>
           }

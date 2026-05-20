@@ -74,7 +74,7 @@ export function CreateWorkspaceDialog({
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block space-y-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
               Nome
             </span>
             <input
@@ -88,20 +88,20 @@ export function CreateWorkspaceDialog({
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             />
           </label>
-          {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+          {error && <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>}
           <DialogFooter>
             <button
               type="button"
               onClick={() => setOpen(false)}
               disabled={pending}
-              className="rounded-md border border-input bg-background px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground disabled:opacity-50"
+              className="rounded-md border border-input bg-background px-3 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-muted-foreground hover:text-foreground disabled:opacity-50"
             >
               Annulla
             </button>
             <button
               type="submit"
               disabled={pending || !name.trim()}
-              className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-background hover:opacity-90 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-background hover:opacity-90 disabled:opacity-50"
             >
               <Plus className="size-3.5" />
               {pending ? "Creazione…" : "Crea"}

@@ -69,7 +69,7 @@ export function CreateProjectForm({
         <button
           type="submit"
           disabled={pending || !name.trim()}
-          className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           <Plus className="size-3.5" />
           Create
@@ -77,7 +77,7 @@ export function CreateProjectForm({
       </div>
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+          <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
             Color
           </span>
           {COLOR_OPTIONS.map((c) => (
@@ -98,7 +98,7 @@ export function CreateProjectForm({
         </div>
         {clients.length > 0 && (
           <label className="flex items-center gap-2">
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
               Client
             </span>
             <select
@@ -118,7 +118,7 @@ export function CreateProjectForm({
         )}
       </div>
       {error && (
-        <p className="font-mono text-[11px] text-destructive">{error}</p>
+        <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>
       )}
     </form>
   );

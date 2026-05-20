@@ -10,6 +10,7 @@ import { DigestSection } from "@/components/features/settings/digest-section";
 import { CalendarSection } from "@/components/features/settings/calendar-section";
 import { WeeklyReportSection } from "@/components/features/settings/weekly-report-section";
 import { ThemeSection } from "@/components/features/settings/theme-section";
+import { FontSizeSection } from "@/components/features/settings/font-size-section";
 import { ImportSection } from "@/components/features/settings/import-section";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
@@ -58,13 +59,14 @@ export default async function SettingsPage({
         </header>
         <Link
           href="/settings/workspace"
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-foreground hover:bg-card"
+          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-label text-foreground hover:bg-card"
         >
           <Users className="size-3.5" />
           Apri impostazioni workspace
         </Link>
       </section>
       <ThemeSection />
+      <FontSizeSection />
       <IcalSection tokens={tokens} baseUrl={baseUrl} />
       <DigestSection userEmail={user.email} />
       <WeeklyReportSection />

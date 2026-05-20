@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[0.6875rem] font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {
@@ -22,7 +22,7 @@ const badgeVariants = cva(
         sage:
           "border-transparent bg-sage/15 text-sage",
         mono:
-          "rounded-sm border-border bg-transparent font-mono tabular-nums text-[10px] uppercase tracking-[0.1em] text-muted-foreground px-1.5",
+          "rounded-sm border-border bg-transparent font-mono tabular-nums text-[0.625rem] uppercase tracking-[0.1em] text-muted-foreground px-1.5",
       },
     },
     defaultVariants: {

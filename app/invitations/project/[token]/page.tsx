@@ -83,7 +83,7 @@ export default async function AcceptProjectInvitationPage({
         </p>
         <Link
           href={signInUrl}
-          className="inline-flex w-fit items-center rounded-md bg-foreground px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-background hover:opacity-90"
+          className="inline-flex w-fit items-center rounded-md bg-foreground px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-background hover:opacity-90"
         >
           Accedi per accettare
         </Link>
@@ -104,7 +104,7 @@ export default async function AcceptProjectInvitationPage({
         </p>
         <Link
           href="/today"
-          className="inline-flex w-fit items-center rounded-md border border-input bg-background px-4 py-2 font-mono text-[11px] uppercase tracking-wider hover:bg-card"
+          className="inline-flex w-fit items-center rounded-md border border-input bg-background px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-wider hover:bg-card"
         >
           Vai alla home
         </Link>

@@ -107,7 +107,7 @@ export function TaskCommentsSection({
                     {c.author.image ? (
                       <AvatarImage src={c.author.image} alt={c.author.name ?? c.author.email} />
                     ) : null}
-                    <AvatarFallback className="text-[10px]">
+                    <AvatarFallback className="text-[0.625rem]">
                       {initials(c.author.name, c.author.email)}
                     </AvatarFallback>
                   </Avatar>

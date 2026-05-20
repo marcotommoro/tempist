@@ -53,14 +53,14 @@ export function ClientPieChart({ data }: { data: ClientSlice[] }) {
           return (
             <li
               key={i}
-              className="grid grid-cols-[12px_1fr_auto_64px] items-center gap-2 text-[12px]"
+              className="grid grid-cols-[12px_1fr_auto_64px] items-center gap-2 text-[0.75rem]"
             >
               <EntityColorMarker kind="client" color={s.color} size="sm" />
               <span className="truncate text-foreground">{s.name}</span>
               <span className="font-mono tabular-nums text-muted-foreground">
                 {s.hours.toFixed(2)}h
               </span>
-              <span className="text-right font-mono text-[10px] uppercase tabular-nums tracking-wider text-muted-foreground">
+              <span className="text-right font-mono text-[0.625rem] uppercase tabular-nums tracking-wider text-muted-foreground">
                 {pct.toFixed(1)}%
               </span>
             </li>

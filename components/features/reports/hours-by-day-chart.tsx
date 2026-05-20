@@ -57,12 +57,12 @@ export function HoursByDayChart({ data }: { data: HoursByDayPoint[] }) {
               const v = Number(payload[0]?.value ?? 0);
               return (
                 <div className="rounded-md border border-border bg-popover px-3 py-2 shadow-md">
-                  <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <div className="font-mono text-[0.5625rem] uppercase tracking-[0.14em] text-muted-foreground">
                     {String(label)}
                   </div>
                   <div className="mt-0.5 font-display text-xl leading-none tabular-nums text-foreground">
                     {v.toFixed(2)}
-                    <span className="ml-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="ml-1 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
                       h
                     </span>
                   </div>

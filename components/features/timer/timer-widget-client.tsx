@@ -50,13 +50,13 @@ export function TimerWidgetClient({ running }: { running: TimeEntry | null }) {
           aria-hidden
           className="inline-block size-[6px] rounded-full bg-coral animate-coral-pulse"
         />
-        <span className="font-display text-[11px] italic text-muted-foreground hidden sm:inline">
+        <span className="font-display text-[0.6875rem] italic text-muted-foreground hidden sm:inline">
           tracking
         </span>
-        <span className="font-mono text-[13px] tabular-nums leading-none text-foreground">
+        <span className="font-mono text-[0.8125rem] tabular-nums leading-none text-foreground">
           {formatDuration(elapsed)}
         </span>
-        <span className="hidden md:inline text-[12px] text-muted-foreground max-w-[12rem] truncate border-l border-border pl-2.5">
+        <span className="hidden md:inline text-[0.75rem] text-muted-foreground max-w-[12rem] truncate border-l border-border pl-2.5">
           {running.description ?? "Untracked"}
         </span>
         <button
@@ -64,7 +64,7 @@ export function TimerWidgetClient({ running }: { running: TimeEntry | null }) {
           onClick={onStop}
           disabled={pending}
           aria-label="Ferma timer"
-          className="inline-flex h-6 items-center gap-1 rounded bg-destructive px-2 font-mono text-[10px] uppercase tracking-wider text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex h-6 items-center gap-1 rounded bg-destructive px-2 font-mono text-[0.625rem] uppercase tracking-wider text-destructive-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           <Square className="size-3" />
           Stop
@@ -80,7 +80,7 @@ export function TimerWidgetClient({ running }: { running: TimeEntry | null }) {
         type="button"
         onClick={onStart}
         disabled={pending}
-        className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-transparent pl-2 pr-2.5 text-[12px] text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-accent hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+        className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-transparent pl-2 pr-2.5 text-[0.75rem] text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-accent hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
       >
         <Play className="size-3" />
         Start timer

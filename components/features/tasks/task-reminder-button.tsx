@@ -110,7 +110,7 @@ export function TaskReminderButton({
         >
           <Bell className="size-3.5" />
           {reminderCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 min-w-3 items-center justify-center rounded-full bg-coral px-1 font-mono text-[8px] font-medium tabular-nums text-coral-foreground">
+            <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 min-w-3 items-center justify-center rounded-full bg-coral px-1 font-mono text-[0.5rem] font-medium tabular-nums text-coral-foreground">
               {reminderCount}
             </span>
           )}
@@ -119,15 +119,15 @@ export function TaskReminderButton({
       <PopoverContent align="end" className="w-72 p-3">
         <div className="space-y-3">
           <div>
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            <div className="mb-2 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
               Attivi
             </div>
             {reminders === null ? (
-              <div className="font-display text-[12px] italic text-muted-foreground">
+              <div className="font-display text-[0.75rem] italic text-muted-foreground">
                 Caricamento…
               </div>
             ) : reminders.length === 0 ? (
-              <div className="font-display text-[12px] italic text-muted-foreground">
+              <div className="font-display text-[0.75rem] italic text-muted-foreground">
                 Nessuno.
               </div>
             ) : (
@@ -135,7 +135,7 @@ export function TaskReminderButton({
                 {reminders.map((r) => (
                   <li
                     key={r.id}
-                    className="flex items-center justify-between text-[12px]"
+                    className="flex items-center justify-between text-[0.75rem]"
                   >
                     <span
                       className={cn(
@@ -163,7 +163,7 @@ export function TaskReminderButton({
 
           {hasScheduledAt && (
             <div>
-              <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="mb-2 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
                 Preset · prima della data
               </div>
               <div className="flex flex-wrap gap-1">
@@ -173,7 +173,7 @@ export function TaskReminderButton({
                     type="button"
                     onClick={() => addPreset(p.value)}
                     disabled={pending}
-                    className="inline-flex h-7 items-center rounded border border-border bg-card/40 px-2 font-mono text-[11px] tabular-nums transition-colors hover:bg-accent disabled:cursor-not-allowed"
+                    className="inline-flex h-7 items-center rounded border border-border bg-card/40 px-2 font-mono text-[0.6875rem] tabular-nums transition-colors hover:bg-accent disabled:cursor-not-allowed"
                   >
                     −{p.label}
                   </button>
@@ -183,7 +183,7 @@ export function TaskReminderButton({
           )}
 
           <div>
-            <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            <div className="mb-2 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
               Data/ora specifica
             </div>
             <div className="flex items-center gap-1.5">
@@ -206,7 +206,7 @@ export function TaskReminderButton({
           </div>
 
           {error && (
-            <p className="font-mono text-[11px] text-destructive">{error}</p>
+            <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>
           )}
         </div>
       </PopoverContent>

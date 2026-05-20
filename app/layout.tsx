@@ -68,6 +68,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <Script src="/theme-bootstrap.js" strategy="beforeInteractive" />
+        <Script src="/font-size-bootstrap.js" strategy="beforeInteractive" />
         <Providers>{children}</Providers>
         <Toaster />
         <ServiceWorkerRegister />

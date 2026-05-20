@@ -98,7 +98,7 @@ export function DateTimePicker({
           autoFocus
         />
         <div className="mt-2 border-t border-border px-1 pt-2">
-          <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="mb-2 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-muted-foreground">
             Time
           </div>
           <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function DateTimePicker({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="ml-auto inline-flex h-8 items-center rounded bg-foreground px-3 font-mono text-[10px] uppercase tracking-wider text-background transition-opacity hover:opacity-90"
+              className="ml-auto inline-flex h-8 items-center rounded bg-foreground px-3 font-mono text-[0.625rem] uppercase tracking-wider text-background transition-opacity hover:opacity-90"
             >
               OK
             </button>
@@ -134,7 +134,7 @@ export function DateTimePicker({
                 onChange(null);
                 setOpen(false);
               }}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded px-2 py-1.5 text-[12px] text-destructive transition-colors hover:bg-destructive/10"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded px-2 py-1.5 text-[0.75rem] text-destructive transition-colors hover:bg-destructive/10"
             >
               <X className="size-3.5" /> Rimuovi data
             </button>
@@ -161,7 +161,7 @@ function TimeSelect({
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="appearance-none rounded-md border border-input bg-background py-1.5 pl-3 pr-7 text-center font-mono text-[14px] tabular-nums transition-colors hover:border-foreground/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+        className="appearance-none rounded-md border border-input bg-background py-1.5 pl-3 pr-7 text-center font-mono text-[0.875rem] tabular-nums transition-colors hover:border-foreground/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
         {...props}
       >
         {options.map((n) => (

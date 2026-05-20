@@ -56,7 +56,7 @@ export function WeekStrip({
         </Link>
         <Link
           href={weekHref(today, group)}
-          className="inline-flex h-7 items-center rounded-md border border-border bg-card/40 px-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="inline-flex h-7 items-center rounded-md border border-border bg-card/40 px-2.5 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           Today
         </Link>
@@ -99,12 +99,12 @@ export function WeekDays({
               href={`#${anchor}`}
               className="group inline-flex flex-col items-center gap-0.5 hover:opacity-80"
             >
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
                 {dayOfWeek}
               </span>
               <span
                 className={cn(
-                  "inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-mono text-[12px] font-medium tabular-nums transition-colors",
+                  "inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-mono text-[0.75rem] font-medium tabular-nums transition-colors",
                   isToday
                     ? "bg-coral text-coral-foreground"
                     : "text-foreground group-hover:bg-accent",

@@ -75,12 +75,12 @@ export function QuickAdd({
           disabled={pending}
           placeholder='Aggiungi un task…  "Chiamare Mario domani 15:00 #Acme p1 60min"'
           autoComplete="off"
-          className="flex-1 bg-transparent py-1.5 text-[14px] outline-none placeholder:text-muted-foreground disabled:opacity-50"
+          className="flex-1 bg-transparent py-1.5 text-[0.875rem] outline-none placeholder:text-muted-foreground disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={pending || !input.trim()}
-          className="inline-flex h-7 items-center gap-1.5 rounded bg-foreground px-2.5 font-mono text-[10px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="inline-flex h-7 items-center gap-1.5 rounded bg-foreground px-2.5 font-mono text-[0.625rem] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-40"
         >
           Add
         </button>
@@ -99,7 +99,7 @@ export function QuickAdd({
         />
       )}
 
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>}
     </form>
   );
 }
@@ -123,7 +123,7 @@ function Chip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10px] tabular-nums",
+        "inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[0.625rem] tabular-nums",
         className,
       )}
     >

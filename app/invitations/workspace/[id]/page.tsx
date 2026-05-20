@@ -80,7 +80,7 @@ export default async function AcceptWorkspaceInvitationPage({
         </p>
         <Link
           href={signInUrl}
-          className="inline-flex w-fit items-center rounded-md bg-foreground px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-background hover:opacity-90"
+          className="inline-flex w-fit items-center rounded-md bg-foreground px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-background hover:opacity-90"
         >
           Accedi con {invitation.email}
         </Link>

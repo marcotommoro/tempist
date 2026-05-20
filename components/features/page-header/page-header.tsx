@@ -38,23 +38,23 @@ export function PageHeader({
     >
       <div className="min-w-0 flex-1 space-y-2">
         {eyebrow ? (
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-muted-foreground">
             {eyebrow}
           </div>
         ) : null}
-        <h1 className="font-display text-[40px] leading-[1.08] tracking-[-0.008em] text-balance text-foreground">
+        <h1 className="font-display text-[2.5rem] leading-[1.08] tracking-[-0.008em] text-balance text-foreground">
           {title}
           {emphasis ? (
             <span className="italic text-muted-foreground"> {emphasis}</span>
           ) : null}
         </h1>
         {meta ? (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.11em] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.6875rem] uppercase tracking-[0.11em] text-muted-foreground">
             {meta}
           </div>
         ) : null}
         {description ? (
-          <p className="max-w-prose pt-1 text-[13px] leading-relaxed text-muted-foreground">
+          <p className="max-w-prose pt-1 text-[0.8125rem] leading-relaxed text-muted-foreground">
             {description}
           </p>
         ) : null}

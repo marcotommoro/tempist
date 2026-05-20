@@ -79,7 +79,19 @@
   --dur-fast: 140ms;
   --dur-base: 180ms;
   --dur-slow: 220ms;
+
+  /* typography — user-configurable root size (see html[data-font-size] below) */
+  --font-size-base: 20px;
 }
+
+/* User-selectable font scale. Applied via <html data-font-size="...">
+   by FontSizeProvider + public/font-size-bootstrap.js. Single lever:
+   changing --font-size-base cascades through every rem-based size. */
+html[data-font-size="sm"]  { --font-size-base: 16px; }
+html[data-font-size="md"]  { --font-size-base: 20px; }
+html[data-font-size="lg"]  { --font-size-base: 22px; }
+html[data-font-size="xl"]  { --font-size-base: 24px; }
+html[data-font-size="xxl"] { --font-size-base: 28px; }
 
 .dark {
   --background: oklch(0.17 0.02 55);             /* warm espresso */
@@ -208,7 +220,7 @@
     @apply border-border outline-ring/50;
   }
   html {
-    font-size: 20px;
+    font-size: var(--font-size-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -281,7 +293,7 @@
 
 @utility text-meta {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 0.75rem;          /* 12px @ md (was 14px hardcoded) */
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted-foreground);
@@ -289,10 +301,17 @@
 
 @utility text-eyebrow {
   font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.11em;
+  font-size: 0.625rem;         /* 10px @ md — matches the de-facto pattern used app-wide */
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted-foreground);
+}
+
+@utility text-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;        /* 11px @ md — for buttons and small inline labels */
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 /* Subtle pulse for active timer indicator. Respects reduced-motion below. */

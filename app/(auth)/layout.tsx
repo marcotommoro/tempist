@@ -11,7 +11,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       {/* Brand mark — small, top-left */}
       <div className="absolute left-6 top-6 inline-flex items-center gap-2.5">
-        <span className="grid h-7 w-7 place-items-center rounded-md bg-foreground font-display text-[15px] italic leading-none text-background">
+        <span className="grid h-7 w-7 place-items-center rounded-md bg-foreground font-display text-[0.9375rem] italic leading-none text-background">
           T
         </span>
         <span className="font-display text-base text-foreground">
@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-sm">{children}</div>
 
       {/* Footer */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-muted-foreground">
         Crafted for power users
       </div>
     </div>

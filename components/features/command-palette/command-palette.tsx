@@ -111,7 +111,7 @@ export function CommandPalette() {
                     >
                       <CheckSquare className="size-4 shrink-0 text-muted-foreground" />
                       <span className="truncate">{r.title}</span>
-                      <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span className="ml-auto font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
                         Task
                       </span>
                     </CommandItem>
@@ -126,7 +126,7 @@ export function CommandPalette() {
                     >
                       <EntityColorMarker kind="project" color={r.color} />
                       <span className="truncate">{r.name}</span>
-                      <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span className="ml-auto font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
                         Project
                       </span>
                     </CommandItem>
@@ -140,7 +140,7 @@ export function CommandPalette() {
                   >
                     <EntityColorMarker kind="client" color={r.color} />
                     <span className="truncate">{r.name}</span>
-                    <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="ml-auto font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
                       Client
                     </span>
                   </CommandItem>

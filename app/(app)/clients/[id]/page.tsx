@@ -241,14 +241,14 @@ export default async function ClientDetailPage({
             <h2 className="section-heading text-muted-foreground">
               Breakdown per progetto
             </h2>
-            <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
               {String(aggregatesSorted.length).padStart(2, "0")}
             </span>
           </div>
           <div className="overflow-hidden rounded-md border border-border bg-card">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/30 text-left font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                <tr className="border-b border-border bg-muted/30 text-left text-eyebrow">
                   <th className="px-4 py-2 font-normal">Progetto</th>
                   <th className="px-4 py-2 text-right font-normal">Ore</th>
                   <th className="px-4 py-2 text-right font-normal">Voci</th>
@@ -296,7 +296,7 @@ export default async function ClientDetailPage({
           <h2 className="section-heading text-muted-foreground">
             Tasks
           </h2>
-          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
             {String(tasks.length).padStart(2, "0")}
           </span>
         </div>
@@ -313,7 +313,7 @@ export default async function ClientDetailPage({
           <h2 className="section-heading text-muted-foreground">
             Time entries
           </h2>
-          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
             {String(entries.length).padStart(2, "0")}
           </span>
         </div>
@@ -352,7 +352,7 @@ function Stat({
 }) {
   return (
     <div className="bg-card p-4">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <div className="text-eyebrow">
         {label}
       </div>
       <div

@@ -85,7 +85,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
           {favorites.length > 0 && (
             <div className="mt-6">
-              <div className="flex items-center gap-1.5 px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <div className="flex items-center gap-1.5 px-3 pb-1.5 text-eyebrow">
                 <Star className="h-3 w-3" aria-hidden />
                 <span>Favorites</span>
               </div>
@@ -98,7 +98,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           )}
 
           <div className="mt-6">
-            <div className="flex items-center justify-between px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <div className="flex items-center justify-between px-3 pb-1.5 text-eyebrow">
               <span>Projects</span>
               <Link
                 href="/projects"
@@ -110,7 +110,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </div>
             <div className="space-y-0.5">
               {others.length === 0 && favorites.length === 0 ? (
-                <p className="px-3 py-1.5 text-[12px] text-muted-foreground">
+                <p className="px-3 py-1.5 text-xs text-muted-foreground">
                   Nessun progetto.{" "}
                   <Link href="/projects" className="text-coral underline-offset-2 hover:underline">
                     Crea il primo
@@ -127,7 +127,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
           {sharedProjects.length > 0 && (
             <div className="mt-6">
-              <div className="px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <div className="px-3 pb-1.5 text-eyebrow">
                 Shared with me
               </div>
               <div className="space-y-0.5" role="list">
@@ -139,7 +139,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           )}
 
           <div className="mt-6">
-            <div className="px-3 pb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            <div className="px-3 pb-1.5 text-eyebrow">
               Workspace
             </div>
             <nav className="space-y-0.5" aria-label="Strumenti workspace">

@@ -27,9 +27,9 @@ export function TodayScheduledSection({
   return (
     <section className="space-y-3">
       <div className="flex items-center border-b border-border pb-1.5">
-        <h2 className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.16em] text-foreground">
+        <h2 className="inline-flex items-center gap-1.5 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-foreground">
           Oggi
-          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
             {String(openCount).padStart(2, "0")}
           </span>
         </h2>

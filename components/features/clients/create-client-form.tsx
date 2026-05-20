@@ -101,7 +101,7 @@ export function CreateClientForm() {
         </Field>
       </div>
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
           Color
         </span>
         {COLOR_OPTIONS.map((c) => (
@@ -124,13 +124,13 @@ export function CreateClientForm() {
         <button
           type="submit"
           disabled={pending || !name.trim()}
-          className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[11px] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           <Plus className="size-3.5" />
           Create client
         </button>
         {error && (
-          <p className="font-mono text-[11px] text-destructive">{error}</p>
+          <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>
         )}
       </div>
       <style>{`
@@ -140,7 +140,7 @@ export function CreateClientForm() {
           border: 1px solid var(--input);
           background: var(--background);
           padding: 0.5rem 0.75rem;
-          font-size: 13px;
+          font-size: 0.8125rem;
           transition: border-color 140ms;
         }
         .editorial-input:hover { border-color: color-mix(in oklch, var(--foreground) 20%, transparent); }
@@ -154,7 +154,7 @@ export function CreateClientForm() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </span>
       {children}

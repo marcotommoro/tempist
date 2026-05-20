@@ -149,13 +149,13 @@ export default async function ReportsPage({
           <div className="flex items-center gap-2">
             <Link
               href={`/api/reports/time-entries.csv?range=${range}`}
-              className="inline-flex h-8 items-center rounded-md border border-border bg-transparent px-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="inline-flex h-8 items-center rounded-md border border-border bg-transparent px-2.5 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               Export CSV
             </Link>
             <Link
               href={`/reports/print?range=${range}`}
-              className="inline-flex h-8 items-center rounded-md border border-border bg-transparent px-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="inline-flex h-8 items-center rounded-md border border-border bg-transparent px-2.5 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               Print
             </Link>
@@ -201,7 +201,7 @@ export default async function ReportsPage({
           <h2 className="section-heading text-muted-foreground">
             By client
           </h2>
-          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
             {String(meaningfulRows.length).padStart(2, "0")}
           </span>
         </div>
@@ -213,7 +213,7 @@ export default async function ReportsPage({
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr className="border-b border-border text-eyebrow">
                   <th className="px-4 py-2.5 text-left font-medium">Client</th>
                   <th className="px-4 py-2.5 text-right font-medium">Done</th>
                   <th className="px-4 py-2.5 text-right font-medium">Hours</th>
@@ -231,7 +231,7 @@ export default async function ReportsPage({
                       {r.id ? (
                         <Link
                           href={`/clients/${r.id}`}
-                          className="inline-flex items-center gap-2 text-[13px] hover:text-coral"
+                          className="inline-flex items-center gap-2 text-[0.8125rem] hover:text-coral"
                         >
                           <EntityColorMarker kind="client" color={r.color} size="sm" />
                           {r.name}
@@ -275,7 +275,7 @@ export default async function ReportsPage({
           <h2 className="section-heading text-muted-foreground">
             By project
           </h2>
-          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.625rem] tabular-nums text-muted-foreground">
             {String(projectRows.length).padStart(2, "0")}
           </span>
         </div>
@@ -287,7 +287,7 @@ export default async function ReportsPage({
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr className="border-b border-border text-eyebrow">
                   <th className="px-4 py-2.5 text-left font-medium">Project</th>
                   <th className="px-4 py-2.5 text-right font-medium">Hours</th>
                   <th className="px-4 py-2.5 text-right font-medium">Entries</th>
@@ -303,7 +303,7 @@ export default async function ReportsPage({
                     <td className="px-4 py-2.5">
                       <Link
                         href={`/projects/${p.id}`}
-                        className="inline-flex items-center gap-2 text-[13px] hover:text-coral"
+                        className="inline-flex items-center gap-2 text-[0.8125rem] hover:text-coral"
                       >
                         <EntityColorMarker kind="project" color={p.color} size="sm" />
                         {p.name}
@@ -342,7 +342,7 @@ function Stat({
 }) {
   return (
     <div className="bg-card p-4">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <div className="text-eyebrow">
         {label}
       </div>
       <div
@@ -381,7 +381,7 @@ function RangeToggle({ current }: { current: Range }) {
     { value: "month", label: "Month" },
   ];
   return (
-    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[10px] uppercase tracking-wider">
+    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[0.625rem] uppercase tracking-wider">
       {options.map((o) => (
         <Link
           key={o.value}

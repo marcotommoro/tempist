@@ -164,7 +164,7 @@ export default async function UpcomingPage({
                 <h2 className="font-display text-xl leading-none text-foreground">
                   {format(day, "d MMM")}
                 </h2>
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <span className="text-eyebrow">
                   {isToday(day) ? "Oggi · " : isTomorrow(day) ? "Domani · " : ""}
                   {label}
                 </span>

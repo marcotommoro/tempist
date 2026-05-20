@@ -91,7 +91,7 @@ export function ProjectEditableTitle({
           )}
         />
         {error ? (
-          <span className="mt-1 block font-sans text-[12px] normal-case tracking-normal text-destructive">
+          <span className="mt-1 block font-sans text-[0.75rem] normal-case tracking-normal text-destructive">
             {error}
           </span>
         ) : null}

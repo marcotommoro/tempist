@@ -28,7 +28,7 @@ export function TaskListViewToggle({
   const isProject = group === "project";
 
   return (
-    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[10px] uppercase tracking-wider">
+    <div className="inline-flex rounded-md border border-border bg-card/40 p-0.5 font-mono text-[0.625rem] uppercase tracking-wider">
       <Link
         href={buildHref(basePath, "flat", preserveParams)}
         className={cn(

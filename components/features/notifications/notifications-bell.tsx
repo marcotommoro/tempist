@@ -57,7 +57,7 @@ export function NotificationsBell({
           <Bell className="size-4" />
           {unreadCount > 0 && (
             <span
-              className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] px-1 inline-flex items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white tabular-nums"
+              className="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] px-1 inline-flex items-center justify-center rounded-full bg-red-500 text-[0.625rem] font-semibold text-white tabular-nums"
               aria-label={`${unreadCount} non lette`}
             >
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -153,7 +153,7 @@ function NotificationBody({ notification }: { notification: Notification }) {
           {notification.body}
         </div>
       )}
-      <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+      <div className="mt-1 text-[0.625rem] uppercase tracking-wider text-muted-foreground">
         {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
       </div>
     </>

@@ -82,7 +82,7 @@ export function TaskEstimateField({
           disabled={pending}
           placeholder="es. 1h30m"
           aria-label="Stima durata"
-          className="flex h-8 w-full rounded-md border border-input bg-background px-2.5 font-mono text-[12px] tabular-nums transition-colors hover:border-foreground/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:opacity-50"
+          className="flex h-8 w-full rounded-md border border-input bg-background px-2.5 font-mono text-[0.75rem] tabular-nums transition-colors hover:border-foreground/20 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:opacity-50"
         />
         {estimatedMinutes != null && (
           <button
@@ -110,7 +110,7 @@ export function TaskEstimateField({
             onClick={() => apply(p.minutes)}
             disabled={pending}
             className={cn(
-              "inline-flex h-6 items-center rounded border border-border bg-card/40 px-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed",
+              "inline-flex h-6 items-center rounded border border-border bg-card/40 px-2 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed",
               estimatedMinutes === p.minutes &&
                 "border-coral/30 bg-coral/10 text-coral",
             )}
@@ -120,7 +120,7 @@ export function TaskEstimateField({
         ))}
       </div>
       {error && (
-        <p className="font-mono text-[11px] text-destructive">{error}</p>
+        <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>
       )}
     </div>
   );

@@ -73,7 +73,7 @@ export function ClientBillingFilters({ clientId, from, to, presetActive }: Props
           allowClear={false}
           placeholder="Da"
         />
-        <span className="font-mono text-[10px] text-muted-foreground">→</span>
+        <span className="font-mono text-[0.625rem] text-muted-foreground">→</span>
         <DatePicker
           value={customTo}
           onChange={(d) => d && setCustomTo(d)}
@@ -85,7 +85,7 @@ export function ClientBillingFilters({ clientId, from, to, presetActive }: Props
           size="sm"
           variant="ghost"
           onClick={applyCustom}
-          className="h-7 px-2 text-[11px] uppercase tracking-wider"
+          className="h-7 px-2 text-[0.6875rem] uppercase tracking-wider"
         >
           Applica
         </Button>
@@ -116,7 +116,7 @@ function PresetLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex h-9 items-center px-3 font-mono text-[10px] uppercase tracking-wider transition-colors",
+        "inline-flex h-9 items-center px-3 font-mono text-[0.625rem] uppercase tracking-wider transition-colors",
         active
           ? "bg-foreground text-background"
           : "text-muted-foreground hover:bg-accent hover:text-foreground",

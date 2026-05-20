@@ -29,11 +29,11 @@ export function AcceptProjectInvitationForm({
         type="button"
         onClick={onAccept}
         disabled={pending}
-        className="inline-flex w-fit items-center rounded-md bg-foreground px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-background hover:opacity-90 disabled:opacity-50"
+        className="inline-flex w-fit items-center rounded-md bg-foreground px-4 py-2 font-mono text-[0.6875rem] uppercase tracking-wider text-background hover:opacity-90 disabled:opacity-50"
       >
         {pending ? "Accettazione…" : `Accetta e apri "${projectName}"`}
       </button>
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[0.6875rem] text-destructive">{error}</p>}
     </div>
   );
 }
