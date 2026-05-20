@@ -29,9 +29,11 @@ export function CalendarSection({
       <div>
         <h2 className="text-base font-semibold">Calendar sync</h2>
         <p className="text-sm text-muted-foreground">
-          Push automatico dei task come eventi su Google Calendar.
-          Push-only: gli eventi creati direttamente su Google non vengono
-          importati come task.
+          Sincronizzazione bidirezionale con il calendario principale Google:
+          i task con data/ora diventano eventi e gli impegni con orario su
+          Google compaiono in Inbox. Solo eventi con orario (no tutto il giorno).
+          Aggiornamento in tempo reale se il webhook è raggiungibile, altrimenti
+          entro circa 5 minuti.
         </p>
       </div>
 

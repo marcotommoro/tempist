@@ -4,11 +4,16 @@ import { useState, useTransition } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 import { rescheduleOverdueAction } from "@/lib/actions/tasks";
-import { TaskList, type ProjectMeta } from "@/components/features/tasks/task-list";
-import type { Task } from "@/lib/db/schema";
+import { TaskListByGroup } from "@/components/features/tasks/task-list-by-group";
+import { type ProjectMeta } from "@/components/features/tasks/task-list";
+import type { Project, Task } from "@/lib/db/schema";
+import type { TaskGroupMode } from "@/lib/utils/group-by-project";
 
 export function OverdueSection({
   tasks,
+  title = "Scadute",
+  group = "flat",
+  projects,
   trackedByTask,
   remindersByTask,
   commentsByTask,
@@ -16,6 +21,9 @@ export function OverdueSection({
   currentUserId,
 }: {
   tasks: Task[];
+  title?: string;
+  group?: TaskGroupMode;
+  projects: ReadonlyArray<Pick<Project, "id" | "name" | "color" | "isFavorite">>;
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
   commentsByTask?: Map<string, number>;
@@ -50,7 +58,7 @@ export function OverdueSection({
           ) : (
             <ChevronRight className="size-3" />
           )}
-          Overdue
+          {title}
           <span className="ml-1 font-mono text-[10px] tabular-nums text-destructive/70">
             {String(tasks.length).padStart(2, "0")}
           </span>
@@ -66,8 +74,10 @@ export function OverdueSection({
       </div>
       {open && (
         <>
-          <TaskList
+          <TaskListByGroup
+            group={group}
             tasks={tasks}
+            projects={projects}
             trackedByTask={trackedByTask}
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}

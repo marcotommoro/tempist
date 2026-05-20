@@ -26,8 +26,8 @@ export function SidebarLink({
       className={cn(
         "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[13px] transition-colors duration-[var(--dur-fast)]",
         active
-          ? "bg-sidebar-accent/70 text-foreground font-medium"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+          ? "bg-sidebar-accent text-foreground font-medium shadow-xs"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/80 hover:text-foreground",
       )}
     >
       <span
@@ -69,8 +69,8 @@ export function ProjectLink({
       className={cn(
         "group relative flex h-8 items-center gap-2.5 rounded-md pl-3 pr-2.5 text-[13px] transition-colors duration-[var(--dur-fast)]",
         active
-          ? "bg-sidebar-accent/70 text-foreground font-medium"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+          ? "bg-sidebar-accent text-foreground font-medium shadow-xs"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/80 hover:text-foreground",
       )}
     >
       <span

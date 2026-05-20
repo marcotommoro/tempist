@@ -10,8 +10,11 @@ import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { listProjects } from "@/lib/domain/projects";
-import { TaskList, type ProjectMeta } from "@/components/features/tasks/task-list";
+import { TaskListByGroup } from "@/components/features/tasks/task-list-by-group";
+import { TaskListViewToggle } from "@/components/features/tasks/task-list-view-toggle";
+import { type ProjectMeta } from "@/components/features/tasks/task-list";
 import { OverdueSection } from "@/components/features/upcoming/overdue-section";
+import { parseTaskGroupMode } from "@/lib/utils/group-by-project";
 import {
   WeekDays,
   WeekStrip,
@@ -30,7 +33,7 @@ const WEEKDAY_IT = [
   "sabato",
 ];
 
-type Search = { cursor?: string };
+type Search = { cursor?: string; group?: string };
 
 function dayLabel(day: Date, todayLocal: Date): string {
   if (isSameDay(day, todayLocal)) return "Oggi";
@@ -43,7 +46,12 @@ export default async function UpcomingPage({
 }: {
   searchParams: Promise<Search>;
 }) {
-  const { cursor: cursorParam } = await searchParams;
+  const { cursor: cursorParam, group: groupParam } = await searchParams;
+  const group = parseTaskGroupMode(groupParam);
+  const preserveParams =
+    cursorParam && /^\d{4}-\d{2}-\d{2}$/.test(cursorParam)
+      ? { cursor: cursorParam }
+      : undefined;
   const { user, organizationId } = await requireActiveOrganization();
   const timezone =
     (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
@@ -118,15 +126,24 @@ export default async function UpcomingPage({
             <span>{format(rangeStartLocal, "d LLL")} → {format(addDays(rangeStartLocal, 13), "d LLL")}</span>
           </>
         }
+        actions={
+          <TaskListViewToggle
+            basePath="/upcoming"
+            group={group}
+            preserveParams={preserveParams}
+          />
+        }
       />
 
       <div className="space-y-2">
-        <WeekStrip cursorDate={cursorLocal} todayLocal={todayLocal} />
+        <WeekStrip cursorDate={cursorLocal} todayLocal={todayLocal} group={group} />
         <WeekDays cursorDate={cursorLocal} todayLocal={todayLocal} />
       </div>
 
       <OverdueSection
         tasks={overdueTasks}
+        group={group}
+        projects={projects}
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
@@ -151,8 +168,10 @@ export default async function UpcomingPage({
                 </span>
               </div>
               {dayTasks.length > 0 ? (
-                <TaskList
+                <TaskListByGroup
+                  group={group}
                   tasks={dayTasks}
+                  projects={projects}
                   trackedByTask={trackedByTask}
                   remindersByTask={remindersByTask}
                   commentsByTask={commentsByTask}

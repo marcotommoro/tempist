@@ -18,6 +18,10 @@ import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { db, schema } from "@/lib/db";
 import { createTask } from "@/lib/domain/tasks";
 import { parseQuickAdd } from "@/lib/parsers/quick-add";
+import {
+  defaultTaskScheduledAt,
+  userTimezone,
+} from "@/lib/utils/default-task-scheduled-at";
 import type { ActionResult } from "./tasks";
 
 const VIEW_PATHS = ["/today", "/inbox", "/upcoming"];
@@ -100,12 +104,15 @@ export async function createTaskFromQuickAddAction(
     }
 
     // ---- Create task ----
+    const scheduledAt =
+      parsed.scheduledAt ?? defaultTaskScheduledAt(userTimezone(user));
+
     const task = await createTask({
       organizationId,
       createdById: user.id,
       title: parsed.title,
       priority: parsed.priority,
-      scheduledAt: parsed.scheduledAt,
+      scheduledAt,
       estimatedMinutes: parsed.estimatedMinutes,
       projectId,
       clientId,

@@ -6,9 +6,14 @@ import { getCommentCountByTask } from "@/lib/domain/comments";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import {
+  defaultTaskScheduledAt,
+  userTimezone,
+} from "@/lib/utils/default-task-scheduled-at";
 
 export default async function InboxPage() {
   const { user, organizationId } = await requireActiveOrganization();
+  const defaultScheduledAt = defaultTaskScheduledAt(userTimezone(user));
   const tasks = await getInboxTasks({ organizationId });
   const taskIds = tasks.map((t) => t.id);
   const [trackedByTask, remindersByTask, commentsByTask] = await Promise.all([
@@ -34,7 +39,7 @@ export default async function InboxPage() {
         description="Task non assegnati a nessun progetto. Aggiungi qui le idee veloci."
       />
 
-      <QuickAdd />
+      <QuickAdd defaultScheduledAt={defaultScheduledAt} />
 
       <TaskList
         tasks={tasks}

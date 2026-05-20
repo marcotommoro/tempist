@@ -7,14 +7,51 @@ import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { listProjects } from "@/lib/domain/projects";
-import { TaskList, type ProjectMeta } from "@/components/features/tasks/task-list";
+import { TaskListViewToggle } from "@/components/features/tasks/task-list-view-toggle";
+import { type ProjectMeta } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import { OverdueSection } from "@/components/features/upcoming/overdue-section";
+import { TodayScheduledSection } from "@/components/features/today/today-scheduled-section";
+import { parseTaskGroupMode } from "@/lib/utils/group-by-project";
+import {
+  defaultTaskScheduledAt,
+  userTimezone,
+} from "@/lib/utils/default-task-scheduled-at";
+import { todayBoundsUtc } from "@/lib/utils/today-bounds";
+import type { Task } from "@/lib/db/schema";
 
-export default async function TodayPage() {
+type Search = { group?: string };
+
+function splitTodayPageTasks(
+  tasks: Task[],
+  startUtc: Date,
+): { overdueTasks: Task[]; todayTasks: Task[] } {
+  const overdueTasks: Task[] = [];
+  const todayTasks: Task[] = [];
+  for (const task of tasks) {
+    if (!task.scheduledAt) continue;
+    if (!task.completedAt && task.scheduledAt < startUtc) {
+      overdueTasks.push(task);
+      continue;
+    }
+    if (task.scheduledAt >= startUtc) {
+      todayTasks.push(task);
+    }
+  }
+  return { overdueTasks, todayTasks };
+}
+
+export default async function TodayPage({
+  searchParams,
+}: {
+  searchParams: Promise<Search>;
+}) {
+  const { group: groupParam } = await searchParams;
+  const group = parseTaskGroupMode(groupParam);
   const { user, organizationId } = await requireActiveOrganization();
-  const timezone =
-    (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
+  const timezone = userTimezone(user);
+  const defaultScheduledAt = defaultTaskScheduledAt(timezone);
 
   const tasks = await getTodayTasks({ organizationId, timezone });
   const taskIds = tasks.map((t) => t.id);
@@ -30,8 +67,11 @@ export default async function TodayPage() {
   );
 
   const todayLocal = toZonedTime(new Date(), timezone);
+  const { startUtc } = todayBoundsUtc(timezone);
+  const { overdueTasks, todayTasks } = splitTodayPageTasks(tasks, startUtc);
   const openCount = tasks.filter((t) => !t.completedAt).length;
   const completedCount = tasks.length - openCount;
+  const overdueCount = overdueTasks.length;
 
   return (
     <div className="space-y-6">
@@ -45,32 +85,61 @@ export default async function TodayPage() {
             <span aria-hidden>·</span>
             <span>
               <span className="text-foreground tabular-nums">{openCount}</span>{" "}
-              open
+              aperte
             </span>
+            {overdueCount > 0 ? (
+              <>
+                <span aria-hidden>·</span>
+                <span className="text-destructive">
+                  <span className="tabular-nums">{overdueCount}</span> scadute
+                </span>
+              </>
+            ) : null}
             {completedCount > 0 ? (
               <>
                 <span aria-hidden>·</span>
                 <span>
                   <span className="text-foreground tabular-nums">{completedCount}</span>{" "}
-                  done
+                  completate
                 </span>
               </>
             ) : null}
           </>
         }
+        actions={<TaskListViewToggle basePath="/today" group={group} />}
       />
 
-      <QuickAdd defaultScheduledAt={new Date()} />
+      <QuickAdd defaultScheduledAt={defaultScheduledAt} />
 
-      <TaskList
-        tasks={tasks}
-        trackedByTask={trackedByTask}
-        remindersByTask={remindersByTask}
-        commentsByTask={commentsByTask}
-        projectsById={projectsById}
-        currentUserId={user.id}
-        emptyMessage="Tutto pulito per oggi."
-      />
+      {overdueTasks.length === 0 && todayTasks.length === 0 ? (
+        <p className="px-1 font-display text-sm italic text-muted-foreground">
+          Tutto pulito per oggi.
+        </p>
+      ) : (
+        <div className="space-y-8">
+          <OverdueSection
+            tasks={overdueTasks}
+            group={group}
+            projects={projects}
+            trackedByTask={trackedByTask}
+            remindersByTask={remindersByTask}
+            commentsByTask={commentsByTask}
+            projectsById={projectsById}
+            currentUserId={user.id}
+          />
+
+          <TodayScheduledSection
+            tasks={todayTasks}
+            group={group}
+            projects={projects}
+            trackedByTask={trackedByTask}
+            remindersByTask={remindersByTask}
+            commentsByTask={commentsByTask}
+            projectsById={projectsById}
+            currentUserId={user.id}
+          />
+        </div>
+      )}
     </div>
   );
 }

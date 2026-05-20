@@ -69,5 +69,8 @@ test.describe("settings (theme, iCal, import)", () => {
     await expect(
       page.getByRole("heading", { name: /calendar sync/i }),
     ).toBeVisible();
+    await expect(
+      page.getByText(/sincronizzazione bidirezionale/i),
+    ).toBeVisible();
   });
 });

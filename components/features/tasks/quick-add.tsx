@@ -32,6 +32,9 @@ export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) 
     return parseQuickAdd(input);
   }, [input]);
 
+  const effectiveScheduledAt =
+    parsed?.scheduledAt ?? defaultScheduledAt ?? null;
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = input.trim();
@@ -80,7 +83,7 @@ export function QuickAdd({ defaultScheduledAt }: { defaultScheduledAt?: Date }) 
       {parsed && (
         <ParsedPreview
           title={parsed.title}
-          scheduledAt={parsed.scheduledAt}
+          scheduledAt={effectiveScheduledAt}
           priority={parsed.priority}
           projectName={parsed.projectName}
           labelNames={parsed.labelNames}

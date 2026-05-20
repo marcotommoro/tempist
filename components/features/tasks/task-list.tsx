@@ -11,6 +11,7 @@ export function TaskList({
   projectsById,
   currentUserId,
   emptyMessage = "Nessun task.",
+  showProjectBadge = true,
 }: {
   tasks: Task[];
   /** Map<taskId, trackedSeconds> per arricchire ogni item con la sua progress bar */
@@ -23,11 +24,12 @@ export function TaskList({
   projectsById?: Map<string, ProjectMeta>;
   currentUserId?: string;
   emptyMessage?: string;
+  showProjectBadge?: boolean;
 }) {
   if (tasks.length === 0) {
     return (
-      <div className="overflow-hidden rounded-md border border-dashed border-border bg-card/30 px-6 py-12 text-center">
-        <p className="font-display text-lg italic text-muted-foreground">
+      <div className="overflow-hidden rounded-lg border border-border/80 bg-secondary/50 px-6 py-14 text-center shadow-xs">
+        <p className="font-display text-lg leading-relaxed text-muted-foreground">
           {emptyMessage}
         </p>
       </div>
@@ -44,7 +46,7 @@ export function TaskList({
   return (
     <div className="space-y-4">
       {incomplete.length > 0 && (
-        <ul className="overflow-hidden rounded-md border border-border bg-card">
+        <ul className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-xs">
           {incomplete.map((t) => {
             const projectMeta = t.projectId
               ? projectsById?.get(t.projectId)
@@ -56,8 +58,8 @@ export function TaskList({
                 trackedSeconds={trackedByTask?.get(t.id) ?? 0}
                 reminderCount={remindersByTask?.get(t.id) ?? 0}
                 commentCount={commentsByTask?.get(t.id) ?? 0}
-                projectName={projectMeta?.name ?? null}
-                projectColor={projectMeta?.color ?? null}
+                projectName={showProjectBadge ? (projectMeta?.name ?? null) : null}
+                projectColor={showProjectBadge ? (projectMeta?.color ?? null) : null}
                 currentUserId={currentUserId}
               />
             );
@@ -74,7 +76,7 @@ export function TaskList({
               {String(completed.length).padStart(2, "0")}
             </span>
           </div>
-          <ul className="overflow-hidden rounded-md border border-border bg-card/60">
+          <ul className="overflow-hidden rounded-lg border border-border/80 bg-card/80 shadow-xs">
             {completed.map((t) => {
               const projectMeta = t.projectId
                 ? projectsById?.get(t.projectId)
@@ -86,8 +88,8 @@ export function TaskList({
                   trackedSeconds={trackedByTask?.get(t.id) ?? 0}
                   reminderCount={remindersByTask?.get(t.id) ?? 0}
                   commentCount={commentsByTask?.get(t.id) ?? 0}
-                  projectName={projectMeta?.name ?? null}
-                  projectColor={projectMeta?.color ?? null}
+                  projectName={showProjectBadge ? (projectMeta?.name ?? null) : null}
+                  projectColor={showProjectBadge ? (projectMeta?.color ?? null) : null}
                   currentUserId={currentUserId}
                 />
               );

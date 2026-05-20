@@ -12,8 +12,15 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import type { TaskGroupMode } from "@/lib/utils/group-by-project";
 
 const WEEKDAY_SHORT_IT = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
+
+function weekHref(cursor: string, group: TaskGroupMode) {
+  const params = new URLSearchParams({ cursor });
+  if (group === "project") params.set("group", "project");
+  return `?${params.toString()}`;
+}
 
 /**
  * Strip 7 giorni con day of week + day number. Cliccando un giorno setta
@@ -22,9 +29,11 @@ const WEEKDAY_SHORT_IT = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
 export function WeekStrip({
   cursorDate,
   todayLocal,
+  group = "flat",
 }: {
   cursorDate: Date;
   todayLocal: Date;
+  group?: TaskGroupMode;
 }) {
   const weekStart = startOfWeek(cursorDate, { weekStartsOn: 1 });
 
@@ -39,20 +48,20 @@ export function WeekStrip({
       </div>
       <div className="flex items-center gap-1">
         <Link
-          href={`?cursor=${prev}`}
+          href={weekHref(prev, group)}
           aria-label="Settimana precedente"
           className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <ChevronLeft className="size-3.5" />
         </Link>
         <Link
-          href={`?cursor=${today}`}
+          href={weekHref(today, group)}
           className="inline-flex h-7 items-center rounded-md border border-border bg-card/40 px-2.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           Today
         </Link>
         <Link
-          href={`?cursor=${next}`}
+          href={weekHref(next, group)}
           aria-label="Settimana successiva"
           className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >

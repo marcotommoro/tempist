@@ -32,7 +32,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "relative mb-8 flex items-end justify-between gap-6 pt-10 pb-5 border-b border-border",
+        "relative mb-8 flex items-end justify-between gap-6 border-b border-border/70 pt-10 pb-5",
         className,
       )}
     >
@@ -42,14 +42,14 @@ export function PageHeader({
             {eyebrow}
           </div>
         ) : null}
-        <h1 className="font-display text-[40px] leading-[1.05] tracking-[-0.01em] text-balance text-foreground">
+        <h1 className="font-display text-[40px] leading-[1.08] tracking-[-0.008em] text-balance text-foreground">
           {title}
           {emphasis ? (
-            <span className="italic text-muted-foreground/90"> {emphasis}</span>
+            <span className="italic text-muted-foreground"> {emphasis}</span>
           ) : null}
         </h1>
         {meta ? (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] uppercase tracking-[0.11em] text-muted-foreground">
             {meta}
           </div>
         ) : null}

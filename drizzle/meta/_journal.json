@@ -15,6 +15,13 @@
       "when": 1779118295470,
       "tag": "0001_jittery_rumiko_fujikawa",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779263608796,
+      "tag": "0002_complex_mach_iv",
+      "breakpoints": true
     }
   ]
 }

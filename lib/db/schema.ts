@@ -588,6 +588,9 @@ export const calendarAccount = pgTable(
     watchChannelId: text("watch_channel_id"),
     watchResourceId: text("watch_resource_id"),
     watchExpiresAt: timestamp("watch_expires_at", { withTimezone: true, mode: "date" }),
+    watchWebhookToken: text("watch_webhook_token"),
+    syncToken: text("sync_token"),
+    pullEnabled: boolean("pull_enabled").default(true).notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -609,6 +612,7 @@ export const calendarEventLink = pgTable(
       .references(() => calendarAccount.id, { onDelete: "cascade" }),
     externalEventId: text("external_event_id").notNull(),
     etag: text("etag"),
+    googleUpdatedAt: timestamp("google_updated_at", { withTimezone: true, mode: "date" }),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),

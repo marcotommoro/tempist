@@ -18,6 +18,10 @@ import { z } from "zod";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import {
+  defaultTaskScheduledAt,
+  userTimezone,
+} from "@/lib/utils/default-task-scheduled-at";
+import {
   createTask,
   rescheduleOverdueToToday,
   softDeleteTask,
@@ -81,11 +85,15 @@ export async function createTaskAction(
       const first = parsed.error.issues[0];
       return { ok: false, error: first?.message ?? "Input non valido" };
     }
+    const scheduledAt =
+      parsed.data.scheduledAt ??
+      defaultTaskScheduledAt(userTimezone(user));
+
     const task = await createTask({
       organizationId,
       createdById: user.id,
       title: parsed.data.title,
-      scheduledAt: parsed.data.scheduledAt ?? null,
+      scheduledAt,
       priority: parsed.data.priority,
       projectId: parsed.data.projectId ?? null,
       sectionId: parsed.data.sectionId ?? null,

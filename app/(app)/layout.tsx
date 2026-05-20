@@ -159,7 +159,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Topbar — workspace tools only. Pinned by the parent grid row; the row never scrolls. */}
-      <header className="z-20 flex items-center justify-end border-b border-border bg-background px-5">
+      <header className="z-20 flex items-center justify-end border-b border-border/70 bg-background/95 px-5 backdrop-blur-sm">
         <div className="flex items-center gap-2.5">
           <GlobalManualEntryServer />
           <TimerWidget />

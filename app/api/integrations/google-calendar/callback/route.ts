@@ -13,6 +13,7 @@ import {
   fetchUserInfo,
 } from "@/lib/integrations/google-calendar";
 import { upsertGoogleAccount } from "@/lib/domain/calendar-accounts";
+import { syncAccountById } from "@/lib/domain/calendar-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,7 @@ export async function GET(req: Request): Promise<Response> {
       redirectUri,
     });
     const info = await fetchUserInfo(tok.access_token);
-    await upsertGoogleAccount({
+    const account = await upsertGoogleAccount({
       organizationId,
       userId: user.id,
       externalAccountId: info.sub,
@@ -70,6 +71,11 @@ export async function GET(req: Request): Promise<Response> {
       refreshToken: tok.refresh_token ?? null,
       expiresInSeconds: tok.expires_in,
     });
+    try {
+      await syncAccountById(account.id);
+    } catch (syncErr) {
+      console.error("[gcal.callback] initial sync", syncErr);
+    }
     return NextResponse.redirect(new URL("/settings?gcal_connected=1", url));
   } catch (err) {
     console.error("[gcal.callback]", err);
