@@ -20,7 +20,12 @@ import {
   WeekStrip,
 } from "@/components/features/upcoming/week-strip";
 import { AddTaskForDay } from "@/components/features/upcoming/add-task-for-day";
+import { QuickAdd } from "@/components/features/tasks/quick-add";
 import { groupByDay } from "@/lib/utils/group-by-day";
+import {
+  defaultTaskScheduledAt,
+  userTimezone,
+} from "@/lib/utils/default-task-scheduled-at";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
 const WEEKDAY_IT = [
@@ -53,8 +58,8 @@ export default async function UpcomingPage({
       ? { cursor: cursorParam }
       : undefined;
   const { user, organizationId } = await requireActiveOrganization();
-  const timezone =
-    (user as unknown as { timezone?: string }).timezone ?? "Europe/Rome";
+  const timezone = userTimezone(user);
+  const defaultScheduledAt = defaultTaskScheduledAt(timezone);
 
   // Cursor: data inizio del range mostrato. Default = oggi local.
   const now = new Date();
@@ -136,6 +141,8 @@ export default async function UpcomingPage({
           />
         }
       />
+
+      <QuickAdd defaultScheduledAt={defaultScheduledAt} timezone={timezone} />
 
       <div className="space-y-2">
         <WeekStrip cursorDate={cursorLocal} todayLocal={todayLocal} group={group} />
