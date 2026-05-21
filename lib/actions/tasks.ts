@@ -67,6 +67,12 @@ const createTaskSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => (v && v !== "null" ? v : null)),
+  clientId: z
+    .string()
+    .min(1)
+    .nullable()
+    .optional()
+    .transform((v) => (v && v !== "null" ? v : null)),
 });
 
 export async function createTaskAction(
@@ -80,6 +86,7 @@ export async function createTaskAction(
       priority: (formData.get("priority") as string | null) ?? "P4",
       projectId: formData.get("projectId") || undefined,
       sectionId: formData.get("sectionId") || undefined,
+      clientId: formData.get("clientId") || undefined,
     };
     const parsed = createTaskSchema.safeParse(raw);
     if (!parsed.success) {
@@ -117,10 +124,14 @@ export async function createTaskAction(
       estimatedMinutes,
       projectId: parsed.data.projectId ?? null,
       sectionId: parsed.data.sectionId ?? null,
+      clientId: parsed.data.clientId ?? null,
     });
     revalidateTaskViews();
     if (parsed.data.projectId) {
       revalidatePath(`/projects/${parsed.data.projectId}`);
+    }
+    if (parsed.data.clientId) {
+      revalidatePath(`/clients/${parsed.data.clientId}`);
     }
     return { ok: true, data: { id: task.id } };
   } catch (err) {

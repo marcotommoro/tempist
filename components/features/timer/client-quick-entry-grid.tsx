@@ -444,46 +444,48 @@ function QuickCell({
   onCommit: (v: string) => void;
 }) {
   return (
-    <div className="relative">
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={(e) => onCommit(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === "Escape") {
-            (e.target as HTMLInputElement).blur();
-          }
-        }}
-        placeholder="—"
-        disabled={status === "pending"}
-        aria-invalid={status === "error"}
-        aria-label={error ?? "Ore"}
-        className={cn(
-          "h-9 w-full rounded border border-transparent bg-transparent px-2 text-right font-mono text-[0.875em] tabular-nums text-foreground transition-colors",
-          "hover:bg-accent focus:border-ring focus:bg-background focus:outline-none",
-          status === "error" && "border-destructive/60 bg-destructive/5 text-destructive",
-          status === "pending" && "opacity-60",
-        )}
-      />
-      {status === "pending" && (
-        <Loader2
-          aria-hidden
-          className="pointer-events-none absolute right-1.5 top-1/2 size-3 -translate-y-1/2 animate-spin text-muted-foreground"
+    <div>
+      <div className="relative">
+        <input
+          type="text"
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={(e) => onCommit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === "Escape") {
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          placeholder="—"
+          disabled={status === "pending"}
+          aria-invalid={status === "error"}
+          aria-label={error ?? "Ore"}
+          className={cn(
+            "h-9 w-full rounded border border-transparent bg-transparent px-2 text-right font-mono text-[0.875em] tabular-nums text-foreground transition-colors",
+            "hover:bg-accent focus:border-ring focus:bg-background focus:outline-none",
+            status === "error" && "border-destructive/60 bg-destructive/5 text-destructive",
+            status === "pending" && "opacity-60",
+          )}
         />
-      )}
+        {status === "pending" && (
+          <Loader2
+            aria-hidden
+            className="pointer-events-none absolute right-1.5 top-1/2 size-3 -translate-y-1/2 animate-spin text-muted-foreground"
+          />
+        )}
+        {status === "error" && error && (
+          <div className="absolute left-0 right-0 top-full z-20 mt-0.5 rounded border border-destructive/60 bg-background px-1.5 py-0.5 text-[0.625em] text-destructive shadow-sm">
+            {error}
+          </div>
+        )}
+      </div>
       {otherSeconds > 0 && status !== "error" && (
         <div
-          className="pointer-events-none absolute -bottom-3 right-2 font-mono text-[0.5625em] tracking-wide text-muted-foreground"
+          className="pointer-events-none px-2 pt-0.5 text-right font-mono text-[0.5625em] leading-none tracking-wide text-muted-foreground"
           title="Ore già tracciate da altre voci (timer/voce manuale)"
         >
           +{formatHours(otherSeconds)}
-        </div>
-      )}
-      {status === "error" && error && (
-        <div className="absolute left-0 right-0 top-full z-20 mt-0.5 rounded border border-destructive/60 bg-background px-1.5 py-0.5 text-[0.625em] text-destructive shadow-sm">
-          {error}
         </div>
       )}
     </div>

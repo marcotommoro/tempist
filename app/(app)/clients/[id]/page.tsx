@@ -28,6 +28,7 @@ import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { ClientBillingFilters } from "@/components/features/timer/client-billing-filters";
 import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-entry-grid";
 import { TaskList } from "@/components/features/tasks/task-list";
+import { AddTaskToClient } from "@/components/features/tasks/add-task-to-client";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
@@ -347,6 +348,7 @@ export default async function ClientDetailPage({
             {String(tasks.length).padStart(2, "0")}
           </span>
         </div>
+        <AddTaskToClient clientId={id} timezone={tz} />
         <TaskList
           tasks={tasks}
           trackedByTask={trackedByTask}
