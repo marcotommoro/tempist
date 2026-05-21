@@ -1,4 +1,4 @@
-# Todoist + Time Tracker
+# Tempist
 
 Web app full-stack che unisce le funzionalità di **Todoist** (task, progetti, ricorrenze, notifiche) con un **time tracker professionale** stile Toggl (clienti, timer, ore fatturabili, report).
 

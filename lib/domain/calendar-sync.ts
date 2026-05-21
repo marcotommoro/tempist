@@ -7,6 +7,7 @@ import {
   listAccountsDueForSync,
 } from "@/lib/domain/calendar-accounts";
 import { googleUpdatedForEvent, resolveSyncWinner } from "@/lib/domain/calendar-conflict";
+import { htmlToText } from "@/lib/utils/html";
 import { ensureWatchChannel, pullAccount } from "@/lib/domain/calendar-pull";
 import {
   deleteEvent,
@@ -151,7 +152,7 @@ async function pushUnlinkedOne(args: {
 function taskToEventInput(task: Task) {
   return {
     summary: task.title,
-    description: task.descriptionMarkdown ?? undefined,
+    description: htmlToText(task.descriptionMarkdown) ?? undefined,
     startIso: task.scheduledAt!.toISOString(),
     endIso: task.estimatedMinutes
       ? new Date(

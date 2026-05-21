@@ -168,7 +168,7 @@ export function ProjectMembersDialog({
 
             <div className="overflow-hidden rounded-md border border-border">
               {members.length === 0 ? (
-                <p className="px-3 py-3 font-display text-sm italic text-muted-foreground">
+                <p className="px-3 py-3 font-serif text-sm italic text-muted-foreground">
                   Nessun membro esterno al workspace.
                 </p>
               ) : (
@@ -236,7 +236,7 @@ export function ProjectMembersDialog({
 
           <TabsContent value="invites" className="pt-3">
             {invitations.length === 0 ? (
-              <p className="rounded-md border border-dashed border-border bg-card/40 px-3 py-3 text-center font-display text-sm italic text-muted-foreground">
+              <p className="rounded-md border border-dashed border-border bg-card/40 px-3 py-3 text-center font-serif text-sm italic text-muted-foreground">
                 Nessun invito in sospeso.
               </p>
             ) : (

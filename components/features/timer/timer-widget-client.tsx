@@ -50,7 +50,7 @@ export function TimerWidgetClient({ running }: { running: TimeEntry | null }) {
           aria-hidden
           className="inline-block size-[6px] rounded-full bg-coral animate-coral-pulse"
         />
-        <span className="font-display text-[0.6875em] italic text-muted-foreground hidden sm:inline">
+        <span className="font-serif text-[0.6875em] italic text-muted-foreground hidden sm:inline">
           tracking
         </span>
         <span className="font-mono text-[0.8125em] tabular-nums leading-none text-foreground">

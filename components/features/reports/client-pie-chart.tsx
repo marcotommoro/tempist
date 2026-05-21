@@ -19,7 +19,7 @@ export function ClientPieChart({ data }: { data: ClientSlice[] }) {
   const meaningful = data.filter((d) => d.hours > 0);
   if (meaningful.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center font-display text-base italic text-muted-foreground">
+      <div className="flex h-48 items-center justify-center font-serif text-base italic text-muted-foreground">
         Nessun cliente con ore nel range.
       </div>
     );

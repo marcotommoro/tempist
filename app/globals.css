@@ -9,68 +9,81 @@
    ========================================================================= */
 
 :root {
-  /* surfaces */
-  --background: oklch(0.968 0.014 82);          /* cream paper */
-  --foreground: oklch(0.30 0.03 55);            /* warm charcoal */
-  --card: oklch(0.995 0.009 82);                /* warm off-white */
-  --card-foreground: oklch(0.30 0.03 55);
-  --popover: oklch(0.995 0.009 82);
-  --popover-foreground: oklch(0.30 0.03 55);
+  /* surfaces — warm paper (Tempist redesign) */
+  --background: #f4eedf;          /* warm cream — the canvas */
+  --foreground: #181410;          /* ink — primary text / headings */
+  --card: #ffffff;                /* elevated content */
+  --card-foreground: #181410;
+  --popover: #ffffff;
+  --popover-foreground: #181410;
 
   /* primary / secondary / muted / accent */
-  --primary: oklch(0.32 0.04 55);
-  --primary-foreground: oklch(0.98 0.01 82);
-  --secondary: oklch(0.94 0.018 78);
-  --secondary-foreground: oklch(0.38 0.03 55);
-  --muted: oklch(0.94 0.018 78);
-  --muted-foreground: oklch(0.52 0.025 55);
-  --accent: oklch(0.955 0.022 75);
-  --accent-foreground: oklch(0.30 0.03 55);
+  --primary: #181410;             /* ink — solid buttons */
+  --primary-foreground: #fbf7ec;
+  --secondary: #efe8d5;           /* hover well */
+  --secondary-foreground: #3a332b;
+  --muted: #fbf7ec;               /* surface */
+  --muted-foreground: #6e6457;    /* ink-3 — secondary / labels */
+  --accent: #efe8d5;              /* hover surface */
+  --accent-foreground: #181410;
+
+  /* extended neutrals */
+  --surface: #fbf7ec;             /* sidebar / footer wells */
+  --ink-2: #3a332b;               /* body text */
+  --mute: #9a9082;                /* faint */
+  --line-soft: #ece4cf;           /* inner dividers */
+  --hover: #efe8d5;
 
   /* borders / inputs / ring */
-  --border: oklch(0.88 0.02 78);
-  --input: oklch(0.92 0.018 80);
-  --ring: oklch(0.66 0.18 35);
+  --border: #e2d9c2;
+  --input: #e2d9c2;
+  --ring: #d45a33;
 
   /* destructive */
   --destructive: oklch(0.58 0.22 25);
-  --destructive-foreground: oklch(0.98 0.01 82);
+  --destructive-foreground: #fbf7ec;
 
   /* signature accents */
-  --coral: oklch(0.64 0.17 38);
-  --coral-foreground: oklch(0.98 0.01 82);
-  --sage: oklch(0.65 0.06 145);
-  --sage-foreground: oklch(0.30 0.03 55);
+  --coral: #d45a33;               /* terracotta — CTAs, today, brand, P1 */
+  --coral-foreground: #ffffff;
+  --coral-2: #b84724;             /* deeper terracotta */
+  --coral-soft: #f7e5d9;          /* running-timer pill, today row, avatar */
+  --sage: #5c7a4f;                /* billable / success */
+  --sage-foreground: #ffffff;
+  --sage-soft: #e6ebdd;
+  --info: #3f7ab8;                /* clients / references */
+  --amber: #c49237;               /* warning / scheduled */
+  --pink: #c25d7a;                /* optional project tag */
 
   /* priority */
-  --p1: oklch(0.62 0.22 25);
-  --p2: oklch(0.74 0.16 70);
-  --p3: oklch(0.62 0.12 250);
-  --p4: oklch(0.68 0.02 65);
+  --p1: #d45a33;
+  --p2: #c49237;
+  --p3: #3f7ab8;
+  --p4: #9a9082;
 
   /* charts (editorial palette) */
-  --chart-1: oklch(0.68 0.20 25);   /* coral */
-  --chart-2: oklch(0.65 0.06 145);  /* sage */
-  --chart-3: oklch(0.62 0.12 250);  /* blue */
-  --chart-4: oklch(0.74 0.16 70);   /* amber */
-  --chart-5: oklch(0.55 0.08 295);  /* plum */
+  --chart-1: #d45a33;   /* terracotta */
+  --chart-2: #5c7a4f;   /* sage */
+  --chart-3: #3f7ab8;   /* blue */
+  --chart-4: #c49237;   /* amber */
+  --chart-5: #c25d7a;   /* pink */
 
   /* sidebar */
-  --sidebar: oklch(0.955 0.016 78);
-  --sidebar-foreground: oklch(0.42 0.03 55);
-  --sidebar-primary: oklch(0.30 0.03 55);
-  --sidebar-primary-foreground: oklch(0.98 0.01 82);
-  --sidebar-accent: oklch(0.92 0.024 72);
-  --sidebar-accent-foreground: oklch(0.30 0.03 55);
-  --sidebar-border: oklch(0.88 0.02 78);
-  --sidebar-ring: oklch(0.66 0.18 35);
+  --sidebar: #fbf7ec;
+  --sidebar-foreground: #3a332b;
+  --sidebar-primary: #181410;
+  --sidebar-primary-foreground: #fbf7ec;
+  --sidebar-accent: #efe8d5;
+  --sidebar-accent-foreground: #181410;
+  --sidebar-border: #e2d9c2;
+  --sidebar-ring: #d45a33;
 
   /* shape & elevation */
-  --radius: 0.5rem;
-  --shadow-xs: 0 1px 0 0 oklch(0.35 0.04 55 / 0.06);
-  --shadow-sm: 0 1px 2px 0 oklch(0.35 0.04 55 / 0.07), 0 1px 1px 0 oklch(0.35 0.04 55 / 0.04);
-  --shadow-md: 0 4px 14px -2px oklch(0.35 0.04 55 / 0.1), 0 2px 4px -1px oklch(0.35 0.04 55 / 0.06);
-  --shadow-lg: 0 20px 40px -12px oklch(0.35 0.04 55 / 0.16), 0 0 0 1px oklch(0.35 0.04 55 / 0.05);
+  --radius: 0.625rem;
+  --shadow-xs: 0 1px 0 0 rgb(24 20 16 / 0.04);
+  --shadow-sm: 0 1px 0 0 rgb(24 20 16 / 0.04), 0 2px 8px rgb(24 20 16 / 0.04);
+  --shadow-md: 0 1px 0 0 rgb(24 20 16 / 0.04), 0 8px 24px -8px rgb(24 20 16 / 0.08);
+  --shadow-lg: 0 1px 0 0 rgb(24 20 16 / 0.04), 0 24px 48px -16px rgb(24 20 16 / 0.12);
 
   /* motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -142,58 +155,70 @@ html[data-content-size="xxl"] { --content-base: 28px; }
 }
 
 .dark {
-  --background: oklch(0.17 0.02 55);             /* warm espresso */
-  --foreground: oklch(0.94 0.012 82);
-  --card: oklch(0.21 0.022 58);
-  --card-foreground: oklch(0.94 0.012 82);
-  --popover: oklch(0.22 0.022 58);
-  --popover-foreground: oklch(0.94 0.012 82);
+  --background: #15120e;          /* deep warm near-black */
+  --foreground: #f1e9d6;
+  --card: #221e18;
+  --card-foreground: #f1e9d6;
+  --popover: #221e18;
+  --popover-foreground: #f1e9d6;
 
-  --primary: oklch(0.94 0.012 82);
-  --primary-foreground: oklch(0.22 0.03 55);
-  --secondary: oklch(0.24 0.02 58);
-  --secondary-foreground: oklch(0.86 0.015 82);
-  --muted: oklch(0.24 0.02 58);
-  --muted-foreground: oklch(0.68 0.02 70);
-  --accent: oklch(0.26 0.025 62);
-  --accent-foreground: oklch(0.94 0.012 82);
+  --primary: #f1e9d6;
+  --primary-foreground: #181410;
+  --secondary: #26221c;
+  --secondary-foreground: #c8bfab;
+  --muted: #1b1813;
+  --muted-foreground: #8e8576;
+  --accent: #26221c;
+  --accent-foreground: #f1e9d6;
 
-  --border: oklch(1 0 0 / 0.08);
-  --input: oklch(1 0 0 / 0.10);
-  --ring: oklch(0.72 0.20 25);
+  --surface: #1b1813;
+  --ink-2: #c8bfab;
+  --mute: #6e6557;
+  --line-soft: #25211b;
+  --hover: #26221c;
+
+  --border: #2d2820;
+  --input: #2d2820;
+  --ring: #e76e48;
 
   --destructive: oklch(0.62 0.22 25);
-  --destructive-foreground: oklch(0.96 0.005 90);
+  --destructive-foreground: #f6efe2;
 
-  --coral: oklch(0.72 0.20 25);
-  --coral-foreground: oklch(0.17 0.02 55);
-  --sage: oklch(0.70 0.07 145);
-  --sage-foreground: oklch(0.17 0.02 55);
+  --coral: #e76e48;
+  --coral-foreground: #15120e;
+  --coral-2: #f2825f;
+  --coral-soft: #3a2218;
+  --sage: #8fb07f;
+  --sage-foreground: #15120e;
+  --sage-soft: #28301f;
+  --info: #6ea3da;
+  --amber: #d9ac56;
+  --pink: #d77b97;
 
-  --p1: oklch(0.66 0.20 25);
-  --p2: oklch(0.76 0.15 70);
-  --p3: oklch(0.66 0.11 250);
-  --p4: oklch(0.60 0.02 65);
+  --p1: #e76e48;
+  --p2: #d9ac56;
+  --p3: #6ea3da;
+  --p4: #6e6557;
 
-  --chart-1: oklch(0.72 0.20 25);
-  --chart-2: oklch(0.70 0.07 145);
-  --chart-3: oklch(0.66 0.11 250);
-  --chart-4: oklch(0.76 0.15 70);
-  --chart-5: oklch(0.60 0.10 295);
+  --chart-1: #e76e48;
+  --chart-2: #8fb07f;
+  --chart-3: #6ea3da;
+  --chart-4: #d9ac56;
+  --chart-5: #d77b97;
 
-  --sidebar: oklch(0.15 0.02 55);
-  --sidebar-foreground: oklch(0.82 0.015 82);
-  --sidebar-primary: oklch(0.94 0.012 82);
-  --sidebar-primary-foreground: oklch(0.22 0.03 55);
-  --sidebar-accent: oklch(0.23 0.025 60);
-  --sidebar-accent-foreground: oklch(0.94 0.012 82);
-  --sidebar-border: oklch(0.94 0.01 82 / 0.1);
-  --sidebar-ring: oklch(0.72 0.20 25);
+  --sidebar: #1b1813;
+  --sidebar-foreground: #c8bfab;
+  --sidebar-primary: #f1e9d6;
+  --sidebar-primary-foreground: #181410;
+  --sidebar-accent: #26221c;
+  --sidebar-accent-foreground: #f1e9d6;
+  --sidebar-border: #2d2820;
+  --sidebar-ring: #e76e48;
 
-  --shadow-xs: 0 1px 0 0 oklch(0 0 0 / 0.35);
-  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.35), 0 1px 1px 0 oklch(0 0 0 / 0.25);
-  --shadow-md: 0 4px 12px -2px oklch(0 0 0 / 0.45), 0 2px 4px -1px oklch(0 0 0 / 0.28);
-  --shadow-lg: 0 24px 48px -12px oklch(0 0 0 / 0.55), 0 0 0 1px oklch(0.94 0.01 82 / 0.06);
+  --shadow-xs: 0 1px 0 0 rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 0 0 rgb(0 0 0 / 0.4), 0 2px 8px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 24px 48px -16px rgb(0 0 0 / 0.5);
 }
 
 @theme inline {
@@ -220,8 +245,24 @@ html[data-content-size="xxl"] { --content-base: 28px; }
 
   --color-coral: var(--coral);
   --color-coral-foreground: var(--coral-foreground);
+  --color-coral-2: var(--coral-2);
+  --color-coral-soft: var(--coral-soft);
   --color-sage: var(--sage);
   --color-sage-foreground: var(--sage-foreground);
+  --color-sage-soft: var(--sage-soft);
+
+  /* semantic aliases + extended palette */
+  --color-surface: var(--surface);
+  --color-ink-2: var(--ink-2);
+  --color-mute: var(--mute);
+  --color-line-soft: var(--line-soft);
+  --color-hover: var(--hover);
+  --color-billable: var(--sage);
+  --color-billable-foreground: var(--sage-foreground);
+  --color-billable-soft: var(--sage-soft);
+  --color-info: var(--info);
+  --color-amber: var(--amber);
+  --color-pink: var(--pink);
 
   --color-p1: var(--p1);
   --color-p2: var(--p2);
@@ -256,11 +297,13 @@ html[data-content-size="xxl"] { --content-base: 28px; }
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
 
-  /* font families — wired to next/font CSS variables in app/layout.tsx */
-  --font-display: var(--font-display), "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* font families — wired to next/font CSS variables in app/layout.tsx.
+     Headings use Geist (--font-sans); --font-serif is the Instrument Serif
+     editorial accent, applied sparingly. */
+  --font-display: var(--font-sans), "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  --font-serif: ui-serif, "Iowan Old Style", Baskerville, Georgia, serif;
+  --font-serif: var(--font-serif), "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
 }
 
 @layer base {
@@ -279,8 +322,7 @@ html[data-content-size="xxl"] { --content-base: 28px; }
     font-family: var(--font-sans);
   }
   .font-display, [class*="font-display"] {
-    letter-spacing: -0.01em;
-    font-feature-settings: "ss01", "cv11";
+    letter-spacing: -0.02em;
   }
 
   /* Distinct, accessible focus ring on the coral accent. Never remove. */

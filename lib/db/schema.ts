@@ -1,5 +1,5 @@
 /**
- * Todoist + Time Tracker — Drizzle schema (postgresql)
+ * Tempist — Drizzle schema (postgresql)
  *
  * Sections:
  *   1. Shared helpers (id, timestamps)
@@ -351,6 +351,9 @@ export const task = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
 
     title: text("title").notNull(),
+    // Nonostante il nome storico della colonna, contiene HTML rich-text
+    // sanitizzato (TipTap), non markdown. Sanitizzato dalle action prima di
+    // persistere e di nuovo al render (vedi lib/utils/html.ts).
     descriptionMarkdown: text("description_markdown"),
     priority: priorityEnum("priority").default("P4").notNull(),
 

@@ -38,7 +38,7 @@ export async function sendProjectInviteEmail(opts: {
 }): Promise<void> {
   const { to, inviterName, projectName, acceptUrl } = opts;
   const subject = `${inviterName} ti ha invitato al progetto "${projectName}"`;
-  const text = `${inviterName} ti ha invitato a collaborare al progetto "${projectName}" su Todoist+Tracker.\n\nClicca qui per accettare:\n\n${acceptUrl}\n\nL'invito scade tra 7 giorni. Se non hai un account verrà creato automaticamente con questa email.`;
+  const text = `${inviterName} ti ha invitato a collaborare al progetto "${projectName}" su Tempist.\n\nClicca qui per accettare:\n\n${acceptUrl}\n\nL'invito scade tra 7 giorni. Se non hai un account verrà creato automaticamente con questa email.`;
 
   await writeE2EFile(to, acceptUrl);
 

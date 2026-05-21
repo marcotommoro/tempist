@@ -28,6 +28,7 @@ import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { ClientBillingFilters } from "@/components/features/timer/client-billing-filters";
 import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-entry-grid";
 import { TaskList } from "@/components/features/tasks/task-list";
+import { Stat } from "@/components/ui/stat";
 import { AddTaskToClient } from "@/components/features/tasks/add-task-to-client";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
@@ -253,20 +254,24 @@ export default async function ClientDetailPage({
       />
 
       {/* Totali — editorial KPI grid */}
-      <section className="grid grid-cols-4 gap-px overflow-hidden rounded-md border border-border bg-border">
-        <Stat label="Hours" value={formatDuration(totals.totalSeconds)} />
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
+        <Stat className="bg-card" label="Hours" value={formatDuration(totals.totalSeconds)} />
         <Stat
+          className="bg-card"
           label="Billable"
+          accent="billable"
           value={formatDuration(totals.billableSeconds)}
         />
         <Stat
+          className="bg-card"
           label="Internal"
           value={formatDuration(totals.internalSeconds)}
         />
         <Stat
+          className="bg-card"
           label={`Amount (${client.currency})`}
           value={totals.billableAmount.toFixed(2)}
-          accent
+          accent="coral"
         />
       </section>
 
@@ -293,7 +298,7 @@ export default async function ClientDetailPage({
               {String(aggregatesSorted.length).padStart(2, "0")}
             </span>
           </div>
-          <div className="overflow-hidden rounded-md border border-border bg-card">
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-left text-eyebrow">
@@ -315,7 +320,7 @@ export default async function ClientDetailPage({
                       {agg.projectId
                         ? (projectsById.get(agg.projectId) ?? "—")
                         : (
-                          <span className="font-display italic text-muted-foreground">
+                          <span className="font-serif italic text-muted-foreground">
                             Senza progetto
                           </span>
                         )}
@@ -380,39 +385,12 @@ export default async function ClientDetailPage({
               ))}
             </ul>
           ) : (
-            <p className="px-4 py-8 text-center font-display text-base italic text-muted-foreground">
+            <p className="px-4 py-8 text-center font-serif text-lg italic text-muted-foreground">
               Nessuna voce di tracking ancora.
             </p>
           )}
         </div>
       </section>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="bg-card p-4">
-      <div className="text-eyebrow">
-        {label}
-      </div>
-      <div
-        className={
-          accent
-            ? "mt-1.5 font-display text-3xl leading-none tabular-nums text-coral"
-            : "mt-1.5 font-display text-3xl leading-none tabular-nums text-foreground"
-        }
-      >
-        {value}
-      </div>
     </div>
   );
 }

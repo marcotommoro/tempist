@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Tempist — Redesign</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html, body { margin:0; padding:0; background:#E7E1D2; font-family: "Geist", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+
+  /* ============================================
+     LIGHT THEME — refined warm paper
+     ============================================ */
+  .t-light {
+    --bg:        #F4EEDF;
+    --surface:   #FBF7EC;
+    --canvas:    #FFFFFF;
+    --ink:       #181410;
+    --ink-2:     #3A332B;
+    --ink-3:     #6E6457;
+    --mute:      #9A9082;
+    --line:      #E2D9C2;
+    --line-soft: #ECE4CF;
+    --hover:     #EFE8D5;
+    --accent:    #D45A33;
+    --accent-2:  #B84724;
+    --accent-soft:#F7E5D9;
+    --billable:  #5C7A4F;
+    --billable-soft:#E6EBDD;
+    --info:      #3F7AB8;
+    --amber:     #C49237;
+    --pink:      #C25D7A;
+    --shadow: 0 1px 0 rgba(24,20,16,.04), 0 2px 8px rgba(24,20,16,.04);
+    --shadow-lg: 0 1px 0 rgba(24,20,16,.04), 0 24px 48px -16px rgba(24,20,16,.12);
+    color: var(--ink);
+    background: var(--bg);
+  }
+
+  /* ============================================
+     DARK THEME — warm near-black
+     ============================================ */
+  .t-dark {
+    --bg:        #15120E;
+    --surface:   #1B1813;
+    --canvas:    #221E18;
+    --ink:       #F1E9D6;
+    --ink-2:     #C8BFAB;
+    --ink-3:     #8E8576;
+    --mute:      #6E6557;
+    --line:      #2D2820;
+    --line-soft: #25211B;
+    --hover:     #26221C;
+    --accent:    #E76E48;
+    --accent-2:  #F2825F;
+    --accent-soft:#3A2218;
+    --billable:  #8FB07F;
+    --billable-soft:#28301F;
+    --info:      #6EA3DA;
+    --amber:     #D9AC56;
+    --pink:      #D77B97;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.3);
+    --shadow-lg: 0 24px 48px -16px rgba(0,0,0,.5);
+    color: var(--ink);
+    background: var(--bg);
+  }
+
+  .mono { font-family: "Geist Mono", ui-monospace, monospace; font-feature-settings: "tnum"; letter-spacing: -0.01em; }
+  .serif { font-family: "Instrument Serif", serif; }
+</style>
+</head>
+<body>
+
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="landing.jsx"></script>
+<script type="text/babel" src="canvas-mount.jsx"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+
+</body>
+</html>

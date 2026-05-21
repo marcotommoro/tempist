@@ -9,6 +9,8 @@ import { TimesheetFilters } from "@/components/features/timer/timesheet-filters"
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import { Card } from "@/components/ui/card";
+import { Stat } from "@/components/ui/stat";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 import {
@@ -122,11 +124,11 @@ export default async function TimesheetPage({
 
       <ManualEntryForm />
 
-      <section className="grid grid-cols-3 gap-px overflow-hidden rounded-md border border-border bg-border">
+      <Card className="flex divide-x divide-border">
         <Stat label="Hours" value={formatDuration(totals.totalSeconds)} />
-        <Stat label="Billable" value={totals.billable.toFixed(2)} accent />
+        <Stat label="Revenue" value={`€${totals.billable.toFixed(2)}`} accent="coral" />
         <Stat label="Entries" value={String(entries.length)} />
-      </section>
+      </Card>
 
       <section className="space-y-6">
         {dayKeys.length > 0 ? (
@@ -148,7 +150,7 @@ export default async function TimesheetPage({
                     )}
                   </span>
                 </div>
-                <div className="overflow-hidden rounded-md border border-border bg-card">
+                <Card className="overflow-hidden">
                   <ul className="divide-y divide-border">
                     {bucket.entries.map((e) => (
                       <TimeEntryRow
@@ -160,13 +162,13 @@ export default async function TimesheetPage({
                       />
                     ))}
                   </ul>
-                </div>
+                </Card>
               </div>
             );
           })
         ) : (
-          <div className="rounded-md border border-dashed px-4 py-12 text-center">
-            <p className="font-display text-base italic text-muted-foreground">
+          <div className="rounded-xl border border-dashed px-4 py-12 text-center">
+            <p className="font-serif text-lg italic text-muted-foreground">
               Nessuna voce in questo periodo.
             </p>
             <p className="mt-2 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
@@ -175,33 +177,6 @@ export default async function TimesheetPage({
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="bg-card p-4">
-      <div className="text-eyebrow">
-        {label}
-      </div>
-      <div
-        className={
-          accent
-            ? "mt-1.5 font-display text-3xl leading-none tabular-nums text-coral"
-            : "mt-1.5 font-display text-3xl leading-none tabular-nums text-foreground"
-        }
-      >
-        {value}
-      </div>
     </div>
   );
 }

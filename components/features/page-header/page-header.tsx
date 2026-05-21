@@ -45,7 +45,7 @@ export function PageHeader({
         <h1 className="font-display text-[2.5em] leading-[1.08] tracking-[-0.008em] text-balance text-foreground">
           {title}
           {emphasis ? (
-            <span className="italic text-muted-foreground"> {emphasis}</span>
+            <span className="font-serif font-normal italic text-muted-foreground"> {emphasis}</span>
           ) : null}
         </h1>
         {meta ? (

@@ -19,6 +19,8 @@ import { ClientPieChart } from "@/components/features/reports/client-pie-chart";
 import { cn } from "@/lib/utils";
 import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import { Card } from "@/components/ui/card";
+import { Stat } from "@/components/ui/stat";
 
 type Search = { range?: string };
 
@@ -168,13 +170,14 @@ export default async function ReportsPage({
       </div>
 
       {/* Totali del range — editorial KPI grid */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border md:grid-cols-4">
-        <Stat label="Hours" value={hoursFromSeconds(totals.totalSeconds)} />
-        <Stat label="Entries" value={String(totals.entryCount)} />
-        <Stat label="Completed" value={String(totals.completedTasks)} />
+      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
+        <Stat className="bg-card" label="Hours" value={hoursFromSeconds(totals.totalSeconds)} />
+        <Stat className="bg-card" label="Entries" value={String(totals.entryCount)} />
+        <Stat className="bg-card" label="Completed" value={String(totals.completedTasks)} />
         <Stat
+          className="bg-card"
           label="Billable"
-          accent
+          accent="coral"
           value={
             totals.billableByCurrency.size === 0
               ? "—"
@@ -205,9 +208,9 @@ export default async function ReportsPage({
             {String(meaningfulRows.length).padStart(2, "0")}
           </span>
         </div>
-        <div className="overflow-x-auto rounded-md border border-border bg-card">
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
           {meaningfulRows.length === 0 ? (
-            <p className="px-4 py-8 text-center font-display text-base italic text-muted-foreground">
+            <p className="px-4 py-8 text-center font-serif text-lg italic text-muted-foreground">
               Nessuna attività registrata nel range selezionato.
             </p>
           ) : (
@@ -237,7 +240,7 @@ export default async function ReportsPage({
                           {r.name}
                         </Link>
                       ) : (
-                        <span className="font-display italic text-muted-foreground">
+                        <span className="font-serif italic text-muted-foreground">
                           {r.name}
                         </span>
                       )}
@@ -279,9 +282,9 @@ export default async function ReportsPage({
             {String(projectRows.length).padStart(2, "0")}
           </span>
         </div>
-        <div className="overflow-x-auto rounded-md border border-border bg-card">
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
           {projectRows.length === 0 ? (
-            <p className="px-4 py-8 text-center font-display text-base italic text-muted-foreground">
+            <p className="px-4 py-8 text-center font-serif text-lg italic text-muted-foreground">
               Nessun progetto con tracking nel range.
             </p>
           ) : (
@@ -331,32 +334,6 @@ export default async function ReportsPage({
   );
 }
 
-function Stat({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="bg-card p-4">
-      <div className="text-eyebrow">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "mt-1.5 font-display text-2xl leading-none tabular-nums md:text-3xl",
-          accent ? "text-coral" : "text-foreground",
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
 function ChartCard({
   title,
   children,
@@ -365,12 +342,12 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-md border border-border bg-card p-4">
+    <Card className="p-5">
       <h3 className="section-heading-sm mb-3 text-muted-foreground">
         {title}
       </h3>
       {children}
-    </div>
+    </Card>
   );
 }
 

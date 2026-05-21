@@ -1,13 +1,13 @@
 {
-  "name": "Todoist + Tracker",
-  "short_name": "Todoist+Tracker",
-  "description": "Task management + time tracking unificati",
+  "name": "Tempist",
+  "short_name": "Tempist",
+  "description": "Il time tracker per freelance e piccoli studi. Le ore che hai davvero fatturato.",
   "start_url": "/today",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#0f172a",
+  "background_color": "#f4eedf",
+  "theme_color": "#f4eedf",
   "lang": "it",
   "icons": [
     {

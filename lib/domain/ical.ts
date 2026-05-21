@@ -8,6 +8,7 @@ import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import type { IcalToken } from "@/lib/db/schema";
+import { htmlToText } from "@/lib/utils/html";
 import { buildIcs } from "@/lib/utils/ics";
 
 function generateToken(): string {
@@ -98,7 +99,7 @@ export async function generateFeedIcs(opts: {
     events: tasks.map((t) => ({
       uid: `${t.id}@todoist-tracker`,
       summary: t.title,
-      description: t.descriptionMarkdown ?? null,
+      description: htmlToText(t.descriptionMarkdown),
       start: t.scheduledAt!, // garantito da isNotNull
       end: t.estimatedMinutes
         ? new Date(t.scheduledAt!.getTime() + t.estimatedMinutes * 60_000)

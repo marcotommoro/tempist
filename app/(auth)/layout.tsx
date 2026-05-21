@@ -11,11 +11,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       {/* Brand mark — small, top-left */}
       <div className="absolute left-6 top-6 inline-flex items-center gap-2.5">
-        <span className="grid h-7 w-7 place-items-center rounded-md bg-foreground font-display text-[0.9375em] italic leading-none text-background">
+        <span className="grid h-7 w-7 place-items-center rounded-md bg-foreground font-serif text-[1.0625em] italic leading-none text-background">
           T
         </span>
-        <span className="font-display text-base text-foreground">
-          Todoist+Tracker
+        <span className="font-display text-base font-medium tracking-[-0.02em] text-foreground">
+          Tempist
         </span>
       </div>
 

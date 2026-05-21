@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -22,11 +23,12 @@ const monoStyle = {
 export function HoursByDayChart({ data }: { data: HoursByDayPoint[] }) {
   if (data.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center font-display text-base italic text-muted-foreground">
+      <div className="flex h-48 items-center justify-center font-serif text-lg italic text-muted-foreground">
         Nessun dato nel range.
       </div>
     );
   }
+  const maxHours = Math.max(...data.map((d) => d.hours), 0);
   return (
     <div className="h-60 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -70,12 +72,18 @@ export function HoursByDayChart({ data }: { data: HoursByDayPoint[] }) {
               );
             }}
           />
-          <Bar
-            dataKey="hours"
-            fill="var(--coral)"
-            radius={[3, 3, 0, 0]}
-            maxBarSize={28}
-          />
+          <Bar dataKey="hours" radius={[3, 3, 0, 0]} maxBarSize={28}>
+            {data.map((d, i) => {
+              const isPeak = maxHours > 0 && d.hours >= maxHours;
+              return (
+                <Cell
+                  key={i}
+                  fill={isPeak ? "var(--coral)" : "var(--foreground)"}
+                  fillOpacity={isPeak ? 1 : 0.82}
+                />
+              );
+            })}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>

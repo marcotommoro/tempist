@@ -123,11 +123,11 @@ export function TaskReminderButton({
               Attivi
             </div>
             {reminders === null ? (
-              <div className="font-display text-[0.75em] italic text-muted-foreground">
+              <div className="font-serif text-[0.75em] italic text-muted-foreground">
                 Caricamento…
               </div>
             ) : reminders.length === 0 ? (
-              <div className="font-display text-[0.75em] italic text-muted-foreground">
+              <div className="font-serif text-[0.75em] italic text-muted-foreground">
                 Nessuno.
               </div>
             ) : (

@@ -40,7 +40,7 @@ export function MembersTable({
   return (
     <div className="overflow-hidden rounded-md border border-border bg-card">
       {members.length === 0 ? (
-        <p className="px-3 py-3 font-display text-sm italic text-muted-foreground">
+        <p className="px-3 py-3 font-serif text-sm italic text-muted-foreground">
           Nessun membro.
         </p>
       ) : (

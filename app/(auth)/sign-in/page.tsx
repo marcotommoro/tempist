@@ -49,7 +49,7 @@ function SignInForm() {
           Sign in
         </p>
         <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-foreground">
-          Welcome <span className="italic text-muted-foreground/90">back.</span>
+          Welcome <span className="font-serif font-normal italic text-muted-foreground/90">back.</span>
         </h1>
         <p className="text-[0.8125em] text-muted-foreground">
           Inserisci la tua email per ricevere il magic link.
@@ -116,7 +116,7 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <p className="text-center font-display text-base italic text-muted-foreground">
+        <p className="text-center font-serif text-base italic text-muted-foreground">
           Loading…
         </p>
       }

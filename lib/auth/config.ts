@@ -132,7 +132,7 @@ export const auth = betterAuth({
         }
         await sendEmail(
           email,
-          "Accedi a Todoist+Tracker",
+          "Accedi a Tempist",
           `Clicca qui per accedere:\n\n${url}\n\nIl link scade tra 5 minuti.`,
         );
       },
@@ -176,7 +176,7 @@ export const auth = betterAuth({
         await sendEmail(
           email,
           `${inviterName} ti ha invitato al workspace "${org.name}"`,
-          `${inviterName} ti ha invitato a unirti al workspace "${org.name}" su Todoist+Tracker.\n\nClicca qui per accettare:\n\n${acceptUrl}\n\nSe non hai un account verrà creato automaticamente con questa email.`,
+          `${inviterName} ti ha invitato a unirti al workspace "${org.name}" su Tempist.\n\nClicca qui per accettare:\n\n${acceptUrl}\n\nSe non hai un account verrà creato automaticamente con questa email.`,
         );
       },
     }),

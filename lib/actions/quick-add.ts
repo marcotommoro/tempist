@@ -17,6 +17,7 @@ import { and, eq, ilike, or } from "drizzle-orm";
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { db, schema } from "@/lib/db";
 import { createTask } from "@/lib/domain/tasks";
+import { normalizeDescriptionHtml } from "@/lib/utils/html";
 import { parseQuickAdd } from "@/lib/parsers/quick-add";
 import {
   defaultTaskScheduledAt,
@@ -42,8 +43,9 @@ export async function createTaskFromQuickAddAction(
       return { ok: false, error: "Il titolo non puo' essere vuoto dopo i token" };
     }
 
-    const descriptionMarkdown =
-      String(formData.get("descriptionMarkdown") ?? "").trim() || null;
+    const descriptionMarkdown = normalizeDescriptionHtml(
+      formData.get("descriptionMarkdown")?.toString(),
+    );
     // Selezione esplicita dalle tendine: ha la precedenza sul token nel titolo.
     const explicitProjectId = String(formData.get("projectId") ?? "").trim();
     const explicitClientId = String(formData.get("clientId") ?? "").trim();

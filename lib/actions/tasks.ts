@@ -17,6 +17,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
+import { normalizeDescriptionHtml } from "@/lib/utils/html";
 import { resolveTaskFromTitle } from "@/lib/parsers/resolve-task-from-title";
 import {
   defaultTaskScheduledAt,
@@ -127,7 +128,7 @@ export async function createTaskAction(
       organizationId,
       createdById: user.id,
       title,
-      descriptionMarkdown: parsed.data.descriptionMarkdown ?? null,
+      descriptionMarkdown: normalizeDescriptionHtml(parsed.data.descriptionMarkdown),
       scheduledAt,
       priority,
       estimatedMinutes,
@@ -249,11 +250,10 @@ export async function setTaskDescriptionAction(
 ): Promise<ActionResult> {
   try {
     const { organizationId } = await requireActiveOrganization();
-    const normalized = descriptionMarkdown?.trim();
     await updateTaskDescription({
       taskId,
       organizationId,
-      descriptionMarkdown: normalized ? normalized : null,
+      descriptionMarkdown: normalizeDescriptionHtml(descriptionMarkdown),
     });
     revalidateTaskViews();
     return { ok: true, data: undefined };

@@ -10,7 +10,7 @@ export default function VerifyRequestPage() {
         Magic link sent
       </p>
       <h1 className="mb-3 font-display text-3xl leading-[1.1] tracking-tight text-foreground">
-        Check your <span className="italic text-muted-foreground/90">inbox.</span>
+        Check your <span className="font-serif font-normal italic text-muted-foreground/90">inbox.</span>
       </h1>
       <p className="mb-2 text-[0.8125em] text-muted-foreground">
         Ti abbiamo inviato un magic link per accedere. Cliccalo entro 5 minuti.

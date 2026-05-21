@@ -21,8 +21,18 @@ const badgeVariants = cva(
           "border-transparent bg-coral/12 text-coral",
         sage:
           "border-transparent bg-sage/15 text-sage",
+        billable:
+          "border-transparent bg-billable-soft text-billable",
+        info:
+          "border-transparent bg-info/12 text-info",
+        amber:
+          "border-transparent bg-amber/15 text-amber",
         mono:
           "rounded-sm border-border bg-transparent font-mono tabular-nums text-[0.625em] uppercase tracking-[0.1em] text-muted-foreground px-1.5",
+        chip:
+          "rounded-md border-border bg-transparent font-mono text-[0.625em] uppercase tracking-[0.1em] text-ink-2 px-2.5 py-1 transition-colors hover:bg-accent",
+        chipActive:
+          "rounded-md border-foreground bg-foreground font-mono text-[0.625em] uppercase tracking-[0.1em] text-background px-2.5 py-1",
       },
     },
     defaultVariants: {

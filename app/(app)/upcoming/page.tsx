@@ -196,7 +196,7 @@ export default async function UpcomingPage({
                   currentUserId={user.id}
                 />
               ) : (
-                <p className="px-1 font-display text-sm italic text-muted-foreground">
+                <p className="px-1 font-serif text-sm italic text-muted-foreground">
                   Nessuna attività.
                 </p>
               )}

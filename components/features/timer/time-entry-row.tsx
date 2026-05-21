@@ -86,7 +86,7 @@ export function TimeEntryRow({
         <div className="min-w-0">
           <p className="truncate text-[0.8125em] text-foreground">
             {entry.description ?? (
-              <span className="font-display italic text-muted-foreground">
+              <span className="font-serif italic text-muted-foreground">
                 — senza descrizione —
               </span>
             )}

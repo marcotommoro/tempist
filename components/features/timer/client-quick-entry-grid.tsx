@@ -309,7 +309,7 @@ export function ClientQuickEntryGrid({
                   {col.id ? (
                     col.name
                   ) : (
-                    <span className="font-display italic text-muted-foreground">
+                    <span className="font-serif italic text-muted-foreground">
                       {col.name}
                     </span>
                   )}

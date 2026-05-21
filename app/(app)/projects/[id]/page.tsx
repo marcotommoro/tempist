@@ -280,7 +280,7 @@ function SectionBlock({
             ))}
           </ul>
         ) : (
-          <p className="px-3 py-3 font-display text-sm italic text-muted-foreground">
+          <p className="px-3 py-3 font-serif text-sm italic text-muted-foreground">
             Nessun task.
           </p>
         )}

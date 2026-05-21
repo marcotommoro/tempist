@@ -30,7 +30,7 @@ export function PendingInvitationsList({
 
   if (invitations.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-border bg-card/40 px-3 py-3 text-center font-display text-sm italic text-muted-foreground">
+      <p className="rounded-md border border-dashed border-border bg-card/40 px-3 py-3 text-center font-serif text-sm italic text-muted-foreground">
         Nessun invito in sospeso.
       </p>
     );

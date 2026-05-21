@@ -120,7 +120,7 @@ export default async function TodayPage({
       />
 
       {overdueTasks.length === 0 && todayTasks.length === 0 ? (
-        <p className="px-1 font-display text-sm italic text-muted-foreground">
+        <p className="px-1 font-serif text-lg italic text-muted-foreground">
           Tutto pulito per oggi.
         </p>
       ) : (

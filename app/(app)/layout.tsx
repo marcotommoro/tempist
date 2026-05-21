@@ -20,6 +20,7 @@ import { TimerWidget } from "@/components/features/timer/timer-widget";
 import { GlobalManualEntryServer } from "@/components/features/timer/global-manual-entry-server";
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
 import { CommandPalette } from "@/components/features/command-palette/command-palette";
+import { TopbarBreadcrumb } from "@/components/features/topbar/topbar-breadcrumb";
 import {
   ClientLink,
   ProjectLink,
@@ -54,7 +55,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const others = projects.filter((p) => !p.isFavorite);
 
   return (
-    <div className="grid h-[100dvh] max-h-[100dvh] grid-cols-[260px_1fr] grid-rows-[56px_minmax(0,1fr)] overflow-hidden">
+    <div className="grid h-[100dvh] max-h-[100dvh] grid-cols-[252px_1fr] grid-rows-[60px_minmax(0,1fr)] overflow-hidden">
       {/* Skip to main content (accessibility) */}
       <a
         href="#main-content"
@@ -191,8 +192,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Topbar — workspace tools only. Pinned by the parent grid row; the row never scrolls. */}
-      <header className="z-20 flex items-center justify-end border-b border-border/70 bg-background/95 px-5 backdrop-blur-sm">
-        <div className="flex items-center gap-2.5">
+      <header className="z-20 flex items-center gap-3 border-b border-border bg-background/95 px-6 backdrop-blur-sm">
+        <TopbarBreadcrumb />
+        <div className="ml-auto flex items-center gap-2.5">
           <GlobalManualEntryServer />
           <TimerWidget />
           <NotificationsBellServer />

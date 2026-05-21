@@ -1,12 +1,19 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AlignLeft, Pencil } from "lucide-react";
+import { AlignLeft } from "lucide-react";
 
-import { DescriptionEditor } from "@/components/features/tasks/description-editor";
+import {
+  DescriptionEditor,
+  RichTextContent,
+} from "@/components/features/tasks/description-editor";
 import { setTaskDescriptionAction } from "@/lib/actions/tasks";
-import { Markdown } from "@/lib/utils/markdown";
-import { toggleTaskListItem } from "@/lib/utils/markdown-tasklist";
+
+/** Un doc TipTap vuoto serializza come `<p></p>`: lo trattiamo come "nessuna descrizione". */
+function isEmptyHtml(html: string): boolean {
+  const t = html.trim();
+  return t === "" || t === "<p></p>";
+}
 
 export function TaskDescriptionEditor({
   taskId,
@@ -34,7 +41,7 @@ export function TaskDescriptionEditor({
 
   function save() {
     setError(null);
-    const next = draft.trim();
+    const next = isEmptyHtml(draft) ? "" : draft;
     startTransition(async () => {
       const res = await setTaskDescriptionAction(taskId, next ? next : null);
       if (!res.ok) {
@@ -46,48 +53,24 @@ export function TaskDescriptionEditor({
     });
   }
 
-  // Spunta/de-spunta una checkbox dalla vista di lettura: aggiorna in modo
-  // ottimistico e persiste. Su errore ripristina lo stato precedente.
-  function onToggle(index: number) {
-    const prev = description;
-    const next = toggleTaskListItem(description, index);
-    setDescription(next);
-    setError(null);
-    startTransition(async () => {
-      const res = await setTaskDescriptionAction(taskId, next ? next : null);
-      if (!res.ok) {
-        setDescription(prev);
-        setError(res.error);
-      }
-    });
-  }
-
   if (editing) {
     return (
       <div className="space-y-2">
         <DescriptionEditor
-          variant="inline"
           value={draft}
           onChange={setDraft}
           disabled={pending}
           autoFocus
-          placeholder="Aggiungi una descrizione... (markdown supportato — ⌘↵ per salvare)"
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-              e.preventDefault();
-              save();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              cancel();
-            }
-          }}
+          placeholder="Aggiungi una descrizione… (⌘↵ per salvare, Esc per annullare)"
+          onSubmit={save}
+          onCancel={cancel}
         />
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={save}
             disabled={pending}
-            className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             Salva
           </button>
@@ -95,7 +78,7 @@ export function TaskDescriptionEditor({
             type="button"
             onClick={cancel}
             disabled={pending}
-            className="text-xs px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground"
+            className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             Annulla
           </button>
@@ -105,12 +88,12 @@ export function TaskDescriptionEditor({
     );
   }
 
-  if (!description) {
+  if (isEmptyHtml(description)) {
     return (
       <button
         type="button"
         onClick={startEdit}
-        className="w-full text-left rounded-md hover:bg-muted/50 px-2 py-1.5 -mx-2 transition-colors"
+        className="-mx-2 w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/50"
       >
         <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <AlignLeft className="size-4" /> Descrizione
@@ -119,20 +102,26 @@ export function TaskDescriptionEditor({
     );
   }
 
-  // Con descrizione: i checkbox sono cliccabili, quindi NON avvolgiamo tutto in
-  // un <button> (input dentro button è HTML non valido). La modifica si apre con
-  // un pulsante dedicato che appare in hover.
+  // Click in qualunque punto della descrizione → apre l'editor. Usiamo un div
+  // con role=button (non un <button>) perché il renderer contiene markup di
+  // blocco (liste, checkbox) non valido dentro un elemento interattivo.
   return (
-    <div className="group relative rounded-md px-2 py-1.5 -mx-2 transition-colors hover:bg-muted/50">
-      <Markdown source={description} interactive onToggleCheckbox={onToggle} />
-      <button
-        type="button"
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
         onClick={startEdit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            startEdit();
+          }
+        }}
         aria-label="Modifica descrizione"
-        className="absolute right-1 top-1 inline-flex size-6 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:bg-background hover:text-foreground group-hover:opacity-100"
+        className="-mx-2 block w-full cursor-text rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/50"
       >
-        <Pencil className="size-3.5" />
-      </button>
+        <RichTextContent html={description} />
+      </div>
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );

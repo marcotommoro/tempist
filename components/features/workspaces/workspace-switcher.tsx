@@ -51,7 +51,7 @@ export function WorkspaceSwitcher({
           >
             <span
               aria-hidden
-              className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-foreground font-display text-[0.9375em] leading-none italic text-background"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-foreground font-serif text-[1.0625em] leading-none italic text-background"
             >
               {initial}
             </span>

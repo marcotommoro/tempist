@@ -215,7 +215,7 @@ export function TaskDetailDialog({
                 )}
               </div>
               {open && comments === null ? (
-                <p className="font-display text-sm italic text-muted-foreground">
+                <p className="font-serif text-sm italic text-muted-foreground">
                   Caricamento commenti...
                 </p>
               ) : (
@@ -241,7 +241,7 @@ export function TaskDetailDialog({
                   {projectName}
                 </div>
               ) : (
-                <span className="font-display text-sm italic text-muted-foreground">
+                <span className="font-serif text-sm italic text-muted-foreground">
                   In arrivo
                 </span>
               )}

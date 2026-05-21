@@ -1,43 +1,42 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegister } from "@/components/features/pwa/sw-register";
 
-// Tight display sans — page titles, hero numerics, auth headlines.
-// Inter Tight: same family as body, with tighter tracking for editorial impact.
-const interTight = Inter_Tight({
-  variable: "--font-display",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-// Industry-standard UI sans — all body text. Variable axes, tabular nums.
-const inter = Inter({
+// Primary UI + display sans. Variable; headings use weight 500.
+const geist = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 });
 
-// Distinctive mono — durations, dates, kbd, meta labels.
-const jetbrainsMono = JetBrains_Mono({
+// Tabular mono — durations, dates, eyebrows, KPI values.
+const geistMono = Geist_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  display: "swap",
+});
+
+// Editorial serif accent — emphasis words, brand mark. Used sparingly.
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Todoist + Tracker",
-  description: "Task management + time tracking unificati",
+  title: "Tempist",
+  description: "Il time tracker per freelance e piccoli studi. Le ore che hai davvero fatturato.",
   manifest: "/manifest.webmanifest",
-  applicationName: "Todoist+Tracker",
+  applicationName: "Tempist",
   appleWebApp: {
     capable: true,
-    title: "Todoist+Tracker",
+    title: "Tempist",
     statusBarStyle: "default",
   },
   icons: {
@@ -48,8 +47,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f0e8" },
-    { media: "(prefers-color-scheme: dark)", color: "#2a241c" },
+    { media: "(prefers-color-scheme: light)", color: "#f4eedf" },
+    { media: "(prefers-color-scheme: dark)", color: "#15120e" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -63,7 +62,7 @@ export default function RootLayout({
   return (
     <html
       lang="it"
-      className={`${interTight.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans">
