@@ -19,12 +19,12 @@ test.describe("landing & sign-in (public)", () => {
     await expect(page.getByPlaceholder(/email/i)).toBeVisible();
   });
 
-  test("middleware redirige /today verso /sign-in se non autenticati", async ({ page }) => {
+  test("proxy redirige /today verso /sign-in se non autenticati", async ({ page }) => {
     await page.goto("/today");
     await expect(page).toHaveURL(/\/sign-in/);
   });
 
-  test("middleware protegge anche /settings e /reports", async ({ page }) => {
+  test("proxy protegge anche /settings e /reports", async ({ page }) => {
     await page.goto("/settings");
     await expect(page).toHaveURL(/\/sign-in/);
     await page.goto("/reports");

@@ -1,5 +1,5 @@
 /**
- * Middleware: redirect a /sign-in se l'utente non e' autenticato per le rotte protette.
+ * Proxy: redirect a /sign-in se l'utente non e' autenticato per le rotte protette.
  * Better Auth gestisce la sessione via cookie; qui controlliamo solo la presenza del cookie
  * della session token (l'app esegue il check completo lato server con getSession).
  *
@@ -13,7 +13,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED_PREFIXES = ["/today", "/inbox", "/upcoming", "/projects", "/clients", "/reports", "/settings"];
 const AUTH_PAGES = ["/sign-in", "/verify-request"];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const sessionCookie = getSessionCookie(req);
 

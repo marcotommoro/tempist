@@ -73,6 +73,13 @@ const createTaskSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => (v && v !== "null" ? v : null)),
+  descriptionMarkdown: z
+    .string()
+    .trim()
+    .max(20000)
+    .nullable()
+    .optional()
+    .transform((v) => (v && v.length ? v : null)),
 });
 
 export async function createTaskAction(
@@ -87,6 +94,7 @@ export async function createTaskAction(
       projectId: formData.get("projectId") || undefined,
       sectionId: formData.get("sectionId") || undefined,
       clientId: formData.get("clientId") || undefined,
+      descriptionMarkdown: formData.get("descriptionMarkdown") || undefined,
     };
     const parsed = createTaskSchema.safeParse(raw);
     if (!parsed.success) {
@@ -119,6 +127,7 @@ export async function createTaskAction(
       organizationId,
       createdById: user.id,
       title,
+      descriptionMarkdown: parsed.data.descriptionMarkdown ?? null,
       scheduledAt,
       priority,
       estimatedMinutes,

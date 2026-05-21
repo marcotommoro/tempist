@@ -42,9 +42,26 @@ export async function createTaskFromQuickAddAction(
       return { ok: false, error: "Il titolo non puo' essere vuoto dopo i token" };
     }
 
-    // ---- Resolve project (require existence) ----
+    const descriptionMarkdown =
+      String(formData.get("descriptionMarkdown") ?? "").trim() || null;
+    // Selezione esplicita dalle tendine: ha la precedenza sul token nel titolo.
+    const explicitProjectId = String(formData.get("projectId") ?? "").trim();
+    const explicitClientId = String(formData.get("clientId") ?? "").trim();
+
+    // ---- Resolve project: tendina (esplicito) > token #nome (require existence) ----
     let projectId: string | null = null;
-    if (parsed.projectName) {
+    if (explicitProjectId) {
+      const proj = await db.query.project.findFirst({
+        where: and(
+          eq(schema.project.id, explicitProjectId),
+          eq(schema.project.organizationId, organizationId),
+        ),
+      });
+      if (!proj) {
+        return { ok: false, error: "Progetto selezionato non valido" };
+      }
+      projectId = proj.id;
+    } else if (parsed.projectName) {
       const proj = await db.query.project.findFirst({
         where: and(
           eq(schema.project.organizationId, organizationId),
@@ -60,9 +77,20 @@ export async function createTaskFromQuickAddAction(
       projectId = proj.id;
     }
 
-    // ---- Resolve client (require existence) ----
+    // ---- Resolve client: tendina (esplicito) > token !cliente:nome (require existence) ----
     let clientId: string | null = null;
-    if (parsed.clientName) {
+    if (explicitClientId) {
+      const cl = await db.query.client.findFirst({
+        where: and(
+          eq(schema.client.id, explicitClientId),
+          eq(schema.client.organizationId, organizationId),
+        ),
+      });
+      if (!cl) {
+        return { ok: false, error: "Cliente selezionato non valido" };
+      }
+      clientId = cl.id;
+    } else if (parsed.clientName) {
       const cl = await db.query.client.findFirst({
         where: and(
           eq(schema.client.organizationId, organizationId),
@@ -114,6 +142,7 @@ export async function createTaskFromQuickAddAction(
       organizationId,
       createdById: user.id,
       title: parsed.title,
+      descriptionMarkdown,
       priority: parsed.priority,
       scheduledAt,
       estimatedMinutes: parsed.estimatedMinutes,

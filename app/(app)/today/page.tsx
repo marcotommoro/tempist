@@ -7,6 +7,7 @@ import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { listProjects } from "@/lib/domain/projects";
+import { listClients } from "@/lib/domain/clients";
 import { TaskListViewToggle } from "@/components/features/tasks/task-list-view-toggle";
 import { type ProjectMeta } from "@/components/features/tasks/task-list";
 import { QuickAdd } from "@/components/features/tasks/quick-add";
@@ -55,12 +56,14 @@ export default async function TodayPage({
 
   const tasks = await getTodayTasks({ organizationId, timezone });
   const taskIds = tasks.map((t) => t.id);
-  const [trackedByTask, remindersByTask, commentsByTask, projects] = await Promise.all([
-    getTrackedSecondsByTask({ organizationId, taskIds }),
-    getPendingReminderCountByTask(taskIds),
-    getCommentCountByTask({ taskIds }),
-    listProjects({ organizationId }),
-  ]);
+  const [trackedByTask, remindersByTask, commentsByTask, projects, clients] =
+    await Promise.all([
+      getTrackedSecondsByTask({ organizationId, taskIds }),
+      getPendingReminderCountByTask(taskIds),
+      getCommentCountByTask({ taskIds }),
+      listProjects({ organizationId }),
+      listClients({ organizationId }),
+    ]);
 
   const projectsById = new Map<string, ProjectMeta>(
     projects.map((p) => [p.id, { name: p.name, color: p.color }]),
@@ -109,7 +112,12 @@ export default async function TodayPage({
         actions={<TaskListViewToggle basePath="/today" group={group} />}
       />
 
-      <QuickAdd defaultScheduledAt={defaultScheduledAt} timezone={timezone} />
+      <QuickAdd
+        defaultScheduledAt={defaultScheduledAt}
+        timezone={timezone}
+        projects={projects}
+        clients={clients}
+      />
 
       {overdueTasks.length === 0 && todayTasks.length === 0 ? (
         <p className="px-1 font-display text-sm italic text-muted-foreground">

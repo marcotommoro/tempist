@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { createTaskFromQuickAddAction } from "@/lib/actions/quick-add";
 import { parseQuickAdd } from "@/lib/parsers/quick-add";
 import { cn } from "@/lib/utils";
+import { DescriptionEditor } from "./description-editor";
+import { QuickAddPickers, type PickItem } from "./quick-add-panel";
 
 /**
  * QuickAdd v2 — NLP parsing + live preview chips.
@@ -24,11 +26,19 @@ import { cn } from "@/lib/utils";
 export function QuickAdd({
   defaultScheduledAt,
   timezone = "Europe/Rome",
+  projects = [],
+  clients = [],
 }: {
   defaultScheduledAt?: Date;
   timezone?: string;
+  projects?: PickItem[];
+  clients?: PickItem[];
 }) {
   const [input, setInput] = useState("");
+  const [description, setDescription] = useState("");
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +50,13 @@ export function QuickAdd({
 
   const effectiveScheduledAt =
     parsed?.scheduledAt ?? defaultScheduledAt ?? null;
+
+  function resetFields() {
+    setInput("");
+    setDescription("");
+    setProjectId(null);
+    setClientId(null);
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -53,12 +70,17 @@ export function QuickAdd({
         finalInput = `${trimmed} ${defaultScheduledAt.toISOString()}`;
       }
       fd.set("input", finalInput);
+      if (description.trim()) fd.set("descriptionMarkdown", description.trim());
+      // La selezione esplicita vince sul token: la mandiamo solo se presente.
+      if (projectId) fd.set("projectId", projectId);
+      if (clientId) fd.set("clientId", clientId);
       const res = await createTaskFromQuickAddAction(fd);
       if (!res.ok) {
         setError(res.error);
         return;
       }
-      setInput("");
+      resetFields();
+      // Resta espanso per l'inserimento rapido del task successivo.
       inputRef.current?.focus();
     });
   }
@@ -72,6 +94,20 @@ export function QuickAdd({
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onFocus={() => setExpanded(true)}
+          onKeyDown={(e) => {
+            if (
+              e.key === "Escape" &&
+              !input.trim() &&
+              !description.trim() &&
+              !projectId &&
+              !clientId
+            ) {
+              setExpanded(false);
+              // Blur così che un nuovo focus riapra il pannello.
+              inputRef.current?.blur();
+            }
+          }}
           disabled={pending}
           placeholder='Aggiungi un task…  "Chiamare Mario domani 15:00 #Acme p1 60min"'
           autoComplete="off"
@@ -97,6 +133,27 @@ export function QuickAdd({
           clientName={parsed.clientName}
           recurrenceRule={parsed.recurrenceRule}
         />
+      )}
+
+      {expanded && (
+        <div className="space-y-2 rounded-md border border-border/60 bg-card/30 p-2">
+          <DescriptionEditor
+            value={description}
+            onChange={setDescription}
+            disabled={pending}
+          />
+          <QuickAddPickers
+            projects={projects}
+            clients={clients}
+            selectedProjectId={projectId}
+            selectedClientId={clientId}
+            onSelectProject={setProjectId}
+            onSelectClient={setClientId}
+            tokenProjectName={parsed?.projectName ?? null}
+            tokenClientName={parsed?.clientName ?? null}
+            disabled={pending}
+          />
+        </div>
       )}
 
       {error && <p className="font-mono text-[0.6875em] text-destructive">{error}</p>}

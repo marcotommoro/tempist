@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useRef, useState, useTransition, type FormEvent } from "react";
-import { Plus } from "lucide-react";
+import { AlignLeft, Plus } from "lucide-react";
 
 import { createTaskAction } from "@/lib/actions/tasks";
 import { parseQuickAdd } from "@/lib/parsers/quick-add";
+import { DescriptionEditor } from "./description-editor";
 import { ParsedPreview } from "./quick-add";
 
 export function AddTaskToClient({
@@ -15,6 +16,8 @@ export function AddTaskToClient({
   timezone?: string;
 }) {
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [showDescription, setShowDescription] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,12 +37,15 @@ export function AddTaskToClient({
       const fd = new FormData();
       fd.set("title", trimmed);
       fd.set("clientId", clientId);
+      if (description.trim()) fd.set("descriptionMarkdown", description.trim());
       const res = await createTaskAction(fd);
       if (!res.ok) {
         setError(res.error);
         return;
       }
       setTitle("");
+      setDescription("");
+      setShowDescription(false);
       inputRef.current?.focus();
     });
   }
@@ -68,7 +74,7 @@ export function AddTaskToClient({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => {
-            if (!title.trim() && !pending) setOpen(false);
+            if (!title.trim() && !showDescription && !pending) setOpen(false);
           }}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
@@ -101,6 +107,22 @@ export function AddTaskToClient({
           clientName={null}
           recurrenceRule={parsed.recurrenceRule}
         />
+      )}
+      {showDescription ? (
+        <DescriptionEditor
+          value={description}
+          onChange={setDescription}
+          disabled={pending}
+        />
+      ) : (
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setShowDescription(true)}
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          <AlignLeft className="size-3.5" /> Descrizione
+        </button>
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </form>
