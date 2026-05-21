@@ -391,6 +391,70 @@ export async function updateTaskTitle(opts: {
     );
 }
 
+/**
+ * Sposta il task in un altro progetto (null = Inbox).
+ * Cambiare progetto azzera la section: le section appartengono a un progetto,
+ * quindi la section corrente non sarebbe più coerente col nuovo progetto.
+ * Valida che il progetto target sia dell'org (no cross-tenant via FK).
+ */
+export async function updateTaskProject(opts: {
+  taskId: string;
+  organizationId: string;
+  projectId: string | null;
+}): Promise<void> {
+  if (opts.projectId) {
+    const proj = await db.query.project.findFirst({
+      where: and(
+        eq(schema.project.id, opts.projectId),
+        eq(schema.project.organizationId, opts.organizationId),
+        isNull(schema.project.deletedAt),
+      ),
+      columns: { id: true },
+    });
+    if (!proj) throw new Error("Progetto non trovato");
+  }
+  await db
+    .update(schema.task)
+    .set({ projectId: opts.projectId, sectionId: null })
+    .where(
+      and(
+        eq(schema.task.id, opts.taskId),
+        eq(schema.task.organizationId, opts.organizationId),
+      ),
+    );
+}
+
+/**
+ * Associa il task a un cliente (null = nessuno). Relazione diretta su
+ * task.clientId, indipendente dal progetto. Valida che il cliente sia dell'org.
+ */
+export async function updateTaskClient(opts: {
+  taskId: string;
+  organizationId: string;
+  clientId: string | null;
+}): Promise<void> {
+  if (opts.clientId) {
+    const cli = await db.query.client.findFirst({
+      where: and(
+        eq(schema.client.id, opts.clientId),
+        eq(schema.client.organizationId, opts.organizationId),
+        isNull(schema.client.deletedAt),
+      ),
+      columns: { id: true },
+    });
+    if (!cli) throw new Error("Cliente non trovato");
+  }
+  await db
+    .update(schema.task)
+    .set({ clientId: opts.clientId })
+    .where(
+      and(
+        eq(schema.task.id, opts.taskId),
+        eq(schema.task.organizationId, opts.organizationId),
+      ),
+    );
+}
+
 export async function updateTaskEstimatedMinutes(opts: {
   taskId: string;
   organizationId: string;

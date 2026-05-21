@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { format } from "date-fns";
+import { Hash, User } from "lucide-react";
 
 import {
   Dialog,
@@ -11,7 +12,10 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
+  fetchTaskPickerOptionsAction,
+  setTaskClientAction,
   setTaskDueDateAction,
+  setTaskProjectAction,
   setTaskScheduledAtAction,
   setTaskTitleAction,
   toggleTaskAction,
@@ -26,6 +30,7 @@ import { TaskCommentsSection } from "./task-comments-section";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskPrioritySelect } from "./task-priority-select";
 import { TaskEstimateField } from "./task-estimate-field";
+import { Picker, type PickItem } from "./quick-add-panel";
 
 export function TaskDetailDialog({
   task,
@@ -50,10 +55,16 @@ export function TaskDetailDialog({
   const [titleDraft, setTitleDraft] = useState(task.title);
   const [scheduledAt, setScheduledAt] = useState<Date | null>(task.scheduledAt);
   const [dueDate, setDueDate] = useState<Date | null>(task.dueDate);
+  const [projectId, setProjectId] = useState<string | null>(task.projectId);
+  const [clientId, setClientId] = useState<string | null>(task.clientId);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
+  const [options, setOptions] = useState<{
+    projects: PickItem[];
+    clients: PickItem[];
+  } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -66,6 +77,45 @@ export function TaskDetailDialog({
       cancelled = true;
     };
   }, [open, task.id]);
+
+  useEffect(() => {
+    if (!open || options) return;
+    let cancelled = false;
+    fetchTaskPickerOptionsAction().then((res) => {
+      if (cancelled) return;
+      if (res.ok) setOptions(res.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, options]);
+
+  // Finché le opzioni non sono caricate, mostra almeno il progetto corrente
+  // (nome/colore già noti via prop) così la tendina non "lampeggia" vuota.
+  const projectItems =
+    options?.projects ??
+    (task.projectId && projectName
+      ? [{ id: task.projectId, name: projectName, color: projectColor }]
+      : []);
+  const clientItems = options?.clients ?? [];
+
+  function onProjectChange(id: string | null) {
+    setProjectId(id);
+    setError(null);
+    startTransition(async () => {
+      const res = await setTaskProjectAction(task.id, id);
+      if (!res.ok) setError(res.error);
+    });
+  }
+
+  function onClientChange(id: string | null) {
+    setClientId(id);
+    setError(null);
+    startTransition(async () => {
+      const res = await setTaskClientAction(task.id, id);
+      if (!res.ok) setError(res.error);
+    });
+  }
 
   function toggle() {
     setError(null);
@@ -231,20 +281,31 @@ export function TaskDetailDialog({
           {/* Destra: sidebar metadata */}
           <aside className="max-h-[85vh] space-y-5 overflow-y-auto border-t border-border bg-muted/40 p-5 md:border-l md:border-t-0">
             <Field label="Project">
-              {projectName ? (
-                <div className="inline-flex items-center gap-2 text-[0.8125em]">
-                  <span
-                    aria-hidden
-                    className="inline-block h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
-                    style={{ backgroundColor: projectColor ?? "#808080" }}
-                  />
-                  {projectName}
-                </div>
-              ) : (
-                <span className="font-serif text-sm italic text-muted-foreground">
-                  In arrivo
-                </span>
-              )}
+              <Picker
+                items={projectItems}
+                selectedId={projectId}
+                onSelect={onProjectChange}
+                icon={<Hash className="size-3" />}
+                placeholder="Progetto"
+                tokenName={null}
+                searchPlaceholder="Cerca progetto…"
+                emptyText="Nessun progetto"
+                disabled={pending || !options}
+              />
+            </Field>
+
+            <Field label="Client">
+              <Picker
+                items={clientItems}
+                selectedId={clientId}
+                onSelect={onClientChange}
+                icon={<User className="size-3" />}
+                placeholder="Cliente"
+                tokenName={null}
+                searchPlaceholder="Cerca cliente…"
+                emptyText="Nessun cliente"
+                disabled={pending || !options}
+              />
             </Field>
 
             <Field label="Date">

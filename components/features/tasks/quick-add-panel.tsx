@@ -75,7 +75,7 @@ export function QuickAddPickers({
   );
 }
 
-function Picker({
+export function Picker({
   items,
   selectedId,
   onSelect,

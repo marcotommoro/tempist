@@ -28,12 +28,16 @@ import {
   rescheduleOverdueToToday,
   softDeleteTask,
   toggleTaskComplete,
+  updateTaskClient,
   updateTaskDescription,
   updateTaskEstimatedMinutes,
   updateTaskPriority,
+  updateTaskProject,
   updateTaskSchedule,
   updateTaskTitle,
 } from "@/lib/domain/tasks";
+import { listProjects } from "@/lib/domain/projects";
+import { listClients } from "@/lib/domain/clients";
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -316,6 +320,73 @@ export async function setTaskEstimatedMinutesAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Errore aggiornamento stima",
+    };
+  }
+}
+
+export async function setTaskProjectAction(
+  taskId: string,
+  projectId: string | null,
+): Promise<ActionResult> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    await updateTaskProject({ taskId, organizationId, projectId });
+    revalidateTaskViews();
+    if (projectId) revalidatePath(`/projects/${projectId}`);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento progetto",
+    };
+  }
+}
+
+export async function setTaskClientAction(
+  taskId: string,
+  clientId: string | null,
+): Promise<ActionResult> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    await updateTaskClient({ taskId, organizationId, clientId });
+    revalidateTaskViews();
+    if (clientId) revalidatePath(`/clients/${clientId}`);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore aggiornamento cliente",
+    };
+  }
+}
+
+export type TaskPickerOption = { id: string; name: string; color: string | null };
+
+/**
+ * Opzioni per le tendine progetto/cliente del task dialog. Caricate lazy
+ * all'apertura del dialog (come i commenti) per non propagare le liste come
+ * prop attraverso tutte le pagine che renderizzano la lista task.
+ */
+export async function fetchTaskPickerOptionsAction(): Promise<
+  ActionResult<{ projects: TaskPickerOption[]; clients: TaskPickerOption[] }>
+> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    const [projects, clients] = await Promise.all([
+      listProjects({ organizationId }),
+      listClients({ organizationId }),
+    ]);
+    return {
+      ok: true,
+      data: {
+        projects: projects.map((p) => ({ id: p.id, name: p.name, color: p.color })),
+        clients: clients.map((c) => ({ id: c.id, name: c.name, color: c.color })),
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore caricamento opzioni",
     };
   }
 }
