@@ -59,8 +59,35 @@ export function ProjectLink({
   name: string;
   color: string;
 }) {
+  return (
+    <ColoredEntityLink href={`/projects/${id}`} name={name} color={color} />
+  );
+}
+
+export function ClientLink({
+  id,
+  name,
+  color,
+}: {
+  id: string;
+  name: string;
+  color: string;
+}) {
+  return (
+    <ColoredEntityLink href={`/clients/${id}`} name={name} color={color} />
+  );
+}
+
+function ColoredEntityLink({
+  href,
+  name,
+  color,
+}: {
+  href: string;
+  name: string;
+  color: string;
+}) {
   const pathname = usePathname();
-  const href = `/projects/${id}`;
   const active = pathname === href;
   return (
     <Link

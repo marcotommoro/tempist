@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
+import { listClients } from "@/lib/domain/clients";
 import { listProjects, listSharedProjects } from "@/lib/domain/projects";
 import { listMyWorkspaces } from "@/lib/domain/workspaces";
 import { TimerWidget } from "@/components/features/timer/timer-widget";
@@ -20,6 +21,7 @@ import { GlobalManualEntryServer } from "@/components/features/timer/global-manu
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
 import { CommandPalette } from "@/components/features/command-palette/command-palette";
 import {
+  ClientLink,
   ProjectLink,
   SidebarLink,
 } from "@/components/features/sidebar/sidebar-link";
@@ -34,7 +36,6 @@ const mainNav = [
 
 const bottomNav = [
   { href: "/filters", label: "Filters", icon: FilterIcon },
-  { href: "/clients", label: "Clients", icon: Users },
   { href: "/timesheet", label: "Timesheet", icon: Clock },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -42,9 +43,10 @@ const bottomNav = [
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, organizationId } = await requireActiveOrganization();
-  const [projects, sharedProjects, workspaces] = await Promise.all([
+  const [projects, sharedProjects, clients, workspaces] = await Promise.all([
     listProjects({ organizationId }),
     listSharedProjects({ userId: user.id, excludeOrganizationId: organizationId }),
+    listClients({ organizationId }),
     listMyWorkspaces(user.id),
   ]);
 
@@ -137,6 +139,34 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </div>
             </div>
           )}
+
+          <div className="mt-6">
+            <div className="flex items-center justify-between px-3 pb-1.5 text-eyebrow">
+              <span>Clients</span>
+              <Link
+                href="/clients"
+                className="rounded-sm p-0.5 transition-colors hover:bg-sidebar-accent hover:text-foreground"
+                aria-label="Vedi tutti i clienti / nuovo"
+              >
+                <Users className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            </div>
+            <div className="space-y-0.5">
+              {clients.length === 0 ? (
+                <p className="px-3 py-1.5 text-xs text-muted-foreground">
+                  Nessun cliente.{" "}
+                  <Link href="/clients" className="text-coral underline-offset-2 hover:underline">
+                    Crea il primo
+                  </Link>
+                  .
+                </p>
+              ) : (
+                clients.map((c) => (
+                  <ClientLink key={c.id} id={c.id} name={c.name} color={c.color} />
+                ))
+              )}
+            </div>
+          </div>
 
           <div className="mt-6">
             <div className="px-3 pb-1.5 text-eyebrow">
