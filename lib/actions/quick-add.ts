@@ -8,7 +8,9 @@
  *  - Client per nome  → REQUIRE existence (idem)
  *  - Label per nome   → AUTO-CREATE se mancante (pattern Todoist-like)
  *
- * Match case-insensitive su tutti i nomi (ilike).
+ * Match fuzzy whole-word (vedi `lib/utils/fuzzy-match.ts`):
+ *  - token espliciti `#nome`/`!cliente:nome` → matchByName, errore se 0 o ≥ 2 match
+ *  - free-text nel titolo → findFreeTextMatch, silent skip se 0 o ≥ 2 match
  */
 
 import { revalidatePath } from "next/cache";
@@ -16,7 +18,14 @@ import { and, eq, ilike, or } from "drizzle-orm";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { db, schema } from "@/lib/db";
+import { listClients } from "@/lib/domain/clients";
+import { listProjects } from "@/lib/domain/projects";
 import { createTask } from "@/lib/domain/tasks";
+import {
+  findFreeTextMatch,
+  matchByName,
+  stripFreeTextMatch,
+} from "@/lib/utils/fuzzy-match";
 import { normalizeDescriptionHtml } from "@/lib/utils/html";
 import { parseQuickAdd } from "@/lib/parsers/quick-add";
 import {
@@ -50,62 +59,76 @@ export async function createTaskFromQuickAddAction(
     const explicitProjectId = String(formData.get("projectId") ?? "").trim();
     const explicitClientId = String(formData.get("clientId") ?? "").trim();
 
-    // ---- Resolve project: tendina (esplicito) > token #nome (require existence) ----
+    // Carica una sola volta progetti+clienti dell'org per fuzzy match (token + free-text).
+    const [projects, clients] = await Promise.all([
+      listProjects({ organizationId }),
+      listClients({ organizationId }),
+    ]);
+
+    // ---- Resolve project: tendina (esplicito) > token #nome (fuzzy whole-word) ----
     let projectId: string | null = null;
     if (explicitProjectId) {
-      const proj = await db.query.project.findFirst({
-        where: and(
-          eq(schema.project.id, explicitProjectId),
-          eq(schema.project.organizationId, organizationId),
-        ),
-      });
+      const proj = projects.find((p) => p.id === explicitProjectId);
       if (!proj) {
         return { ok: false, error: "Progetto selezionato non valido" };
       }
       projectId = proj.id;
     } else if (parsed.projectName) {
-      const proj = await db.query.project.findFirst({
-        where: and(
-          eq(schema.project.organizationId, organizationId),
-          ilike(schema.project.name, parsed.projectName),
-        ),
-      });
+      const proj = matchByName(parsed.projectName, projects);
       if (!proj) {
         return {
           ok: false,
-          error: `Project "${parsed.projectName}" non esiste. Crealo prima dalla sidebar.`,
+          error: `Project "${parsed.projectName}" non trovato (o ambiguo). Crealo prima dalla sidebar.`,
         };
       }
       projectId = proj.id;
     }
 
-    // ---- Resolve client: tendina (esplicito) > token !cliente:nome (require existence) ----
+    // ---- Resolve client: tendina (esplicito) > token !cliente:nome (fuzzy whole-word) ----
     let clientId: string | null = null;
     if (explicitClientId) {
-      const cl = await db.query.client.findFirst({
-        where: and(
-          eq(schema.client.id, explicitClientId),
-          eq(schema.client.organizationId, organizationId),
-        ),
-      });
+      const cl = clients.find((c) => c.id === explicitClientId);
       if (!cl) {
         return { ok: false, error: "Cliente selezionato non valido" };
       }
       clientId = cl.id;
     } else if (parsed.clientName) {
-      const cl = await db.query.client.findFirst({
-        where: and(
-          eq(schema.client.organizationId, organizationId),
-          ilike(schema.client.name, parsed.clientName),
-        ),
-      });
+      const cl = matchByName(parsed.clientName, clients);
       if (!cl) {
         return {
           ok: false,
-          error: `Cliente "${parsed.clientName}" non esiste. Crealo prima da /clients.`,
+          error: `Cliente "${parsed.clientName}" non trovato (o ambiguo). Crealo prima da /clients.`,
         };
       }
       clientId = cl.id;
+    }
+
+    // ---- Free-text auto-association: scansiona il titolo per match opportunistici.
+    // Mai errore: in caso di nessun match o ambiguità, non si associa nulla.
+    // Le parole che hanno triggerato il match vengono rimosse dal titolo (così
+    // "alice 7 giugno mandare mail" salva il task con titolo "mandare mail",
+    // cliente A.L.I.Ce. Italia, data 7 giugno).
+    const wordsToStrip = new Set<string>();
+    if (!projectId) {
+      const m = findFreeTextMatch(parsed.title, projects);
+      if (m) {
+        projectId = m.item.id;
+        for (const t of m.matchedTokens) wordsToStrip.add(t);
+      }
+    }
+    if (!clientId) {
+      const m = findFreeTextMatch(parsed.title, clients);
+      if (m) {
+        clientId = m.item.id;
+        for (const t of m.matchedTokens) wordsToStrip.add(t);
+      }
+    }
+    const finalTitle =
+      wordsToStrip.size > 0
+        ? stripFreeTextMatch(parsed.title, wordsToStrip)
+        : parsed.title;
+    if (!finalTitle) {
+      return { ok: false, error: "Il titolo non puo' essere vuoto dopo i token" };
     }
 
     // ---- Resolve labels (auto-create missing) ----
@@ -143,7 +166,7 @@ export async function createTaskFromQuickAddAction(
     const task = await createTask({
       organizationId,
       createdById: user.id,
-      title: parsed.title,
+      title: finalTitle,
       descriptionMarkdown,
       priority: parsed.priority,
       scheduledAt,

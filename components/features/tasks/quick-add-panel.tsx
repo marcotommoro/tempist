@@ -22,9 +22,14 @@ export type PickItem = { id: string; name: string; color?: string | null };
 
 /**
  * Tendine progetto + cliente del QuickAdd globale, selezionabili col mouse.
- * I token `#Progetto` / `!cliente:Nome` continuano a funzionare dal titolo: qui
- * mostriamo il nome del token (in grigio) finché non si sceglie esplicitamente.
- * La selezione esplicita ha la precedenza (gestita nell'action).
+ *
+ * Priorità di display nel bottone:
+ *   1. selezione esplicita dell'utente (coral)
+ *   2. match fuzzy auto-detected da `autoMatchedId` (italic, semi-evidenziato)
+ *   3. token grezzo `#`/`!` quando non matcha nulla (grigio, "(token)")
+ *   4. placeholder
+ *
+ * La selezione esplicita ha sempre la precedenza anche lato server (action).
  */
 export function QuickAddPickers({
   projects,
@@ -35,6 +40,8 @@ export function QuickAddPickers({
   onSelectClient,
   tokenProjectName,
   tokenClientName,
+  autoMatchedProjectId,
+  autoMatchedClientId,
   disabled,
 }: {
   projects: PickItem[];
@@ -45,6 +52,8 @@ export function QuickAddPickers({
   onSelectClient: (id: string | null) => void;
   tokenProjectName: string | null;
   tokenClientName: string | null;
+  autoMatchedProjectId?: string | null;
+  autoMatchedClientId?: string | null;
   disabled?: boolean;
 }) {
   return (
@@ -56,6 +65,7 @@ export function QuickAddPickers({
         icon={<Hash className="size-3" />}
         placeholder="Progetto"
         tokenName={tokenProjectName}
+        autoMatchedId={autoMatchedProjectId ?? null}
         searchPlaceholder="Cerca progetto…"
         emptyText="Nessun progetto"
         disabled={disabled}
@@ -67,6 +77,7 @@ export function QuickAddPickers({
         icon={<User className="size-3" />}
         placeholder="Cliente"
         tokenName={tokenClientName}
+        autoMatchedId={autoMatchedClientId ?? null}
         searchPlaceholder="Cerca cliente…"
         emptyText="Nessun cliente"
         disabled={disabled}
@@ -82,6 +93,7 @@ export function Picker({
   icon,
   placeholder,
   tokenName,
+  autoMatchedId,
   searchPlaceholder,
   emptyText,
   disabled,
@@ -92,14 +104,18 @@ export function Picker({
   icon: ReactNode;
   placeholder: string;
   tokenName: string | null;
+  autoMatchedId?: string | null;
   searchPlaceholder: string;
   emptyText: string;
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const selected = items.find((i) => i.id === selectedId) ?? null;
-  const fromToken = !selected && tokenName;
-  const label = selected?.name ?? tokenName ?? placeholder;
+  const autoItem = !selected && autoMatchedId
+    ? (items.find((i) => i.id === autoMatchedId) ?? null)
+    : null;
+  const fromToken = !selected && !autoItem && tokenName;
+  const label = selected?.name ?? autoItem?.name ?? tokenName ?? placeholder;
 
   return (
     <div className="inline-flex items-center">
@@ -112,15 +128,15 @@ export function Picker({
               "inline-flex h-7 items-center gap-1.5 rounded border border-border bg-card/40 px-2",
               "font-mono text-[0.6875em] transition-colors hover:bg-muted disabled:opacity-40",
               selected
-                ? "text-foreground"
-                : fromToken
-                  ? "text-muted-foreground"
+                ? "border-coral/40 bg-coral/5 text-foreground"
+                : autoItem
+                  ? "border-coral/20 bg-coral/[0.03] italic text-foreground/90"
                   : "text-muted-foreground",
-              selected && "border-coral/40 bg-coral/5",
             )}
           >
             <span className="opacity-70">{icon}</span>
             {label}
+            {autoItem && <span className="opacity-60">(auto)</span>}
             {fromToken && <span className="opacity-50">(token)</span>}
             <ChevronDown className="size-3 opacity-50" />
           </button>

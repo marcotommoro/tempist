@@ -48,6 +48,8 @@ export type ParsedQuickAdd = {
   estimatedMinutes: number | null;
   clientName: string | null;
   recurrenceRule: string | null;
+  /** Testo grezzo della data come è apparso nell'input (per highlight inline). */
+  dateSourceText: string | null;
 };
 
 const NAME_RE = /[\p{L}\p{N}_-]+/u;
@@ -168,7 +170,7 @@ function extractDate(
   text: string,
   refDate: Date,
   timezone: string,
-): { date: Date | null; rest: string } {
+): { date: Date | null; rest: string; sourceText: string | null } {
   const normalized = normalizeItalianDateText(text);
 
   const supplement = parseItalianDateSupplement(normalized, timezone, refDate);
@@ -180,7 +182,7 @@ function extractDate(
     );
     const index = findInsensitiveIndex(text, supplement.matchedText);
     const rest = removeDateSpan(text, supplement.matchedText, index >= 0 ? index : undefined);
-    return { date, rest };
+    return { date, rest, sourceText: supplement.matchedText };
   }
 
   const ref = { instant: refDate, timezone };
@@ -190,7 +192,7 @@ function extractDate(
     ...chrono.it.casual.parse(normalized, ref, opts),
     ...chrono.en.casual.parse(normalized, ref, opts),
   ];
-  if (chronoResults.length === 0) return { date: null, rest: text };
+  if (chronoResults.length === 0) return { date: null, rest: text, sourceText: null };
 
   chronoResults.sort((a, b) => {
     const indexA = a.index ?? 0;
@@ -199,7 +201,7 @@ function extractDate(
     return b.text.length - a.text.length;
   });
   const result = chronoResults[0];
-  if (!result) return { date: null, rest: text };
+  if (!result) return { date: null, rest: text, sourceText: null };
 
   const hasExplicitHour = result.start.isCertain("hour");
   const date = finalizeDate(result.start.date(), timezone, hasExplicitHour);
@@ -210,7 +212,7 @@ function extractDate(
     result.text,
     indexInOriginal >= 0 ? indexInOriginal : result.index,
   );
-  return { date, rest };
+  return { date, rest, sourceText: result.text };
 }
 
 function cleanWhitespace(text: string): string {
@@ -263,5 +265,6 @@ export function parseQuickAdd(
     estimatedMinutes: dur.minutes,
     clientName: client.value,
     recurrenceRule: repeats.value,
+    dateSourceText: date.sourceText,
   };
 }
