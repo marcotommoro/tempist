@@ -58,20 +58,6 @@ test.describe("timesheet", () => {
     await expect(page.getByText(description)).toBeVisible({ timeout: 5_000 });
   });
 
-  test("quick-add voce direttamente dal /timesheet", async ({ page }) => {
-    const description = `Quick add ${uniqueSuffix()}`;
-
-    await page.goto("/timesheet");
-    await expect(page.getByRole("heading", { name: /timesheet/i })).toBeVisible();
-
-    // ManualEntryForm in cima alla pagina (senza clientId, sopra le stats)
-    await page.getByRole("button", { name: /aggiungi voce manuale/i }).first().click();
-    await page.getByPlaceholder(/cosa hai fatto/i).fill(description);
-    await page.getByRole("button", { name: /salva voce/i }).click();
-
-    await expect(page.getByText(description)).toBeVisible({ timeout: 5_000 });
-  });
-
   test("export CSV cliente restituisce CSV con voci", async ({ page, request }) => {
     const clientName = `CSV Export ${uniqueSuffix()}`;
     const description = `Voce CSV ${uniqueSuffix()}`;

@@ -7,7 +7,6 @@ import { listProjects } from "@/lib/domain/projects";
 import { listTimeEntriesForUser } from "@/lib/domain/time-entries";
 import { TimesheetFilters } from "@/components/features/timer/timesheet-filters";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
-import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { PageHeader } from "@/components/features/page-header/page-header";
 import { Card } from "@/components/ui/card";
 import { Stat } from "@/components/ui/stat";
@@ -122,8 +121,6 @@ export default async function TimesheetPage({
         }
       />
 
-      <ManualEntryForm />
-
       <Card className="flex divide-x divide-border">
         <Stat label="Hours" value={formatDuration(totals.totalSeconds)} />
         <Stat label="Revenue" value={`€${totals.billable.toFixed(2)}`} accent="coral" />
@@ -172,7 +169,7 @@ export default async function TimesheetPage({
               Nessuna voce in questo periodo.
             </p>
             <p className="mt-2 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
-              Avvia un timer dalla command palette o aggiungi una voce manuale qui sopra.
+              Avvia un timer dalla command palette.
             </p>
           </div>
         )}

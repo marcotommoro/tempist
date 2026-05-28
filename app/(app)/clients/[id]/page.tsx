@@ -33,7 +33,6 @@ import { AddTaskToClient } from "@/components/features/tasks/add-task-to-client"
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
-import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Params = { id: string };
@@ -197,12 +196,7 @@ export default async function ClientDetailPage({
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow={
-          <span className="inline-flex items-center gap-2">
-            <EntityColorMarker kind="client" color={client.color} size="sm" />
-            Client
-          </span>
-        }
+        className="pt-4 pb-3 mb-4"
         title={client.name}
         actions={
           <EditClientDialog

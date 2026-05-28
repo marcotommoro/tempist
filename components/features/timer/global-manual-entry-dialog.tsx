@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
-import { Clock, Plus } from "lucide-react";
+import {
+  useState,
+  useTransition,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
+import { Check, ChevronDown, Clock, Plus } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createManualEntryAction } from "@/lib/actions/timer";
 import type { Client, Project } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
+import { minutesToTimeString } from "@/lib/utils/linked-time-range";
 
 import { LinkedTimeRangeFields } from "./linked-time-range-fields";
 import { useLinkedTimeRange } from "./use-linked-time-range";
@@ -66,8 +73,10 @@ export function GlobalManualEntryDialog({
     setError(null);
   }
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  // keepOpen=false → salva e chiude (Invio). keepOpen=true → "salva e continua"
+  // (⌘/Ctrl+Invio): la voce successiva parte dalla fine di questa con la stessa
+  // durata, mantenendo giorno/progetto/cliente e svuotando la descrizione.
+  function submitEntry(keepOpen: boolean) {
     setError(null);
     const range = timeRange.getResolvedRange();
     if (!range.ok) {
@@ -89,9 +98,29 @@ export function GlobalManualEntryDialog({
         setError(res.error);
         return;
       }
+      if (keepOpen) {
+        timeRange.reset(
+          minutesToTimeString(range.endMinutes),
+          minutesToTimeString(range.endMinutes + range.durationMinutes),
+        );
+        setDescription("");
+        return;
+      }
       reset();
       setOpen(false);
     });
+  }
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    submitEntry(false);
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLFormElement>) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      submitEntry(true);
+    }
   }
 
   // Quando seleziono un progetto, propaga il suo client (se ce l'ha)
@@ -127,7 +156,7 @@ export function GlobalManualEntryDialog({
             Registra retroattivamente un blocco di tempo già lavorato.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-3">
+        <form onSubmit={onSubmit} onKeyDown={onKeyDown} className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="manual-date">Giorno</Label>
             <DatePicker
@@ -154,37 +183,43 @@ export function GlobalManualEntryDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="manual-project">Progetto</Label>
-              <select
-                id="manual-project"
-                value={projectId}
-                onChange={(e) => onProjectChange(e.target.value)}
-                disabled={pending}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
-              >
-                <option value="">— nessuno —</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  id="manual-project"
+                  value={projectId}
+                  onChange={(e) => onProjectChange(e.target.value)}
+                  disabled={pending}
+                  className="w-full h-10 appearance-none rounded-md border border-input bg-background pl-3 pr-9 text-sm disabled:opacity-50"
+                >
+                  <option value="">— nessuno —</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
             </div>
             <div>
               <Label htmlFor="manual-client">Cliente</Label>
-              <select
-                id="manual-client"
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-                disabled={pending}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm disabled:opacity-50"
-              >
-                <option value="">— nessuno —</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  id="manual-client"
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  disabled={pending}
+                  className="w-full h-10 appearance-none rounded-md border border-input bg-background pl-3 pr-9 text-sm disabled:opacity-50"
+                >
+                  <option value="">— nessuno —</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
             </div>
           </div>
           <div>
@@ -199,18 +234,37 @@ export function GlobalManualEntryDialog({
               disabled={pending}
             />
           </div>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={billable}
-              onChange={(e) => setBillable(e.target.checked)}
-              disabled={pending}
-              className="accent-primary"
-            />
+          <label className="inline-flex cursor-pointer select-none items-center gap-2 text-sm">
+            <span className="relative inline-flex">
+              {/* L'input resta il vero box cliccabile; lo stato visivo è guidato
+                  da `billable` con utility base, così non dipende dai varianti
+                  checked:/peer-checked: di Tailwind. */}
+              <input
+                type="checkbox"
+                checked={billable}
+                onChange={(e) => setBillable(e.target.checked)}
+                disabled={pending}
+                className={cn(
+                  "size-4 appearance-none rounded-[5px] border transition-colors disabled:opacity-50",
+                  billable
+                    ? "border-coral bg-coral"
+                    : "border-input bg-background",
+                )}
+              />
+              {billable && (
+                <Check
+                  strokeWidth={3}
+                  className="pointer-events-none absolute inset-0 m-auto size-3 text-coral-foreground"
+                />
+              )}
+            </span>
             <span>Fatturabile</span>
           </label>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <DialogFooter className="gap-2 sm:gap-0">
+            <span className="hidden text-xs text-muted-foreground sm:mr-auto sm:flex sm:items-center">
+              {"⌘↵ salva e aggiungine un'altra"}
+            </span>
             <Button
               type="button"
               variant="ghost"
