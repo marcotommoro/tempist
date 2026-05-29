@@ -6,7 +6,7 @@ import { getCommentCountByTask } from "@/lib/domain/comments";
 import { listProjects } from "@/lib/domain/projects";
 import { listClients } from "@/lib/domain/clients";
 import { TaskList } from "@/components/features/tasks/task-list";
-import { QuickAdd } from "@/components/features/tasks/quick-add";
+import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { PageHeader } from "@/components/features/page-header/page-header";
 import {
   defaultTaskScheduledAt,
@@ -45,7 +45,7 @@ export default async function InboxPage() {
         description="Task non assegnati a nessun progetto. Aggiungi qui le idee veloci."
       />
 
-      <QuickAdd
+      <CreateTaskDialog
         defaultScheduledAt={defaultScheduledAt}
         timezone={timezone}
         projects={projects}

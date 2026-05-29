@@ -7,6 +7,7 @@ import { listClients } from "@/lib/domain/clients";
 import { CreateProjectForm } from "@/components/features/projects/create-project-form";
 import { EntityColorMarker } from "@/components/features/entity-color-marker";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 
 export default async function ProjectsPage() {
   const { organizationId } = await requireActiveOrganization();
@@ -52,15 +53,15 @@ export default async function ProjectsPage() {
           {projects.map((p) => {
             const cli = p.clientId ? clientById.get(p.clientId) : null;
             return (
-              <li key={p.id}>
+              <li key={p.id} className="group flex items-center gap-1">
                 <Link
                   href={`/projects/${p.id}`}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors duration-[var(--dur-fast)] hover:bg-accent/40"
+                  className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 transition-colors duration-[var(--dur-fast)] hover:bg-accent/40"
                 >
                   <EntityColorMarker kind="project" color={p.color} />
-                  <span className="text-sm font-medium text-foreground">{p.name}</span>
+                  <span className="truncate text-sm font-medium text-foreground">{p.name}</span>
                   {p.isFavorite && (
-                    <Star className="h-3 w-3 fill-coral text-coral" aria-hidden />
+                    <Star className="h-3 w-3 shrink-0 fill-coral text-coral" aria-hidden />
                   )}
                   {cli && (
                     <span className="ml-auto inline-flex items-center gap-1.5 text-eyebrow">
@@ -69,6 +70,11 @@ export default async function ProjectsPage() {
                     </span>
                   )}
                 </Link>
+                <div className="pr-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                  <QuickStartButton
+                    target={{ kind: "project", id: p.id, label: p.name }}
+                  />
+                </div>
               </li>
             );
           })}

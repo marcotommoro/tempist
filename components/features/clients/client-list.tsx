@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ClientForEdit } from "@/components/features/clients/edit-client-dialog";
 import { EditClientDialogButton } from "@/components/features/clients/edit-client-dialog";
 import { EntityColorMarker } from "@/components/features/entity-color-marker";
+import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 
 export function ClientList({ clients }: { clients: ClientForEdit[] }) {
   return (
@@ -32,7 +33,8 @@ export function ClientList({ clients }: { clients: ClientForEdit[] }) {
               </span>
             )}
           </Link>
-          <div className="pr-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+          <div className="flex items-center gap-1 pr-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+            <QuickStartButton target={{ kind: "client", id: c.id, label: c.name }} />
             <EditClientDialogButton client={c} />
           </div>
         </li>

@@ -30,25 +30,41 @@ import { QuickAddPickers, type PickItem } from "./quick-add-panel";
  *   #project   @label   p1..p4   !cliente:Nome   60min / 1h / 1h30m
  *   chrono-node: "tomorrow at 3pm", "domani 15:00", "next monday", ecc.
  */
-export function QuickAdd({
+export function QuickAddForm({
   defaultScheduledAt,
+  defaultProjectId = null,
+  defaultSectionId = null,
+  defaultClientId = null,
   timezone = "Europe/Rome",
   projects = [],
   clients = [],
+  autoFocus = false,
+  onCreated,
 }: {
   defaultScheduledAt?: Date;
+  defaultProjectId?: string | null;
+  defaultSectionId?: string | null;
+  defaultClientId?: string | null;
   timezone?: string;
   projects?: PickItem[];
   clients?: PickItem[];
+  autoFocus?: boolean;
+  /** Chiamato dopo una creazione riuscita (es. per chiudere il dialog). */
+  onCreated?: () => void;
 }) {
   const [input, setInput] = useState("");
   const [description, setDescription] = useState("");
-  const [projectId, setProjectId] = useState<string | null>(null);
-  const [clientId, setClientId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [projectId, setProjectId] = useState<string | null>(defaultProjectId);
+  const [clientId, setClientId] = useState<string | null>(defaultClientId);
+  const [expanded, setExpanded] = useState(autoFocus);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Autofocus all'apertura (dialog): focus sul campo titolo.
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   const parsed = useMemo(() => {
     if (!input.trim()) return null;
@@ -147,6 +163,17 @@ export function QuickAdd({
       merged.push(s);
       lastEnd = s.end;
     }
+    // Se due segmenti sono separati solo da whitespace, le shadow laterali si
+    // sovrappongono sullo spazio: marca i lati "adiacenti" per togliere il pad.
+    for (let i = 0; i < merged.length; i++) {
+      const cur = merged[i]!;
+      const prev = merged[i - 1];
+      const next = merged[i + 1];
+      cur.padLeft =
+        !prev || !/^\s*$/.test(input.slice(prev.end, cur.start));
+      cur.padRight =
+        !next || !/^\s*$/.test(input.slice(cur.end, next.start));
+    }
     return merged;
   }, [input, parsed, autoMatch]);
 
@@ -156,8 +183,8 @@ export function QuickAdd({
   function resetFields() {
     setInput("");
     setDescription("");
-    setProjectId(null);
-    setClientId(null);
+    setProjectId(defaultProjectId);
+    setClientId(defaultClientId);
   }
 
   function onSubmit(e: FormEvent) {
@@ -176,6 +203,11 @@ export function QuickAdd({
       // La selezione esplicita vince sul token: la mandiamo solo se presente.
       if (projectId) fd.set("projectId", projectId);
       if (clientId) fd.set("clientId", clientId);
+      // La sezione vale solo se il progetto è ancora quello di contesto:
+      // cambiando progetto la sezione non appartiene più al task.
+      if (defaultSectionId && projectId && projectId === defaultProjectId) {
+        fd.set("sectionId", defaultSectionId);
+      }
       const res = await createTaskFromQuickAddAction(fd);
       if (!res.ok) {
         setError(res.error);
@@ -184,6 +216,7 @@ export function QuickAdd({
       resetFields();
       // Resta espanso per l'inserimento rapido del task successivo.
       inputRef.current?.focus();
+      onCreated?.();
     });
   }
 
@@ -274,7 +307,14 @@ type HighlightSegment = {
   kind: "date" | "client" | "project";
   /** Colore hex sorgente dell'item (per client/project); ignorato per date. */
   color?: string | null;
+  /** False quando il segmento confina (solo whitespace) con un altro: niente shadow su quel lato. */
+  padLeft?: boolean;
+  padRight?: boolean;
 };
+
+/** Tipografia condivisa input + overlay (il caret segue l'input). */
+const QUICK_ADD_INPUT_TEXT =
+  "min-h-[2.125rem] w-full appearance-none py-1.5 text-[0.875em] leading-5";
 
 function HighlightedInput({
   inputRef,
@@ -319,22 +359,34 @@ function HighlightedInput({
         <div
           ref={overlayRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre py-1.5 text-[0.875em] text-transparent"
+          className={cn(
+            "pointer-events-none absolute inset-0 overflow-hidden whitespace-pre text-foreground",
+            QUICK_ADD_INPUT_TEXT,
+          )}
         >
           {pieces.map((p, i) =>
             p.segment ? (
               <span
                 key={i}
                 className={cn(
-                  "rounded-sm px-0.5",
-                  p.segment.kind === "date" && "bg-coral/15 text-coral",
-                  p.segment.kind === "client" && "text-foreground",
-                  p.segment.kind === "project" && "text-foreground",
+                  "align-baseline",
+                  p.segment.kind === "date" && "text-coral",
                 )}
                 style={
-                  p.segment.kind !== "date" && p.segment.color
-                    ? itemHighlightStyle(p.segment.color)
-                    : undefined
+                  p.segment.kind === "date"
+                    ? dateTokenHighlightStyle({
+                        padLeft: p.segment.padLeft !== false,
+                        padRight: p.segment.padRight !== false,
+                      })
+                    : p.segment.color
+                      ? {
+                          ...inlineItemTokenHighlightStyle(p.segment.color, {
+                            padLeft: p.segment.padLeft !== false,
+                            padRight: p.segment.padRight !== false,
+                          }),
+                          color: p.segment.color,
+                        }
+                      : undefined
                 }
               >
                 {p.text}
@@ -356,8 +408,8 @@ function HighlightedInput({
         placeholder={placeholder}
         autoComplete="off"
         className={cn(
-          "relative w-full bg-transparent py-1.5 text-[0.875em] outline-none placeholder:text-muted-foreground disabled:opacity-50",
-          // Nascondi il testo dell'input quando ci sono highlight (il caret resta visibile).
+          "relative bg-transparent outline-none placeholder:text-muted-foreground disabled:opacity-50",
+          QUICK_ADD_INPUT_TEXT,
           hasHighlights && "text-transparent caret-foreground selection:bg-coral/30",
         )}
       />
@@ -385,8 +437,54 @@ function splitWithSegments(
   return out;
 }
 
+/** Padding visivo via box-shadow: non allarga la riga né si sovrappone tra token adiacenti. */
+function tokenHighlightPads(
+  backgroundColor: string,
+  opts: { padLeft?: boolean; padRight?: boolean; insetBorder?: string } = {},
+): CSSProperties {
+  const { padLeft = true, padRight = true, insetBorder } = opts;
+  const x = "0.375rem";
+  const y = "0.125rem";
+  const shadows: string[] = [];
+  if (padLeft) {
+    shadows.push(`-${x} -${y} 0 0 ${backgroundColor}`);
+    shadows.push(`-${x} ${y} 0 0 ${backgroundColor}`);
+  }
+  if (padRight) {
+    shadows.push(`${x} -${y} 0 0 ${backgroundColor}`);
+    shadows.push(`${x} ${y} 0 0 ${backgroundColor}`);
+  }
+  // Verticale (sempre presente, sopra il testo) per evitare buchi quando un lato è senza pad orizzontale.
+  shadows.push(`0 -${y} 0 0 ${backgroundColor}`);
+  shadows.push(`0 ${y} 0 0 ${backgroundColor}`);
+  if (insetBorder) shadows.push(`inset 0 0 0 1px ${insetBorder}`);
+  return {
+    backgroundColor,
+    boxShadow: shadows.join(", "),
+    borderRadius: "0.125rem",
+  };
+}
+
+// Colori "solidi" (mescolati con la superficie, non con `transparent`): i 6
+// box-shadow di `tokenHighlightPads` si sovrappongono ai bordi e con colori
+// translucenti l'alpha si somma → centro più chiaro dei bordi. Mescolando con
+// `var(--card)` ogni layer è opaco e la sovrapposizione resta uniforme.
+function dateTokenHighlightStyle(
+  opts: { padLeft?: boolean; padRight?: boolean } = {},
+): CSSProperties {
+  const bg = "color-mix(in oklab, var(--coral) 15%, var(--card))";
+  return tokenHighlightPads(bg, opts);
+}
+
+function inlineItemTokenHighlightStyle(
+  color: string,
+  opts: { padLeft?: boolean; padRight?: boolean } = {},
+): CSSProperties {
+  const bg = `color-mix(in oklab, ${color} 22%, var(--card))`;
+  return tokenHighlightPads(bg, opts);
+}
+
 function itemHighlightStyle(color: string): CSSProperties {
-  // Background semi-trasparente del colore dell'item; il testo resta foreground.
   return {
     backgroundColor: `color-mix(in oklab, ${color} 22%, transparent)`,
     boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${color} 40%, transparent)`,
@@ -468,10 +566,16 @@ export function ParsedPreview(props: {
       {projectDisplay && (
         <Chip
           icon={<Hash className="size-2.5" />}
-          className="border-border text-foreground"
+          className={cn(
+            "border-border",
+            !props.matchedProject?.color && "text-foreground",
+          )}
           style={
             props.matchedProject?.color
-              ? itemHighlightStyle(props.matchedProject.color)
+              ? {
+                  ...itemHighlightStyle(props.matchedProject.color),
+                  color: props.matchedProject.color,
+                }
               : undefined
           }
         >
@@ -490,10 +594,16 @@ export function ParsedPreview(props: {
       {clientDisplay && (
         <Chip
           icon={<User className="size-2.5" />}
-          className="border-border text-foreground"
+          className={cn(
+            "border-border",
+            !props.matchedClient?.color && "text-foreground",
+          )}
           style={
             props.matchedClient?.color
-              ? itemHighlightStyle(props.matchedClient.color)
+              ? {
+                  ...itemHighlightStyle(props.matchedClient.color),
+                  color: props.matchedClient.color,
+                }
               : undefined
           }
         >

@@ -59,9 +59,12 @@ function TimeEntryEditForm({
     userTimezone,
   );
   const [date, setDate] = useState(startLocal);
+  // La durata salvata (in secondi) è la sorgente di verità: così una voce da 5s
+  // mostra "5s", non un fittizio "1h". `null` solo se il timer è ancora in corso.
   const timeRange = useLinkedTimeRange(
     format(startLocal, "HH:mm"),
     format(endLocal, "HH:mm"),
+    entry.durationSeconds ?? undefined,
   );
   const [description, setDescription] = useState(entry.description ?? "");
   const [clientId, setClientId] = useState(entry.clientId ?? "");
@@ -87,7 +90,9 @@ function TimeEntryEditForm({
       return;
     }
     const startedAt = combineDateTime(date, timeRange.startTime, userTimezone);
-    const endedAt = combineDateTime(date, timeRange.endTime, userTimezone);
+    // La fine deriva da inizio + durata (precisa al secondo), non dall'orario HH:mm
+    // arrotondato al minuto: preserva voci sub-minuto senza l'errore "fine ≤ inizio".
+    const endedAt = new Date(startedAt.getTime() + range.durationSeconds * 1000);
     startTransition(async () => {
       const res = await updateTimeEntryAction({
         timeEntryId: entry.id,

@@ -24,6 +24,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { EntityColorMarker } from "@/components/features/entity-color-marker";
+import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { searchAction } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/domain/search";
 
@@ -126,8 +127,13 @@ export function CommandPalette() {
                     >
                       <EntityColorMarker kind="project" color={r.color} />
                       <span className="truncate">{r.name}</span>
-                      <span className="ml-auto font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
-                        Project
+                      <span className="ml-auto flex items-center gap-2">
+                        <span className="font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
+                          Project
+                        </span>
+                        <QuickStartButton
+                          target={{ kind: "project", id: r.id, label: r.name }}
+                        />
                       </span>
                     </CommandItem>
                   );
@@ -140,8 +146,13 @@ export function CommandPalette() {
                   >
                     <EntityColorMarker kind="client" color={r.color} />
                     <span className="truncate">{r.name}</span>
-                    <span className="ml-auto font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
-                      Client
+                    <span className="ml-auto flex items-center gap-2">
+                      <span className="font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
+                        Client
+                      </span>
+                      <QuickStartButton
+                        target={{ kind: "client", id: r.id, label: r.name }}
+                      />
                     </span>
                   </CommandItem>
                 );

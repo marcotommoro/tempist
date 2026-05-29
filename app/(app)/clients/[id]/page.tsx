@@ -27,9 +27,10 @@ import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { ClientBillingFilters } from "@/components/features/timer/client-billing-filters";
 import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-entry-grid";
+import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { Stat } from "@/components/ui/stat";
-import { AddTaskToClient } from "@/components/features/tasks/add-task-to-client";
+import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
@@ -199,15 +200,18 @@ export default async function ClientDetailPage({
         className="pt-4 pb-3 mb-4"
         title={client.name}
         actions={
-          <EditClientDialog
-            client={client}
-            trigger={
-              <Button type="button" variant="outline" size="sm" className="gap-1.5">
-                <Pencil className="size-3.5" />
-                Modifica
-              </Button>
-            }
-          />
+          <div className="flex items-center gap-2">
+            <QuickStartButton target={{ kind: "client", id, label: client.name }} />
+            <EditClientDialog
+              client={client}
+              trigger={
+                <Button type="button" variant="outline" size="sm" className="gap-1.5">
+                  <Pencil className="size-3.5" />
+                  Modifica
+                </Button>
+              }
+            />
+          </div>
         }
         meta={
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 normal-case tracking-normal">
@@ -347,7 +351,7 @@ export default async function ClientDetailPage({
             {String(tasks.length).padStart(2, "0")}
           </span>
         </div>
-        <AddTaskToClient clientId={id} timezone={tz} />
+        <CreateTaskDialog defaultClientId={id} timezone={tz} />
         <TaskList
           tasks={tasks}
           trackedByTask={trackedByTask}

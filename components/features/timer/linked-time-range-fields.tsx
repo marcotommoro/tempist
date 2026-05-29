@@ -63,7 +63,7 @@ export function LinkedTimeRangeFields({
           value={durationText}
           onChange={(e) => onDurationChange(e.target.value)}
           onBlur={onDurationBlur}
-          placeholder="es. 2 o 1h30"
+          placeholder="es. 2, 1h30m, 1:30, 30s"
           required
           disabled={disabled}
           className="font-mono tabular-nums"

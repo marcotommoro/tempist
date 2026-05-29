@@ -54,7 +54,9 @@ export function GlobalManualEntryDialog({
   const [open, setOpen] = useState(false);
   const today = new Date();
   const [date, setDate] = useState<Date>(today);
-  const timeRange = useLinkedTimeRange("09:00", "10:00");
+  // Default 1h esplicito: per una NUOVA voce il default vive qui, non più
+  // nascosto come fallback nel hook.
+  const timeRange = useLinkedTimeRange("09:00", "10:00", 3600);
   const [clientId, setClientId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [description, setDescription] = useState("");

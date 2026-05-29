@@ -13,11 +13,12 @@ import { ProjectDescription } from "@/components/features/projects/project-descr
 import { ProjectEditableTitle } from "@/components/features/projects/project-editable-title";
 import { ProjectMembersButton } from "@/components/features/projects/members/project-members-button";
 import { TaskItem } from "@/components/features/tasks/task-item";
-import { AddTaskToProject } from "@/components/features/tasks/add-task-to-project";
+import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { CreateSectionForm } from "@/components/features/projects/create-section-form";
 import { ProjectBoard } from "@/components/features/projects/board/board";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 
 type Params = { id: string };
@@ -83,7 +84,16 @@ export default async function ProjectDetailPage({
             </span>
           </>
         }
-        actions={<ViewToggle isBoard={isBoard} projectId={id} />}
+        actions={
+          <div className="flex items-center gap-2">
+            {accessType === "workspace" && (
+              <QuickStartButton
+                target={{ kind: "project", id, label: project.name }}
+              />
+            )}
+            <ViewToggle isBoard={isBoard} projectId={id} />
+          </div>
+        }
       />
 
       <ProjectDescription
@@ -285,9 +295,9 @@ function SectionBlock({
           </p>
         )}
         <div className="border-t border-border">
-          <AddTaskToProject
-            projectId={projectId}
-            sectionId={sectionId}
+          <CreateTaskDialog
+            defaultProjectId={projectId}
+            defaultSectionId={sectionId}
             timezone={timezone}
           />
         </div>

@@ -20,8 +20,8 @@ import {
   WeekDays,
   WeekStrip,
 } from "@/components/features/upcoming/week-strip";
-import { AddTaskForDay } from "@/components/features/upcoming/add-task-for-day";
-import { QuickAdd } from "@/components/features/tasks/quick-add";
+import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
+import { Plus } from "lucide-react";
 import { groupByDay } from "@/lib/utils/group-by-day";
 import {
   defaultTaskScheduledAt,
@@ -145,7 +145,7 @@ export default async function UpcomingPage({
         }
       />
 
-      <QuickAdd
+      <CreateTaskDialog
         defaultScheduledAt={defaultScheduledAt}
         timezone={timezone}
         projects={projects}
@@ -173,6 +173,9 @@ export default async function UpcomingPage({
           const key = format(day, "yyyy-MM-dd");
           const dayTasks = tasksByDay.get(key) ?? [];
           const label = dayLabel(day, todayLocal);
+          // Default: giorno alle 09:00 locali (come il vecchio AddTaskForDay).
+          const dayAt9 = new Date(day);
+          dayAt9.setHours(9, 0, 0, 0);
           return (
             <section key={key} id={`day-${key}`} className="space-y-2">
               <div className="flex items-baseline gap-3 border-b border-border pb-1.5">
@@ -200,7 +203,18 @@ export default async function UpcomingPage({
                   Nessuna attività.
                 </p>
               )}
-              <AddTaskForDay day={day} />
+              <CreateTaskDialog
+                defaultScheduledAt={dayAt9}
+                timezone={timezone}
+                trigger={
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
+                  >
+                    <Plus className="size-3" /> Aggiungi attività
+                  </button>
+                }
+              />
             </section>
           );
         })}

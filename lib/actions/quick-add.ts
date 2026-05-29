@@ -58,6 +58,8 @@ export async function createTaskFromQuickAddAction(
     // Selezione esplicita dalle tendine: ha la precedenza sul token nel titolo.
     const explicitProjectId = String(formData.get("projectId") ?? "").trim();
     const explicitClientId = String(formData.get("clientId") ?? "").trim();
+    // Sezione: passata dal contesto (dialog aperto da una sezione di progetto).
+    const sectionId = String(formData.get("sectionId") ?? "").trim() || null;
 
     // Carica una sola volta progetti+clienti dell'org per fuzzy match (token + free-text).
     const [projects, clients] = await Promise.all([
@@ -172,6 +174,8 @@ export async function createTaskFromQuickAddAction(
       scheduledAt,
       estimatedMinutes: parsed.estimatedMinutes,
       projectId,
+      // La sezione vale solo se c'è un progetto a cui appartiene.
+      sectionId: projectId ? sectionId : null,
       clientId,
       recurrenceRule: parsed.recurrenceRule,
     });
@@ -184,6 +188,9 @@ export async function createTaskFromQuickAddAction(
     }
 
     for (const p of VIEW_PATHS) revalidatePath(p);
+    // Revalida anche le pagine contestuali da cui può essere stato creato.
+    if (projectId) revalidatePath(`/projects/${projectId}`);
+    if (clientId) revalidatePath(`/clients/${clientId}`);
 
     return { ok: true, data: { id: task.id } };
   } catch (err) {

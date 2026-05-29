@@ -1,4 +1,13 @@
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+import { redirect } from "next/navigation";
+
+import { getSession } from "@/lib/auth/workspace";
+
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
+  if (session?.user) {
+    redirect("/today");
+  }
+
   return (
     <div className="relative isolate flex min-h-screen items-center justify-center bg-background p-6">
       {/* Editorial atmosphere: subtle coral wash + soft grain. CSS-only, lightweight. */}

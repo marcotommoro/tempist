@@ -13,7 +13,7 @@
 import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
-import type { Task, TimeEntry } from "@/lib/db/schema";
+import type { Client, Project, Task, TimeEntry } from "@/lib/db/schema";
 import {
   computeDurationSeconds,
   validateTimeEntryRange,
@@ -674,6 +674,115 @@ export async function startTimerFromTask(opts: {
     projectId: opts.task.projectId,
     taskId: opts.task.id,
   });
+}
+
+/**
+ * Avvia un timer su un Progetto: descrizione = nome progetto, eredita anche il
+ * cliente del progetto (se presente).
+ */
+export async function startTimerFromProject(opts: {
+  organizationId: string;
+  userId: string;
+  project: Pick<Project, "id" | "name" | "clientId">;
+}): Promise<
+  | { ok: true; entry: TimeEntry }
+  | { ok: false; reason: "already-running"; existing: TimeEntry | null }
+> {
+  return startTimer({
+    organizationId: opts.organizationId,
+    userId: opts.userId,
+    description: opts.project.name,
+    clientId: opts.project.clientId,
+    projectId: opts.project.id,
+  });
+}
+
+/**
+ * Avvia un timer su un Cliente: descrizione = nome cliente, nessun progetto.
+ */
+export async function startTimerFromClient(opts: {
+  organizationId: string;
+  userId: string;
+  client: Pick<Client, "id" | "name">;
+}): Promise<
+  | { ok: true; entry: TimeEntry }
+  | { ok: false; reason: "already-running"; existing: TimeEntry | null }
+> {
+  return startTimer({
+    organizationId: opts.organizationId,
+    userId: opts.userId,
+    description: opts.client.name,
+    clientId: opts.client.id,
+  });
+}
+
+/**
+ * Scarta il timer in corso eliminandolo (senza salvarlo in cronologia).
+ * Variante di deleteTimeEntry che NON blocca sul running. Ritorna false se non
+ * c'è alcun timer attivo.
+ */
+export async function discardRunningTimer(opts: {
+  userId: string;
+  organizationId: string;
+}): Promise<boolean> {
+  const running = await getRunningTimer(opts);
+  if (!running) return false;
+  await writeAudit({
+    timeEntryId: running.id,
+    actorId: opts.userId,
+    action: "DELETE",
+    before: running,
+  });
+  await db.delete(schema.timeEntry).where(eq(schema.timeEntry.id, running.id));
+  return true;
+}
+
+/**
+ * Riassegna il timer in corso a un nuovo contesto (cliente/progetto/task) SENZA
+ * crearne uno nuovo: mantiene startedAt e il tempo accumulato. Ri-risolve lo
+ * snapshot tariffa per il nuovo contesto (coerente col freeze allo start).
+ * Ritorna null se non c'è alcun timer attivo.
+ */
+export async function reassignRunningTimer(opts: {
+  userId: string;
+  organizationId: string;
+  clientId: string | null;
+  projectId: string | null;
+  taskId: string | null;
+  description?: string | null;
+}): Promise<TimeEntry | null> {
+  const running = await getRunningTimer(opts);
+  if (!running) return null;
+  const { rate, currency } = await resolveRateSnapshot({
+    organizationId: opts.organizationId,
+    taskId: opts.taskId,
+    projectId: opts.projectId,
+    clientId: opts.clientId,
+    userId: opts.userId,
+  });
+  const [updated] = await db
+    .update(schema.timeEntry)
+    .set({
+      clientId: opts.clientId,
+      projectId: opts.projectId,
+      taskId: opts.taskId,
+      description: opts.description ?? running.description,
+      hourlyRateSnapshot: rate,
+      currencySnapshot: currency,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.timeEntry.id, running.id))
+    .returning();
+  if (updated) {
+    await writeAudit({
+      timeEntryId: updated.id,
+      actorId: opts.userId,
+      action: "UPDATE",
+      before: running,
+      after: updated,
+    });
+  }
+  return updated ?? null;
 }
 
 export type UpdateTimeEntryInput = {

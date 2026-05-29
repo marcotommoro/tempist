@@ -10,7 +10,7 @@ import { listProjects } from "@/lib/domain/projects";
 import { listClients } from "@/lib/domain/clients";
 import { TaskListViewToggle } from "@/components/features/tasks/task-list-view-toggle";
 import { type ProjectMeta } from "@/components/features/tasks/task-list";
-import { QuickAdd } from "@/components/features/tasks/quick-add";
+import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { PageHeader } from "@/components/features/page-header/page-header";
 import { OverdueSection } from "@/components/features/upcoming/overdue-section";
 import { TodayScheduledSection } from "@/components/features/today/today-scheduled-section";
@@ -112,7 +112,7 @@ export default async function TodayPage({
         actions={<TaskListViewToggle basePath="/today" group={group} />}
       />
 
-      <QuickAdd
+      <CreateTaskDialog
         defaultScheduledAt={defaultScheduledAt}
         timezone={timezone}
         projects={projects}
