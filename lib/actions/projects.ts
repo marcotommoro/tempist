@@ -29,6 +29,7 @@ import {
   toggleProjectFavorite,
 } from "@/lib/domain/projects";
 import { findWorkspaceMemberByEmail } from "@/lib/domain/workspaces";
+import { normalizeDescriptionHtml } from "@/lib/utils/html";
 import { sendProjectInviteEmail } from "@/lib/email/send-invite";
 import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -214,7 +215,12 @@ export async function setProjectDescriptionAction(
     if (!parsed.success) {
       return { ok: false, error: parsed.error.issues[0]?.message ?? "Input non valido" };
     }
-    await setProjectDescription({ projectId, description: parsed.data });
+    // Sanitizza l'HTML del rich-text e azzera se non resta testo visibile,
+    // stesso percorso di setTaskDescriptionAction.
+    await setProjectDescription({
+      projectId,
+      description: normalizeDescriptionHtml(parsed.data),
+    });
     revalidateProjects(projectId);
     return { ok: true, data: undefined };
   } catch (err) {

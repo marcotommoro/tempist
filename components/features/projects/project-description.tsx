@@ -3,9 +3,17 @@
 import { useState, useTransition } from "react";
 import { AlignLeft } from "lucide-react";
 
-import { Textarea } from "@/components/ui/textarea";
+import {
+  DescriptionEditor,
+  RichTextContent,
+} from "@/components/features/tasks/description-editor";
 import { setProjectDescriptionAction } from "@/lib/actions/projects";
-import { Markdown } from "@/lib/utils/markdown";
+
+/** Un doc TipTap vuoto serializza come `<p></p>`: lo trattiamo come "nessuna descrizione". */
+function isEmptyHtml(html: string): boolean {
+  const t = html.trim();
+  return t === "" || t === "<p></p>";
+}
 
 export function ProjectDescription({
   projectId,
@@ -36,7 +44,7 @@ export function ProjectDescription({
 
   function save() {
     setError(null);
-    const next = draft.trim();
+    const next = isEmptyHtml(draft) ? "" : draft;
     startTransition(async () => {
       const res = await setProjectDescriptionAction(projectId, next ? next : null);
       if (!res.ok) {
@@ -51,30 +59,21 @@ export function ProjectDescription({
   if (editing) {
     return (
       <div className="space-y-2">
-        <Textarea
+        <DescriptionEditor
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-              e.preventDefault();
-              save();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              cancel();
-            }
-          }}
-          autoFocus
+          onChange={setDraft}
           disabled={pending}
-          placeholder="Aggiungi una descrizione… (markdown supportato — ⌘↵ per salvare)"
-          rows={5}
-          className="text-sm"
+          autoFocus
+          placeholder="Aggiungi una descrizione… (⌘↵ per salvare, Esc per annullare)"
+          onSubmit={save}
+          onCancel={cancel}
         />
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={save}
             disabled={pending}
-            className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             Salva
           </button>
@@ -82,7 +81,7 @@ export function ProjectDescription({
             type="button"
             onClick={cancel}
             disabled={pending}
-            className="text-xs px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground"
+            className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             Annulla
           </button>
@@ -92,22 +91,48 @@ export function ProjectDescription({
     );
   }
 
-  if (!description && !canEdit) return null;
-
-  return (
-    <button
-      type="button"
-      onClick={startEdit}
-      disabled={!canEdit}
-      className="w-full text-left rounded-md hover:bg-muted/50 px-2 py-1.5 -mx-2 transition-colors disabled:cursor-default disabled:hover:bg-transparent"
-    >
-      {description ? (
-        <Markdown source={description} />
-      ) : (
+  if (isEmptyHtml(description)) {
+    // Senza permessi di modifica e senza contenuto non mostriamo nulla.
+    if (!canEdit) return null;
+    return (
+      <button
+        type="button"
+        onClick={startEdit}
+        className="-mx-2 w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/50"
+      >
         <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <AlignLeft className="size-4" /> Aggiungi descrizione
         </span>
-      )}
-    </button>
+      </button>
+    );
+  }
+
+  // In sola lettura mostriamo il contenuto renderizzato senza renderlo cliccabile.
+  if (!canEdit) {
+    return <RichTextContent html={description} />;
+  }
+
+  // Click in qualunque punto della descrizione → apre l'editor. Usiamo un div
+  // con role=button (non un <button>) perché il renderer contiene markup di
+  // blocco (liste, checkbox) non valido dentro un elemento interattivo.
+  return (
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={startEdit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            startEdit();
+          }
+        }}
+        aria-label="Modifica descrizione"
+        className="-mx-2 block w-full cursor-text rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/50"
+      >
+        <RichTextContent html={description} />
+      </div>
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
+    </div>
   );
 }
