@@ -85,14 +85,42 @@ async function sendEmail(to: string, subject: string, text: string) {
   await resend.emails.send({ from: FROM_EMAIL, to, subject, text });
 }
 
+/**
+ * URL pubblico dell'app — usato per baseURL, trustedOrigins, link nelle email
+ * e callback OAuth. In produzione DEVE essere impostato: senza, i magic link
+ * punterebbero a localhost e trustedOrigins rifiuterebbe il dominio reale.
+ *
+ * Il controllo viene saltato durante `next build` (NEXT_PHASE): la variabile è
+ * richiesta a runtime, non necessariamente sulla macchina di build. Con
+ * output:standalone il server è un processo Node nuovo che rivaluta questo
+ * modulo al boot, quindi il throw scatta all'avvio se la var manca davvero.
+ */
+function resolveAuthURL(): string {
+  const url = process.env.BETTER_AUTH_URL?.trim();
+  if (url) return url;
+
+  const isBuild = process.env.NEXT_PHASE === "phase-production-build";
+  if (process.env.NODE_ENV === "production" && !isBuild) {
+    throw new Error(
+      "BETTER_AUTH_URL mancante in produzione: imposta il dominio pubblico " +
+        "dell'app (es. https://app.example.com). Senza, login via magic link, " +
+        "trustedOrigins e callback OAuth non funzionano.",
+    );
+  }
+
+  return "http://localhost:3000";
+}
+
+const AUTH_URL = resolveAuthURL();
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
   }),
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL,
-  trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://localhost:3000"],
+  baseURL: AUTH_URL,
+  trustedOrigins: [AUTH_URL],
 
   user: {
     additionalFields: {
@@ -148,8 +176,7 @@ export const auth = betterAuth({
     organization({
       allowUserToCreateOrganization: true,
       async sendInvitationEmail({ id, email, inviter, organization: org }) {
-        const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
-        const acceptUrl = `${base}/invitations/workspace/${id}`;
+        const acceptUrl = `${AUTH_URL}/invitations/workspace/${id}`;
         const inviterName = inviter.user.name ?? inviter.user.email;
 
         // E2E test runner: scrive il link su filesystem (riusa stessa convention dei magic link)
