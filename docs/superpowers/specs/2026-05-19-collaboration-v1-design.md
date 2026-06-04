@@ -16,13 +16,13 @@ The todoist app is a multi-tenant Todoist + time-tracker built for teams (worksp
 
 | Decision | Value | Rationale |
 |---|---|---|
-| Assignment cardinality | Single (`assigneeId`) | Schema-aligned; multi noted as "Fase futura" in `lib/domain/comments.ts:10` |
+| Assignment cardinality | Single (`assigneeId`) | Schema-aligned; multi noted as future phase in `lib/domain/comments.ts:10` |
 | Mentionable / assignable | Anyone with project access (workspace member ∪ `projectMember` row) | Consistent with `requireProjectAccess` |
 | Mention storage | `@[Display Name](user:USER_ID)` markdown link + `comment_mention` join table | Round-trips through any md parser; cheap reverse queries; clean cascade-delete |
 | Notification channels | In-app immediately + immediate transactional email | User-chosen |
 | Email infra | Reuse `lib/integrations/email.ts` (Resend) + new `lib/email/send-*.ts` templates | Existing pattern, no new dep |
 | Email dispatch | Async via pg-boss; single generic queue `notification.email` | Worker switches on `notification.type`; future kinds add one template, no queue churn |
-| `assertProjectRole` failure | **Throw a known error**; actions catch and return `ActionResult { ok: false, error: 'Permessi insufficienti' }` | User-chosen; one existing call site to update; page guards keep redirecting via `requireProjectAccess` |
+| `assertProjectRole` failure | **Throw a known error**; actions catch and return `ActionResult { ok: false, error: 'Insufficient permissions' }` | User-chosen; one existing call site to update; page guards keep redirecting via `requireProjectAccess` |
 | Mentions of users without project access | Silent drop server-side (picker won't surface them anyway) | Lowest friction; auto-invite is a creep trap |
 | Self-assign / self-mention | No notification fired | Obvious correct default |
 | Un-mention on comment edit | Delete `comment_mention` row, no "you were un-mentioned" notification | Obvious correct default |
@@ -76,7 +76,7 @@ The load-bearing addition is **one new helper** `requireTaskEditAccess(taskId)` 
 | `tests/unit/domain/notifications.test.ts` | `notifyAssignment` skips self + enqueues job (mock `getBoss`) |
 | `tests/e2e/collaboration-assign.spec.ts` | Assign → notification badge + email file |
 | `tests/e2e/collaboration-mention.spec.ts` | `@`-pick in comment → notification + email file; edit adds 2nd mention → only new fires |
-| `tests/e2e/collaboration-roles.spec.ts` | Viewer mutation attempt → action returns `{ ok: false, error: 'Permessi insufficienti' }` |
+| `tests/e2e/collaboration-roles.spec.ts` | Viewer mutation attempt → action returns `{ ok: false, error: 'Insufficient permissions' }` |
 
 ## Files to modify
 
@@ -174,7 +174,7 @@ pnpm worker:dev
 
 1. Sign in as user A; create a project; invite user B as editor; assign a task to B → B's notification bell increments, email file appears under `.e2e-magic-links/`.
 2. As A, write a comment with `@`, pick B from popover, submit → B sees mention notification + email. Edit the comment to add a mention of user C → only C gets a new notification.
-3. Invite user D as viewer → log in as D → attempt to edit a task title → action returns `{ ok: false, error: 'Permessi insufficienti' }`; toast appears.
+3. Invite user D as viewer → log in as D → attempt to edit a task title → action returns `{ ok: false, error: 'Insufficient permissions' }`; toast appears.
 4. Run `pnpm db:studio`, confirm `comment_mention` rows correctly cascade-delete when a comment is deleted.
 
 ## Non-goals (explicit, for v2+)

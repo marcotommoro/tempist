@@ -1,84 +1,97 @@
 # Flexible Reporting Redesign
 
-## Obiettivo
-Rendere `timesheet`, `reports` e dettaglio cliente più simili a un cockpit operativo: vista ampia, selezione mese sempre accessibile, filtri rapidi, sezioni attivabili e dati aggiornati immediatamente quando cambia l'URL. La soluzione resta server-first: i dati vengono calcolati in Server Components/domain functions, mentre i controlli client aggiornano `searchParams` con `router.replace(..., { scroll: false })` e `useTransition`.
+## Goal
 
-## Contesto rilevante
-- [`app/(app)/layout.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/layout.tsx) oggi forza tutte le pagine dentro `max-w-3xl`, limitando dashboard e tabelle.
-- [`app/(app)/reports/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/reports/page.tsx) supporta solo `week | last-week | month`, dove `month` significa mese corrente.
-- [`app/(app)/timesheet/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/timesheet/page.tsx) ha range settimanale/custom, filtri client/progetto e default limit 200 entries.
-- [`app/(app)/clients/[id]/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/clients/[id]/page.tsx) ha logiche range locali e una colonna unica, pur contenendo billing, quick grid, tasks e time entries.
-- Next 16 docs: `searchParams` va letto nel Page Server Component; `useSearchParams`/`useRouter` sono per Client Components e vanno isolati con `Suspense` quando necessario. `next/form` e navigazione client-side sono utili per filtri GET progressivi. Context7 conferma pattern React 19 con `useTransition` per UI responsive e Recharts 3 con `ResponsiveContainer`/`ComposedChart` per dashboard.
+Make `timesheet`, `reports`, and client detail feel more like an operational cockpit: wide view, month picker always available, quick filters, toggleable sections, and data that updates immediately when the URL changes. The solution stays server-first: data is computed in Server Components/domain functions, while client controls update `searchParams` with `router.replace(..., { scroll: false })` and `useTransition`.
 
-## Design Proposto
-### 1. Layout Wide Scoped
-Modificare [`app/(app)/layout.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/layout.tsx) per mantenere il default stretto ma permettere a specifiche pagine di espandersi. La soluzione più mirata è usare un marker tipo `data-page-width="wide"` sul root delle tre pagine e una regola Tailwind/CSS con `:has()` sul wrapper interno. Così `today`, `inbox`, `projects` ecc. restano invariati.
+## Relevant context
 
-### 2. Modello Filtri Condiviso
-Creare un helper type-safe, ad esempio [`lib/utils/reporting-range.ts`](/Users/marcotommoro/dev/tempist/lib/utils/reporting-range.ts), che sostituisce la duplicazione tra `report-range.ts`, `timesheet-week.ts` e `resolveRange()` locale cliente. Supporterà:
-- `month=YYYY-MM` per scegliere qualunque mese.
-- `period=month | week | custom | all` dove serve.
-- `from/to` validati per custom range, con bound `[from, to)` coerenti.
-- preservazione di `clientId`, `projectId`, `view`, `groupBy`, `show`.
+- [`app/(app)/layout.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/layout.tsx) currently forces all pages inside `max-w-3xl`, limiting dashboards and tables.
+- [`app/(app)/reports/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/reports/page.tsx) only supports `week | last-week | month`, where `month` means the current month.
+- [`app/(app)/timesheet/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/timesheet/page.tsx) has weekly/custom range, client/project filters, and a default limit of 200 entries.
+- [`app/(app)/clients/[id]/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/clients/[id]/page.tsx) has local range logic and a single column, despite billing, quick grid, tasks, and time entries.
+- Next 16 docs: read `searchParams` in the Page Server Component; `useSearchParams`/`useRouter` are for Client Components and should be isolated with `Suspense` when needed. `next/form` and client-side navigation are useful for progressive GET filters. Context7 confirms React 19 patterns with `useTransition` for responsive UI and Recharts 3 with `ResponsiveContainer`/`ComposedChart` for dashboards.
 
-### 3. Componenti Riusabili
-Aggiungere componenti in [`components/features/reports/`](/Users/marcotommoro/dev/tempist/components/features/reports/) riutilizzabili da tutte e tre le pagine:
-- `ReportingToolbar`: selettore mese con prev/next, shortcut "oggi", custom range, client/project select, reset, stato pending.
-- `ViewToggleBar`: tasti per scegliere cosa vedere (`overview`, `charts`, `clients`, `projects`, `entries`, `tasks`, `grid`).
-- `MetricGrid`: KPI card coerenti e più leggibili.
-- `DataPanel`: card/tabelle con header, count, empty state, azioni export.
+## Proposed design
 
-I controlli aggiornano la query string con una whitelist di chiavi note, evitando URL non sanitizzati e mantenendo i filtri condivisi tra CSV/print/pagine.
+### 1. Scoped wide layout
 
-### 4. Reports Page
-Ristrutturare [`app/(app)/reports/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/reports/page.tsx) in dashboard ampia:
-- Toolbar sticky con mese, range custom, client, project, `groupBy` e `show`.
-- KPI in griglia larga: ore, fatturabile, non fatturabile, entries, task completati, media giornaliera.
-- Grafico principale tipo Clockify/Kimai con Recharts `ComposedChart`: ore per giorno più billable/internal.
-- Sezioni attivabili: per cliente, per progetto, trend giornaliero, tabella dettagliata.
-- Export CSV e print preservano gli stessi parametri.
+Change [`app/(app)/layout.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/layout.tsx) to keep the narrow default but let specific pages expand. The most targeted approach is a marker like `data-page-width="wide"` on the root of the three pages and a Tailwind/CSS rule with `:has()` on the inner wrapper. That way `today`, `inbox`, `projects`, etc. stay unchanged.
 
-Estendere [`lib/domain/time-entries.ts`](/Users/marcotommoro/dev/tempist/lib/domain/time-entries.ts), [`lib/domain/analytics.ts`](/Users/marcotommoro/dev/tempist/lib/domain/analytics.ts) e [`lib/domain/tasks.ts`](/Users/marcotommoro/dev/tempist/lib/domain/tasks.ts) per accettare filtri `clientId`, `projectId`, billable/internal e grouping senza perdere `organizationId` in ogni query.
+### 2. Shared filter model
 
-### 5. Timesheet Page
-Aggiornare [`app/(app)/timesheet/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/timesheet/page.tsx) e [`components/features/timer/timesheet-filters.tsx`](/Users/marcotommoro/dev/tempist/components/features/timer/timesheet-filters.tsx):
-- Passare da navigazioni hard via `window.location.href` a `router.replace` con `useTransition`.
-- Aggiungere mese selezionabile (`month=YYYY-MM`) e toggle vista `day | week | month`.
-- Layout più ampio con tabella entries più densa, totali sopra e raggruppamenti collassabili.
-- Rimuovere il limite implicito fragile da 200 per i mesi, sostituendolo con un limite esplicito adeguato o paginazione leggera se i dati sono tanti.
+Create a type-safe helper, e.g. [`lib/utils/reporting-range.ts`](/Users/marcotommoro/dev/tempist/lib/utils/reporting-range.ts), replacing duplication between `report-range.ts`, `timesheet-week.ts`, and client-local `resolveRange()`. It will support:
+- `month=YYYY-MM` to pick any month.
+- `period=month | week | custom | all` where needed.
+- validated `from/to` for custom range, with consistent `[from, to)` bounds.
+- preservation of `clientId`, `projectId`, `view`, `groupBy`, `show`.
 
-### 6. Client Detail Page
-Ristrutturare [`app/(app)/clients/[id]/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/clients/[id]/page.tsx) come dashboard cliente:
-- Header largo con azioni rapide, rate, email/P.IVA e mese attivo.
-- Toolbar unica per billing range e week grid, preservando i parametri.
-- Sezioni flessibili: overview, quick grid, breakdown progetti, tasks, time entries.
-- Vista d'insieme tipo Trello/Clockify: colonne o pannelli per progetto con ore, importo, entries e task collegati.
-- [`components/features/timer/client-billing-filters.tsx`](/Users/marcotommoro/dev/tempist/components/features/timer/client-billing-filters.tsx) diventa un wrapper del nuovo `ReportingToolbar` invece di mantenere logica range locale.
+### 3. Reusable components
 
-### 7. Export, Print e Coerenza URL
-Aggiornare [`app/api/reports/time-entries.csv/route.ts`](/Users/marcotommoro/dev/tempist/app/api/reports/time-entries.csv/route.ts) e [`app/(print)/reports/print/page.tsx`](/Users/marcotommoro/dev/tempist/app/(print)/reports/print/page.tsx) per usare lo stesso parser filtri. In questo modo mese, custom range, client e progetto producono gli stessi dati in pagina, CSV e stampa.
+Add components under [`components/features/reports/`](/Users/marcotommoro/dev/tempist/components/features/reports/) reused by all three pages:
+- `ReportingToolbar`: month selector with prev/next, "today" shortcut, custom range, client/project select, reset, pending state.
+- `ViewToggleBar`: buttons to choose what to show (`overview`, `charts`, `clients`, `projects`, `entries`, `tasks`, `grid`).
+- `MetricGrid`: consistent, more readable KPI cards.
+- `DataPanel`: cards/tables with header, count, empty state, export actions.
 
-### 8. Verifica
-Aggiungere o aggiornare test mirati:
-- Unit test per parser range/search params in [`tests/unit/`](/Users/marcotommoro/dev/tempist/tests/unit/).
-- Test domain per aggregazioni filtrate dove già esistono fixture utili.
-- E2E leggero Playwright: cambiare mese su reports/client/timesheet e verificare URL, KPI/heading aggiornati e assenza di reload pieno.
-- Verifiche finali: `pnpm lint`, `pnpm typecheck`, `pnpm test`, e se tempo/DB disponibile `pnpm test:e2e` mirato.
+Controls update the query string with a whitelist of known keys, avoiding unsanitized URLs and keeping filters shared across CSV/print/pages.
 
-## Sequenza Di Lavoro
-1. Introdurre helper filtri/range condiviso e test unitari.
-2. Rendere il layout wide scoped senza cambiare il comportamento delle pagine non coinvolte.
-3. Implementare componenti riusabili toolbar/toggle/metric/panel.
-4. Migrare reports e sincronizzare CSV/print.
-5. Migrare timesheet.
-6. Migrare dettaglio cliente.
-7. Eseguire test, browser check e rifinitura responsive/accessibile.
+### 4. Reports page
+
+Restructure [`app/(app)/reports/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/reports/page.tsx) as a wide dashboard:
+- Sticky toolbar with month, custom range, client, project, `groupBy`, and `show`.
+- Wide KPI grid: hours, billable, non-billable, entries, completed tasks, daily average.
+- Main chart Clockify/Kimai style with Recharts `ComposedChart`: hours per day plus billable/internal.
+- Toggleable sections: by client, by project, daily trend, detail table.
+- CSV export and print preserve the same parameters.
+
+Extend [`lib/domain/time-entries.ts`](/Users/marcotommoro/dev/tempist/lib/domain/time-entries.ts), [`lib/domain/analytics.ts`](/Users/marcotommoro/dev/tempist/lib/domain/analytics.ts), and [`lib/domain/tasks.ts`](/Users/marcotommoro/dev/tempist/lib/domain/tasks.ts) to accept `clientId`, `projectId`, billable/internal filters and grouping without dropping `organizationId` in any query.
+
+### 5. Timesheet page
+
+Update [`app/(app)/timesheet/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/timesheet/page.tsx) and [`components/features/timer/timesheet-filters.tsx`](/Users/marcotommoro/dev/tempist/components/features/timer/timesheet-filters.tsx):
+- Move from hard navigation via `window.location.href` to `router.replace` with `useTransition`.
+- Add selectable month (`month=YYYY-MM`) and view toggle `day | week | month`.
+- Wider layout with denser entry table, totals on top, collapsible groupings.
+- Remove the fragile implicit 200-entry cap for months; replace with an explicit suitable limit or light pagination when data is large.
+
+### 6. Client detail page
+
+Restructure [`app/(app)/clients/[id]/page.tsx`](/Users/marcotommoro/dev/tempist/app/(app)/clients/[id]/page.tsx) as a client dashboard:
+- Wide header with quick actions, rate, email/VAT, and active month.
+- Single toolbar for billing range and week grid, preserving parameters.
+- Flexible sections: overview, quick grid, project breakdown, tasks, time entries.
+- Trello/Clockify-style overview: columns or panels per project with hours, amount, entries, and linked tasks.
+- [`components/features/timer/client-billing-filters.tsx`](/Users/marcotommoro/dev/tempist/components/features/timer/client-billing-filters.tsx) becomes a wrapper around the new `ReportingToolbar` instead of keeping local range logic.
+
+### 7. Export, print, and URL consistency
+
+Update [`app/api/reports/time-entries.csv/route.ts`](/Users/marcotommoro/dev/tempist/app/api/reports/time-entries.csv/route.ts) and [`app/(print)/reports/print/page.tsx`](/Users/marcotommoro/dev/tempist/app/(print)/reports/print/page.tsx) to use the same filter parser. Month, custom range, client, and project then produce the same data on page, CSV, and print.
+
+### 8. Verification
+
+Add or update focused tests:
+- Unit tests for range/search param parser in [`tests/unit/`](/Users/marcotommoro/dev/tempist/tests/unit/).
+- Domain tests for filtered aggregations where useful fixtures already exist.
+- Light Playwright E2E: change month on reports/client/timesheet and verify URL, updated KPI/heading, and no full reload.
+- Final checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, and if time/DB available targeted `pnpm test:e2e`.
+
+## Work sequence
+
+1. Introduce shared filter/range helper and unit tests.
+2. Enable scoped wide layout without changing non-involved pages.
+3. Implement reusable toolbar/toggle/metric/panel components.
+4. Migrate reports and sync CSV/print.
+5. Migrate timesheet.
+6. Migrate client detail.
+7. Run tests, browser check, and responsive/a11y polish.
 
 ## Todo
-- [ ] Creare parser range/search params condiviso con test unitari.
-- [ ] Rendere wide solo le pagine marcate senza alterare le altre viste app.
-- [ ] Costruire toolbar, toggle e pannelli riusabili per reports/timesheet/clienti.
-- [ ] Redesign reports con mese libero, filtri immediati, chart e export coerenti.
-- [ ] Redesign timesheet con mese libero, viste raggruppate e navigazione client-side.
-- [ ] Redesign dettaglio cliente come dashboard flessibile con sezioni attivabili.
-- [ ] Aggiungere test mirati e verificare lint/typecheck/test.
+
+- [ ] Create shared range/search param parser with unit tests.
+- [ ] Make only marked pages wide without altering other app views.
+- [ ] Build reusable toolbar, toggle, and panels for reports/timesheet/clients.
+- [ ] Redesign reports with free month picker, immediate filters, chart, and consistent export.
+- [ ] Redesign timesheet with free month, grouped views, and client-side navigation.
+- [ ] Redesign client detail as flexible dashboard with toggleable sections.
+- [ ] Add focused tests and verify lint/typecheck/test.

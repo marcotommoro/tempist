@@ -1,97 +1,97 @@
-# ADR 0001 — Stack base
+# ADR 0001 — Base stack
 
 **Status:** Accepted
 **Date:** 2026-05-15
 
 ## Context
 
-Costruire un'app full-stack che unisce Todoist (task management) e un time tracker professionale (clienti, timer, billing). Requisiti:
+Build a full-stack app that combines Todoist-style task management and a professional time tracker (clients, timer, billing). Requirements:
 
-- Multi-tenant dal day 1 (più utenti per workspace, ruoli)
-- Self-hosted in produzione (Coolify), niente vendor lock-in serverless
+- Multi-tenant from day 1 (multiple users per workspace, roles)
+- Self-hosted in production (Coolify), no serverless vendor lock-in
 - TypeScript-first
-- Postgres come unica fonte di verità (anche per i job, niente Redis come dipendenza obbligatoria)
-- Stack pragmatico, evita over-engineering precoce
+- Postgres as the single source of truth (jobs too — no Redis as a mandatory dependency)
+- Pragmatic stack, avoid premature over-engineering
 
-## Decisione
+## Decision
 
-| Layer | Tecnologia |
+| Layer | Technology |
 |---|---|
 | Framework | Next.js 16 (App Router, RSC, Turbopack default) |
-| Linguaggio | TypeScript strict + `noUncheckedIndexedAccess` |
-| ORM | Drizzle ORM (TS-first, partial unique nativi, type inference) |
-| Driver DB | node-postgres (pg) |
-| Auth | Better Auth + plugin `magicLink` + `organization` |
-| Multi-tenancy | Plugin `organization` di Better Auth (mappato come "Workspace" in UI) |
+| Language | TypeScript strict + `noUncheckedIndexedAccess` |
+| ORM | Drizzle ORM (TS-first, native partial uniques, type inference) |
+| DB driver | node-postgres (pg) |
+| Auth | Better Auth + `magicLink` + `organization` plugins |
+| Multi-tenancy | Better Auth `organization` plugin (mapped as "Workspace" in the UI) |
 | Email | Resend |
-| Job queue | pg-boss (schema dedicato `pgboss.*` nello stesso DB) |
-| Realtime | Rimandato (polling TanStack Query in Fase 1-3) |
-| Stile | Tailwind v4 + shadcn/ui |
-| Stato client | TanStack Query (server) + Zustand (UI) |
-| Form | react-hook-form + zod |
-| Test | Vitest + Playwright |
-| Hosting prod | Server self-hosted via Coolify, Dockerfile standalone |
+| Job queue | pg-boss (dedicated `pgboss.*` schema in the same DB) |
+| Realtime | Deferred (TanStack Query polling in Phases 1–3) |
+| Styling | Tailwind v4 + shadcn/ui |
+| Client state | TanStack Query (server) + Zustand (UI) |
+| Forms | react-hook-form + zod |
+| Tests | Vitest + Playwright |
+| Production hosting | Self-hosted server via Coolify, Dockerfile standalone output |
 
-## Alternative considerate
+## Alternatives considered
 
 ### ORM: Prisma vs Drizzle
 
-**Inizialmente:** Prisma. **Cambiato:** Drizzle.
+**Initially:** Prisma. **Switched to:** Drizzle.
 
-| Punto | Prisma 7 | Drizzle |
+| Point | Prisma 7 | Drizzle |
 |---|---|---|
-| Definizione schema | DSL `.prisma` | TS pure |
-| Partial unique index | Solo via raw SQL migration | Nativo (`uniqueIndex().where(sql...)`) |
-| Decimal precisione | Tipo `Decimal` JS (rischio cast) | String (no perdita precisione) |
-| Migration tooling | Migrate (maturissimo) | drizzle-kit (semplice ma efficace) |
-| Curva apprendimento | Bassa | Bassa per chi sa SQL |
-| Type inference | Generated client | `$inferSelect/$inferInsert` |
-| Performance | Buona | Più snella (no codegen) |
+| Schema definition | `.prisma` DSL | Pure TS |
+| Partial unique index | Raw SQL migration only | Native (`uniqueIndex().where(sql...)`) |
+| Decimal precision | JS `Decimal` type (cast risk) | String (no precision loss) |
+| Migration tooling | Migrate (mature) | drizzle-kit (simple but effective) |
+| Learning curve | Low | Low if you know SQL |
+| Type inference | Generated client | `$inferSelect` / `$inferInsert` |
+| Performance | Good | Leaner (no codegen) |
 
-**Trigger del cambio:** Prisma 7 richiede `prisma.config.ts` + driver adapter — l'overhead di config diventa pari a Drizzle, e Drizzle ci dà partial unique gratis (cruciale per "un timer attivo per utente").
+**Trigger for the change:** Prisma 7 requires `prisma.config.ts` + a driver adapter — config overhead rivals Drizzle, and Drizzle gives us partial uniques for free (critical for "one active timer per user").
 
-### Realtime: SaaS (Pusher/Ably) vs Postgres-native vs Polling
+### Realtime: SaaS (Pusher/Ably) vs Postgres-native vs polling
 
-**Scelto:** rimandare. Per Fase 1-3 basta polling. Fase 4 valuteremo:
-- LISTEN/NOTIFY + SSE custom (zero infra, ~100 righe plumbing)
-- ElectricSQL self-hosted (DX eccellente, +1 container)
-- Ably SaaS (zero plumbing, free tier 6M msg/mese)
+**Chosen:** defer. Phases 1–3 are enough with polling. Phase 4 will evaluate:
+- LISTEN/NOTIFY + custom SSE (zero infra, ~100 lines of plumbing)
+- Self-hosted ElectricSQL (excellent DX, +1 container)
+- Ably SaaS (zero plumbing, free tier 6M msg/month)
 
 ### Job queue: Inngest vs Trigger.dev vs pg-boss vs Vercel Cron
 
-**Scelto:** pg-boss. Motivazioni:
-- Zero dipendenze esterne (vive in Postgres)
+**Chosen:** pg-boss. Reasons:
+- Zero external dependencies (lives in Postgres)
 - Cron, retry, group concurrency built-in
-- Transazionale: "crea task + scheduler reminder" in una sola tx DB
-- Worker process separato gira come container Coolify
+- Transactional: "create task + schedule reminder" in a single DB transaction
+- Separate worker process runs as a Coolify container
 
-**Contro accettati:** niente dashboard built-in (pg-bossman opzionale), niente event-driven workflow nativo (gestiamo a mano con `boss.send`).
+**Accepted downsides:** no built-in dashboard (pg-bossman optional), no native event-driven workflows (we orchestrate manually with `boss.send`).
 
 ### Hosting: Vercel vs self-hosted
 
-**Scelto:** Coolify self-hosted (richiesta utente). Tutto in Docker:
-- App: Next standalone output (image ~50MB)
-- Worker: container separato, stesso `DATABASE_URL`
-- Postgres: gestito dall'utente in Coolify
-- TLS via Let's Encrypt (Coolify automatico)
+**Chosen:** Coolify self-hosted (user requirement). Everything in Docker:
+- App: Next standalone output (~50MB image)
+- Worker: separate container, same `DATABASE_URL`
+- Postgres: user-managed in Coolify
+- TLS via Let's Encrypt (Coolify automatic)
 
-## Conseguenze
+## Consequences
 
 **Positive:**
 - Zero vendor lock-in
-- Costi prevedibili (1 server self-hosted)
-- Stack omogeneo (tutto su Postgres: dati app + sessioni Better Auth + queue pg-boss)
-- Sviluppatori possono lavorare offline (Postgres locale via Homebrew)
+- Predictable costs (one self-hosted server)
+- Homogeneous stack (everything on Postgres: app data + Better Auth sessions + pg-boss queue)
+- Developers can work offline (local Postgres via Homebrew)
 
-**Negative / da monitorare:**
-- Drizzle ecosystem più giovane di Prisma (meno tooling, meno tutorial)
-- pg-boss richiede sempre un worker process — su Coolify è banale, su Vercel sarebbe impossibile (ma non è il nostro target)
-- Realtime "rimandato" può creare friction se in Fase 1-3 emerge un caso d'uso urgente — sarà da rivalutare allora
+**Negative / watch:**
+- Drizzle ecosystem younger than Prisma (less tooling, fewer tutorials)
+- pg-boss always requires a worker process — trivial on Coolify, impossible on Vercel (not our target)
+- Deferred realtime may create friction if an urgent use case appears in Phases 1–3 — revisit then
 
-## Note di implementazione
+## Implementation notes
 
-- Tutti gli ID app-generated usano `nanoid(24)` (sicuri, URL-safe, ~16 char più corti di UUID)
-- Timestamps: `timestamp { withTimezone: true, mode: "date" }` su tutta la linea
-- Decimal per tariffe: `numeric(12, 2)` salvato come string lato app
-- Soft delete via `deletedAt` su Task, Project, Client
-- `session.activeOrganizationId` (da plugin `organization`) e' la fonte di verita per il workspace corrente
+- All app-generated IDs use `nanoid(24)` (safe, URL-friendly, ~16 chars shorter than UUID)
+- Timestamps: `timestamp { withTimezone: true, mode: "date" }` everywhere
+- Rates as decimal: `numeric(12, 2)` stored as string in the app
+- Soft delete via `deletedAt` on Task, Project, Client
+- `session.activeOrganizationId` (from `organization` plugin) is the source of truth for the current workspace

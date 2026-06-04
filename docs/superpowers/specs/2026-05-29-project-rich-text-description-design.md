@@ -36,10 +36,10 @@ Mirror `components/features/tasks/task-description-editor.tsx`:
 - Read-only: render `RichTextContent` inside a `role="button"` wrapper that opens the
   editor on click (block markup can't live inside a `<button>`).
 - Preserve the project-specific `canEdit` gate: when `!canEdit`, the read-only content
-  is shown but clicking does not enter edit mode, and the empty-state "Aggiungi
-  descrizione" affordance is hidden (current behaviour at line 95).
+  is shown but clicking does not enter edit mode, and the empty-state "Add
+  description" affordance is hidden (current behaviour at line 95).
 - Use `isEmptyHtml` helper (`"" | "<p></p>"`) to detect "no description", same as tasks.
-- Keep the `AlignLeft` empty-state icon and Italian copy.
+- Keep the `AlignLeft` empty-state icon and existing UI copy (Italian in the app).
 
 ### 2. Update `setProjectDescriptionAction` (`lib/actions/projects.ts`)
 

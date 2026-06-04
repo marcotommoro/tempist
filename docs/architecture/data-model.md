@@ -1,109 +1,109 @@
 # Data model
 
-**Source of truth:** `lib/db/schema.ts` (Drizzle, 25 tabelle).
+**Source of truth:** `lib/db/schema.ts` (Drizzle, 25 tables).
 **Migrations:** `drizzle/*.sql` (generate via `pnpm db:generate`).
 
-## Convenzioni
+## Conventions
 
-- Multi-tenant: ogni risorsa applicativa porta `organization_id` (FK a `organization.id`)
-- "Workspace" è il termine UI; nel DB la tabella è `organization` (convenzione Better Auth)
-- Tutti i timestamp sono UTC con timezone (`timestamp with time zone`), conversione tz lato client tramite `User.timezone`
-- Soft delete via `deleted_at` su: `task`, `project`, `client`
-- ID app-generated: nanoid(24) — `text("id").primaryKey().$defaultFn(() => nanoid(24))`
-- Decimal per importi monetari: `numeric(12, 2)` (rappresentato come string lato JS)
+- Multi-tenant: every application resource carries `organization_id` (FK to `organization.id`)
+- "Workspace" is the UI term; in the DB the table is `organization` (Better Auth convention)
+- All timestamps are UTC with timezone (`timestamp with time zone`); client-side TZ conversion via `User.timezone`
+- Soft delete via `deleted_at` on: `task`, `project`, `client`
+- App-generated IDs: nanoid(24) — `text("id").primaryKey().$defaultFn(() => nanoid(24))`
+- Money amounts: `numeric(12, 2)` (represented as string in JS)
 
-## Sezioni dello schema
+## Schema sections
 
-### 1. Better Auth (auto-generate, mantenuti via `pnpm auth:generate`)
+### 1. Better Auth (auto-generated, maintained via `pnpm auth:generate`)
 
 ```
-user                Account utente — con additionalFields {timezone, locale}
-session             Sessione + activeOrganizationId (da org plugin)
-account             Credenziale OAuth o magic-link
-verification        Token magic link / OTP
-organization        "Workspace" UI
-member              Membership org + ruolo {owner|admin|member}
-invitation          Invito pending
+user                User account — with additionalFields {timezone, locale}
+session             Session + activeOrganizationId (from org plugin)
+account             OAuth or magic-link credential
+verification        Magic link / OTP token
+organization        UI "Workspace"
+member              Org membership + role {owner|admin|member}
+invitation          Pending invite
 ```
 
 ### 2. Task domain
 
 ```
-project             Progetto (gerarchico via parent_id)
-section             Sezione del progetto
-label               Etichetta workspace-wide
-task                Task (gerarchico, RRULE recurrence, P1-P4 priority)
-task_label          Join M:N task↔label
-reminder            Promemoria (TIME o RELATIVE, channels PUSH|EMAIL)
-comment             Commento markdown con attachments JSON
-filter              Filtro salvato con mini-DSL
+project             Project (hierarchical via parent_id)
+section             Project section
+label               Workspace-wide label
+task                Task (hierarchical, RRULE recurrence, P1–P4 priority)
+task_label          M:N join task↔label
+reminder            Reminder (TIME or RELATIVE, channels PUSH|EMAIL)
+comment             Markdown comment with JSON attachments
+filter              Saved filter with mini-DSL
 ```
 
 ### 3. Time tracker
 
 ```
-client              Cliente di fatturazione con tariffa default
-time_entry          Voce timer (con hourly_rate_snapshot congelato)
-billing_rate        Tariffa gerarchica (scope CLIENT|PROJECT|TASK|USER)
-time_entry_audit    Audit log su modifiche time_entry
+client              Billing client with default rate
+time_entry          Timer entry (frozen hourly_rate_snapshot)
+billing_rate        Hierarchical rate (scope CLIENT|PROJECT|TASK|USER)
+time_entry_audit    Audit log for time_entry changes
 ```
 
 ### 4. Integrations
 
 ```
-calendar_account       OAuth account Google/Outlook (token cifrati)
-calendar_event_link    Link bidirezionale task ↔ external event
-ical_token             Token per iCal feed pubblico autenticato
-webhook                Webhook in uscita configurato dall'utente
-webhook_delivery       Log delivery dei webhook
+calendar_account       Google/Outlook OAuth account (encrypted tokens)
+calendar_event_link    Bidirectional task ↔ external event link
+ical_token             Token for authenticated public iCal feed
+webhook                Outbound webhook configured by the user
+webhook_delivery       Webhook delivery log
 ```
 
 ### 5. Notifications
 
 ```
-notification        Notifica in-app (read_at nullable)
+notification        In-app notification (nullable read_at)
 ```
 
-## Indici critici
+## Critical indexes
 
 ```sql
--- Query "Today" / "Upcoming"
+-- "Today" / "Upcoming" queries
 CREATE INDEX task_org_completed_scheduled_idx
   ON task (organization_id, completed_at, scheduled_at);
 
--- Timeline + report time tracker
+-- Timeline + time tracker reports
 CREATE INDEX time_entry_org_user_started_idx
   ON time_entry (organization_id, user_id, started_at);
 
--- Vincolo "un timer attivo per utente" (PARTIAL UNIQUE)
+-- "One active timer per user" constraint (PARTIAL UNIQUE)
 CREATE UNIQUE INDEX time_entry_one_running_per_user
   ON time_entry (user_id)
   WHERE is_running = true;
 
--- Report per cliente
+-- Per-client reports
 CREATE INDEX time_entry_org_client_started_idx
   ON time_entry (organization_id, client_id, started_at);
 
--- Lookup tariffe gerarchiche
+-- Hierarchical rate lookup
 CREATE INDEX billing_rate_org_scope_idx
   ON billing_rate (organization_id, scope, scope_id, effective_from);
 ```
 
-## Snapshot tariffa (regola business)
+## Rate snapshot (business rule)
 
-Quando un `time_entry` viene creato (o stoppato), l'app risolve la tariffa via fallback gerarchico:
+When a `time_entry` is created (or stopped), the app resolves the rate via hierarchical fallback:
 
 ```
 TASK rate → PROJECT rate → CLIENT rate → USER rate → workspace default
 ```
 
-Il valore risolto viene **congelato** in `time_entry.hourly_rate_snapshot` + `currency_snapshot`. Modificare la tariffa cliente in futuro **non** ricalcola le voci storiche.
+The resolved value is **frozen** in `time_entry.hourly_rate_snapshot` + `currency_snapshot`. Changing a client rate later does **not** recalculate historical entries.
 
 ## Audit trail
 
-Ogni `INSERT`/`UPDATE`/`DELETE` su `time_entry` (escluso INSERT iniziale) viene loggato in `time_entry_audit`:
-- `actor_id`: chi ha fatto l'operazione
+Every `INSERT`/`UPDATE`/`DELETE` on `time_entry` (except the initial INSERT) is logged in `time_entry_audit`:
+- `actor_id`: who performed the operation
 - `action`: `CREATE|UPDATE|DELETE|RESUME|STOP`
-- `before_json` / `after_json`: snapshot stato
+- `before_json` / `after_json`: state snapshots
 
-Implementato a livello applicativo in Fase 2 (non via trigger Postgres) per mantenere coerenza con il contesto Better Auth (chi è il currentUser).
+Implemented at the application layer in Phase 2 (not via Postgres triggers) to stay aligned with Better Auth context (who is currentUser).
