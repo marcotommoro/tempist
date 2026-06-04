@@ -1,8 +1,8 @@
-# Deploy su Coolify
+# Deploy on Coolify
 
-L'app gira **interamente self-hosted** sul tuo server Coolify. Postgres è gestito da te (un container Coolify dedicato).
+The app runs **fully self-hosted** on your Coolify server. You manage Postgres yourself (a dedicated Coolify container).
 
-## Architettura prod
+## Production architecture
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -28,35 +28,35 @@ L'app gira **interamente self-hosted** sul tuo server Coolify. Postgres è gesti
                     │
                     │  HTTPS (Let's Encrypt via Coolify)
                     ▼
-              tuo-dominio.com
+              your-domain.com
 ```
 
-## Step di deploy
+## Deploy steps
 
-### 1. Crea il database Postgres su Coolify
+### 1. Create the Postgres database on Coolify
 
 - Coolify > New Resource > PostgreSQL > Postgres 16
-- Annota la `DATABASE_URL` (Coolify la mostra al provisioning)
+- Note the `DATABASE_URL` (Coolify shows it at provisioning)
 
 ### 2. Resource "todoist-app"
 
 - Coolify > New Resource > Application > Dockerfile
-- Repository: il tuo repo GitHub
+- Repository: your GitHub repo
 - Branch: `main`
 - Dockerfile path: `./Dockerfile`
 - Build context: `.`
 - Port: `3000`
-- Domain: assegna un dominio (Coolify configura HTTPS automaticamente)
+- Domain: assign a domain (Coolify configures HTTPS automatically)
 
 **Environment variables:**
 
 ```
-DATABASE_URL=<dal step 1>
+DATABASE_URL=<from step 1>
 BETTER_AUTH_SECRET=<openssl rand -base64 32>
-BETTER_AUTH_URL=https://tuo-dominio.com
-NEXT_PUBLIC_APP_URL=https://tuo-dominio.com
-RESEND_API_KEY=<da resend.com>
-RESEND_FROM_EMAIL=noreply@tuo-dominio.com
+BETTER_AUTH_URL=https://your-domain.com
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+RESEND_API_KEY=<from resend.com>
+RESEND_FROM_EMAIL=noreply@your-domain.com
 GOOGLE_CLIENT_ID=<google cloud console>
 GOOGLE_CLIENT_SECRET=<google cloud console>
 GITHUB_CLIENT_ID=<github settings/developers>
@@ -64,51 +64,51 @@ GITHUB_CLIENT_SECRET=<github settings/developers>
 NODE_ENV=production
 ```
 
-**Pre-deploy hook (su Coolify):**
+**Pre-deploy hook (on Coolify):**
 
 ```
 pnpm db:migrate
 ```
 
-Esegue le migrations sul DB prima di avviare il container.
+Runs migrations on the DB before starting the container.
 
 ### 3. Resource "todoist-worker"
 
 - Coolify > New Resource > Application > Dockerfile
-- Repository: stesso
+- Repository: same repo
 - Dockerfile path: `./Dockerfile.worker`
-- Port: **nessuno** (no expose)
-- Domain: **nessuno**
+- Port: **none** (no expose)
+- Domain: **none**
 
-**Environment variables:** stesse di `todoist-app` (in particolare `DATABASE_URL` identica).
+**Environment variables:** same as `todoist-app` (especially the same `DATABASE_URL`).
 
 ### 4. Auto-deploy
 
-Coolify supporta webhook GitHub: ogni push a `main` triggera build + deploy. Attivalo in: Application > Settings > Auto Deploy.
+Coolify supports GitHub webhooks: each push to `main` triggers build + deploy. Enable it under: Application > Settings > Auto Deploy.
 
-In alternativa puoi triggerare manualmente da Coolify UI.
+You can also trigger deploys manually from the Coolify UI.
 
-## Verifica post-deploy
+## Post-deploy verification
 
-1. Apri il dominio HTTPS → vedi landing page
-2. Click "Accedi" → form sign-in
-3. Inserisci email → arriva magic link da Resend
-4. Click link → `/today` con sidebar e workspace creato automaticamente
-5. Coolify > todoist-worker > Logs → vedi `[health-check] alive @ ...` ogni minuto
+1. Open the HTTPS domain → landing page loads
+2. Click "Sign in" → sign-in form
+3. Enter email → magic link arrives from Resend
+4. Click link → `/today` with sidebar and workspace auto-created
+5. Coolify > todoist-worker > Logs → see `[health-check] alive @ ...` every minute
 
 ## Backup
 
-Coolify Postgres ha backup automatici configurabili in Resource > Backups. Imposta retention >= 7 giorni.
+Coolify Postgres has configurable automatic backups under Resource > Backups. Set retention >= 7 days.
 
 ## Rollback
 
-Coolify mantiene gli ultimi N deploy. Application > Deployments > clicca un deploy precedente > Redeploy.
+Coolify keeps the last N deploys. Application > Deployments > click a previous deploy > Redeploy.
 
 ## Troubleshooting
 
-| Sintomo | Probabile causa | Fix |
+| Symptom | Likely cause | Fix |
 |---|---|---|
-| 500 al login social | OAuth redirect URI sbagliato | Aggiungi `https://tuo-dominio.com/api/auth/callback/google` al provider |
-| Magic link arriva ma 404 | `BETTER_AUTH_URL` errato | Allinea con il dominio reale (https) |
-| Worker non scrive job | `DATABASE_URL` diversa fra app e worker | Verifica env var identica nei due resource |
-| Build fallisce su `prisma generate` | Migration in step pre-deploy fallita | Controlla Logs > Build, esegui manualmente `pnpm db:migrate` con env var corretto |
+| 500 on social login | Wrong OAuth redirect URI | Add `https://your-domain.com/api/auth/callback/google` to the provider |
+| Magic link arrives but 404 | Wrong `BETTER_AUTH_URL` | Align with the real domain (https) |
+| Worker does not process jobs | Different `DATABASE_URL` between app and worker | Verify identical env vars on both resources |
+| Build fails on `prisma generate` | Migration in pre-deploy step failed | Check Logs > Build, run `pnpm db:migrate` manually with correct env |

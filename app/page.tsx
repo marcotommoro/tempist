@@ -4,6 +4,9 @@ import { ArrowRight, Check, Pause, Plus, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
+const GITHUB_REPO = "https://github.com/marcotommoro/tempist";
+const SELF_HOST_DOC = `${GITHUB_REPO}/blob/main/docs/deployment/coolify.md`;
+
 export const metadata: Metadata = {
   title: "Tempist — the hours you actually billed",
   description:
@@ -16,7 +19,7 @@ const features = [
   {
     n: "01",
     t: "One-line time entry",
-    d: "Scrivi 'Call Mario 15:00 #Alice 60min' e pensiamo noi a progetto, data, durata e fatturabilità. Niente form.",
+    d: "Scrivi 'Call Mario 15:00 #demo 60min' e pensiamo noi a progetto, data, durata e fatturabilità. Niente form.",
     color: "text-coral",
   },
   {
@@ -44,32 +47,45 @@ const plans = [
   {
     name: "Solo",
     price: "€0",
+    ghostPrice: null as string | null,
     per: "forever",
     feats: ["Unlimited tracking", "Unlimited clients & projects", "CSV + PDF export", "2 years of history"],
     cta: "Start free",
     primary: false,
+    badge: null as string | null,
   },
   {
     name: "Studio",
-    price: "€8",
-    per: "per seat / month",
+    price: "€0",
+    ghostPrice: "€8",
+    per: "anche con 10 persone in sala",
     feats: ["Everything in Solo", "Up to 10 teammates", "Invoicing integrations", "Team reports", "Priority email support"],
-    cta: "Try free for 14 days",
+    cta: "Ancora gratis",
     primary: true,
-    badge: "MOST POPULAR",
+    badge: "ANCORA €0",
   },
   {
     name: "Agency",
-    price: "€18",
-    per: "per seat / month",
+    price: "€0",
+    ghostPrice: "€18",
+    per: "anche se chiedi SAML per sport",
     feats: ["Everything in Studio", "SSO + SAML", "Custom rate tables", "API + webhooks", "Dedicated CSM"],
-    cta: "Talk to us",
+    cta: "Nessuna call commerciale",
     primary: false,
+    badge: null,
   },
 ];
 
 const weekBars = [2, 3, 4, 5, 6, 5.7, 0];
 const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
+
+function GitHubIcon({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+    </svg>
+  );
+}
 
 function BrandMark({ className = "" }: { className?: string }) {
   return (
@@ -84,18 +100,26 @@ function BrandMark({ className = "" }: { className?: string }) {
 export default function LandingPage() {
   return (
     <div className="flex-1 bg-background text-foreground">
-      {/* Nav */}
       <nav className="flex items-center gap-4 border-b border-line-soft px-6 py-5 md:px-12">
         <Link href="/" className="flex items-center gap-2.5">
           <BrandMark className="h-[30px] w-[30px] text-sm" />
           <span className="text-lg font-semibold tracking-[-0.02em]">Tempist</span>
         </Link>
-        <div className="ml-10 hidden gap-7 text-sm text-ink-2 lg:flex">
+        <div className="ml-10 hidden items-center gap-7 text-sm text-ink-2 lg:flex">
           {navLinks.map((l) => (
             <span key={l} className="cursor-default transition-colors hover:text-foreground">
               {l}
             </span>
           ))}
+          <a
+            href={GITHUB_REPO}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
+          >
+            <GitHubIcon className="size-3.5" />
+            GitHub
+          </a>
         </div>
         <div className="ml-auto flex items-center gap-3.5">
           <Link href="/sign-in" className="text-sm text-ink-2 transition-colors hover:text-foreground">
@@ -107,7 +131,6 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
       <section className="px-6 pb-20 pt-16 md:px-12 md:pt-24">
         <div className="mx-auto grid max-w-[1200px] items-center gap-14 lg:grid-cols-[1.05fr_.95fr]">
           <div>
@@ -139,18 +162,18 @@ export default function LandingPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="h-12 rounded-[10px] px-5 text-[15px]">
-                <Link href="/sign-in">Watch 2-min demo</Link>
+                <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
+                  View on GitHub
+                </a>
               </Button>
             </div>
 
             <div className="mt-6 font-mono text-[11.5px] tracking-[0.06em] text-muted-foreground">
-              FREE FOREVER FOR SOLOS · NO CREDIT CARD · GDPR-COMPLIANT
+              FREE FOR EVERYONE · OPEN SOURCE · SELF-HOST OK
             </div>
           </div>
 
-          {/* Hero artwork — decorative stacked cards */}
           <div aria-hidden className="relative hidden h-[520px] lg:block">
-            {/* Week sparkline */}
             <div className="absolute right-10 top-0 w-[380px] -rotate-[2.2deg] rounded-2xl border border-border bg-card p-6 shadow-lg">
               <div className="mb-2.5 font-mono text-[11px] tracking-[0.08em] text-muted-foreground">
                 WEEK 18 — 24 MAY
@@ -171,7 +194,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Running timer */}
             <div className="absolute left-0 top-[120px] w-[420px] rotate-[1.5deg] rounded-2xl border border-border bg-card px-[22px] py-5 shadow-lg">
               <div className="mb-3.5 flex items-center gap-2.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-coral shadow-[0_0_0_4px_color-mix(in_oklch,var(--coral)_22%,transparent)]" />
@@ -191,12 +213,11 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Quick-add */}
             <div className="absolute bottom-0 left-[60px] right-0 flex -rotate-1 items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 shadow-lg">
               <Zap className="size-4 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1 truncate text-[13.5px]">
                 <span>&quot;Call Mario tomorrow 15:00 </span>
-                <span className="font-medium text-info">#Alice</span>{" "}
+                <span className="font-medium text-info">#demo</span>{" "}
                 <span className="font-medium text-coral">p1</span>{" "}
                 <span className="font-medium text-billable">60min</span>
                 <span>&quot;</span>
@@ -208,22 +229,32 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Logos strip */}
         <div className="mx-auto mt-24 flex max-w-[1100px] flex-wrap items-center justify-between gap-6 border-t border-line-soft pt-9">
           <span className="font-mono text-[11.5px] tracking-[0.1em] text-muted-foreground">
-            TRUSTED BY 3,200+ INDEPENDENT BUSINESSES
+            OPEN SOURCE · SELF-HOST · NO VENDOR LOCK-IN
           </span>
-          <div className="flex flex-wrap items-center gap-x-10 gap-y-3 text-ink-2 opacity-60">
-            <span className="font-serif text-[22px] italic">Studio Indaco</span>
-            <span className="text-lg font-semibold tracking-[-0.02em]">Alice Italia</span>
-            <span className="text-base font-medium uppercase tracking-[0.24em]">Ranghieri</span>
-            <span className="font-mono text-lg">showupp/</span>
-            <span className="font-serif text-[22px] italic">Estintori &amp; Co</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={GITHUB_REPO}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-ink-2 transition-colors hover:border-foreground/20 hover:text-foreground"
+            >
+              <GitHubIcon className="size-4" />
+              GitHub
+            </a>
+            <a
+              href={SELF_HOST_DOC}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-ink-2 transition-colors hover:border-foreground/20 hover:text-foreground"
+            >
+              Self-host guide
+            </a>
           </div>
         </div>
       </section>
 
-      {/* §01 — feature columns */}
       <section className="border-t border-line-soft px-6 py-20 md:px-12">
         <div className="mx-auto max-w-[1200px]">
           <div className="mb-5 font-mono text-[11.5px] tracking-[0.1em] text-muted-foreground">
@@ -263,7 +294,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* §02 — quick entry deep dive */}
       <section className="border-t border-line-soft px-6 py-24 md:px-12">
         <div className="mx-auto grid max-w-[1200px] items-center gap-14 lg:grid-cols-[1fr_1.1fr]">
           <div>
@@ -293,13 +323,12 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Faux quick-add + parsed panel */}
           <div className="rounded-2xl border border-border bg-surface p-6 shadow-lg">
             <div className="mb-4 flex items-center gap-3 rounded-xl border border-border bg-card p-[18px]">
               <Plus className="size-4 shrink-0 text-coral" />
               <div className="flex-1 text-base">
                 <span>Onboarding wireframes </span>
-                <span className="font-medium text-info">#Alice </span>
+                <span className="font-medium text-info">#demo </span>
                 <span className="font-medium text-coral">p1 </span>
                 <span className="font-medium text-billable">2h30</span>
               </div>
@@ -320,7 +349,7 @@ export default function LandingPage() {
                 <dt className="pt-0.5 font-mono text-[11px] tracking-[0.06em] text-muted-foreground">CLIENT</dt>
                 <dd className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-info" />
-                  Alice Italia
+                  Cliente Demo
                 </dd>
 
                 <dt className="pt-0.5 font-mono text-[11px] tracking-[0.06em] text-muted-foreground">PRIORITY</dt>
@@ -341,7 +370,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* §03 — pricing */}
       <section className="border-t border-line-soft px-6 py-24 md:px-12">
         <div className="mx-auto max-w-[1100px]">
           <div className="mb-5 font-mono text-[11.5px] tracking-[0.1em] text-muted-foreground">
@@ -351,8 +379,7 @@ export default function LandingPage() {
             Honest pricing.
           </h2>
           <p className="mb-12 max-w-[50ch] text-[17px] text-ink-2">
-            Gratis se sei solo. Pochi euro al mese per ogni membro del team. Nessun piano
-            &quot;contatta il commerciale&quot;.
+            Tre piani. Stesso prezzo. La fattura la mandi ai clienti, non a noi.
           </p>
 
           <div className="grid gap-4.5 md:grid-cols-3">
@@ -371,7 +398,12 @@ export default function LandingPage() {
                   </span>
                 )}
                 <span className="text-xl font-semibold tracking-[-0.01em]">{p.name}</span>
-                <div className="flex items-baseline gap-2">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  {p.ghostPrice && (
+                    <span className="font-mono text-[22px] font-medium tracking-[-0.02em] line-through opacity-40">
+                      {p.ghostPrice}
+                    </span>
+                  )}
                   <span className="font-mono text-[50px] font-medium tracking-[-0.03em]">{p.price}</span>
                   <span className="text-[13px] opacity-65">{p.per}</span>
                 </div>
@@ -398,7 +430,74 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Closing CTA */}
+      <section
+        id="self-host"
+        className="border-t border-line-soft px-6 py-24 md:px-12 scroll-mt-20"
+      >
+        <div className="mx-auto max-w-[1100px]">
+          <div className="mb-5 font-mono text-[11.5px] tracking-[0.1em] text-muted-foreground">
+            §04 · OPEN SOURCE
+          </div>
+          <h2 className="mb-6 font-display text-[clamp(2rem,4vw,3rem)] font-medium leading-[1.05] tracking-[-0.025em]">
+            Fork it. Host it.
+            <br />
+            <span className="font-serif font-normal italic tracking-normal">Own your hours.</span>
+          </h2>
+          <ul className="mb-10 max-w-[52ch] space-y-3 text-[17px] leading-relaxed text-ink-2">
+            <li className="flex gap-3">
+              <Check className="mt-1 size-4 shrink-0 text-coral" />
+              <span>
+                Codice su{" "}
+                <a
+                  href={GITHUB_REPO}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  GitHub
+                </a>
+                : clone, fork, PR benvenute.
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <Check className="mt-1 size-4 shrink-0 text-coral" />
+              <span>
+                Deploy con Dockerfile standalone + worker pg-boss sul tuo Postgres — guida{" "}
+                <a
+                  href={SELF_HOST_DOC}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  Coolify
+                </a>
+                .
+              </span>
+            </li>
+            <li className="flex gap-3">
+              <Check className="mt-1 size-4 shrink-0 text-coral" />
+              <span>
+                In dev: <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-[13px]">pnpm dev</code> +{" "}
+                <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-[13px]">pnpm worker:dev</code> — niente
+                SaaS obbligatorio.
+              </span>
+            </li>
+          </ul>
+          <div className="flex flex-wrap gap-3.5">
+            <Button asChild size="lg" className="h-12 rounded-[10px] px-5">
+              <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
+                View on GitHub <GitHubIcon className="size-4 opacity-70" />
+              </a>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="h-12 rounded-[10px] px-5">
+              <a href={SELF_HOST_DOC} target="_blank" rel="noopener noreferrer">
+                Self-host guide
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section className="border-t border-line-soft px-6 py-24 md:px-12">
         <div className="relative mx-auto flex max-w-[1100px] flex-col gap-10 overflow-hidden rounded-3xl bg-foreground px-8 py-14 text-background shadow-lg md:flex-row md:items-center md:justify-between md:px-14">
           <div className="relative z-10 flex-1">
@@ -433,7 +532,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="px-6 pb-16 pt-12 md:px-12">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-start justify-between gap-10">
           <div className="max-w-[300px]">
@@ -442,18 +540,38 @@ export default function LandingPage() {
               <span className="text-base font-semibold tracking-[-0.02em]">Tempist</span>
             </div>
             <p className="text-[13px] leading-relaxed text-muted-foreground">
-              Un time tracker per freelance e piccoli studi. Made in Milano.
+              Un time tracker per freelance e piccoli studi. Open source, self-hostable.
             </p>
           </div>
           <div className="flex flex-wrap gap-x-14 gap-y-8 text-[13px] text-ink-2">
             <FooterCol title="PRODUCT" items={["Features", "Pricing", "Changelog", "Roadmap"]} />
-            <FooterCol title="COMPANY" items={["About", "Manifesto", "Contact", "Press"]} />
-            <FooterCol title="LEGAL" items={["Terms", "Privacy", "GDPR", "DPA"]} />
+            <FooterLinkCol
+              title="OPEN SOURCE"
+              links={[
+                { label: "GitHub", href: GITHUB_REPO },
+                { label: "Self-host guide", href: SELF_HOST_DOC },
+                { label: "Issues", href: `${GITHUB_REPO}/issues` },
+              ]}
+            />
+            <FooterLinkCol
+              title="DOCS"
+              links={[
+                { label: "Deploy (Coolify)", href: SELF_HOST_DOC },
+                { label: "AGENTS.md", href: `${GITHUB_REPO}/blob/main/AGENTS.md` },
+              ]}
+            />
           </div>
         </div>
         <div className="mx-auto mt-9 flex max-w-[1200px] flex-wrap justify-between gap-3 border-t border-line-soft pt-6 font-mono text-xs tracking-[0.06em] text-muted-foreground">
-          <span>© 2026 RANGHIERI · MILANO, ITALY</span>
-          <span>v0.4.2 · ALL SYSTEMS NORMAL</span>
+          <span>© 2026 Tempist · Open source</span>
+          <a
+            href={GITHUB_REPO}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-foreground"
+          >
+            github.com/marcotommoro/tempist
+          </a>
         </div>
       </footer>
     </div>
@@ -468,6 +586,31 @@ function FooterCol({ title, items }: { title: string; items: string[] }) {
         <span key={i} className="cursor-default transition-colors hover:text-foreground">
           {i}
         </span>
+      ))}
+    </div>
+  );
+}
+
+function FooterLinkCol({
+  title,
+  links,
+}: {
+  title: string;
+  links: Array<{ label: string; href: string }>;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="mb-1 font-mono text-[11px] tracking-[0.08em] text-muted-foreground">{title}</span>
+      {links.map((link) => (
+        <a
+          key={link.label}
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="transition-colors hover:text-foreground"
+        >
+          {link.label}
+        </a>
       ))}
     </div>
   );

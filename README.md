@@ -1,129 +1,103 @@
 # Tempist
 
-Web app full-stack che unisce le funzionalità di **Todoist** (task, progetti, ricorrenze, notifiche) con un **time tracker professionale** stile Toggl (clienti, timer, ore fatturabili, report).
+**Time tracker + task management** for freelancers and small studios. Log what you did, press Enter, send the invoice.
 
-Lo sviluppo è organizzato in fasi (vedi `PROGRESS.md`).
+Always **free** (all plans, €0). **Open source** and **self-hostable** — your data stays on your server if you want.
+
+**Repository:** [github.com/marcotommoro/tempist](https://github.com/marcotommoro/tempist)
+
+## Features
+
+- **Quick entry** — one line of text for clients, projects, durations, and priorities
+- **Timer & timesheet** — live tracking, billable vs internal hours
+- **Workspace** — multi-tenant with Better Auth (magic link, Google, GitHub)
+- **Projects & tasks** — inbox, today, shared projects, and external invites
+- **Reports & export** — CSV, print, analytics by period
+- **Background jobs** — reminders, digest, calendar sync (pg-boss)
+- **Self-host** — Docker standalone + worker, see [Coolify](docs/deployment/coolify.md) guide
 
 ## Stack
 
-- **Next.js 16** (App Router, RSC, Server Actions, Turbopack default)
-- **TypeScript strict** (con `noUncheckedIndexedAccess`)
-- **Drizzle ORM** + **node-postgres** (Postgres locale dev / Coolify prod)
-- **Better Auth** (magic link via Resend + Google + GitHub + plugin `organization`)
-- **Tailwind CSS v4** + **shadcn/ui** (componenti neutri in MVP)
-- **TanStack Query v5** + **Zustand** (stato client)
-- **pg-boss** per i job (cron, retry, queue — sullo stesso DB Postgres)
-- **Resend** per email transazionali
-- **Vitest** + **Playwright** per test
-- Deploy prod via **Docker** su **Coolify** self-hosted
+- Next.js 16 (App Router) · React 19 · TypeScript strict
+- Drizzle ORM + PostgreSQL · Better Auth · Tailwind 4 · shadcn/ui
+- pg-boss · Resend · Vitest · Playwright · pnpm · Node 22
 
-## Setup locale
+## Quick start
 
-### Prerequisiti
+### Prerequisites
 
-- **Node 22** (`.nvmrc`), pnpm 11+
-- **Postgres 16+** locale via Homebrew: `brew install postgresql@16 && brew services start postgresql@16`
+- Node 22 (`.nvmrc`), pnpm 11+
+- Postgres 16+
 
-### Bootstrap
+### Setup
 
 ```bash
-# Crea i database locali
 createdb todoist_dev
 createdb todoist_test
 
-# Configura le variabili d'ambiente
 cp .env.example .env.local
-# Compila: DATABASE_URL, BETTER_AUTH_SECRET (>=32 char), BETTER_AUTH_URL=http://localhost:3000
-# Opzionali: RESEND_API_KEY, GOOGLE_CLIENT_*, GITHUB_CLIENT_*
+# DATABASE_URL, BETTER_AUTH_SECRET (>=32 char), BETTER_AUTH_URL=http://localhost:3000
 
-# Installa deps
 pnpm install
-
-# Applica le migrations
 pnpm db:migrate
-
-# Popola dati demo (opzionale)
-pnpm db:seed
+pnpm db:seed   # optional
 ```
 
-### Sviluppo
+### Development
 
-In due tab separati:
+Run two processes in parallel:
 
 ```bash
-# Tab 1 — Next.js (porta 3000)
-pnpm dev
-
-# Tab 2 — Worker pg-boss
-pnpm worker:dev
+pnpm dev          # http://localhost:3000
+pnpm worker:dev   # pg-boss worker
 ```
 
-Aprire <http://localhost:3000>.
+## Self-host
 
-## Comandi principali
+Tempist is built to run on **your** infrastructure:
 
-| Comando | Descrizione |
+| Component | Role |
+|---|---|
+| `Dockerfile` | Next.js standalone (port 3000) |
+| `Dockerfile.worker` | pg-boss worker |
+| Postgres 16 | App + pg-boss queues |
+
+Step-by-step guide: **[docs/deployment/coolify.md](docs/deployment/coolify.md)**.
+
+Minimum production variables: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (public app URL). Optional: `RESEND_API_KEY`, Google/GitHub OAuth — see [.env.example](.env.example).
+
+## Commands
+
+| Command | Description |
 |---|---|
 | `pnpm dev` | Next.js dev server |
-| `pnpm worker:dev` | Worker pg-boss (process separato) |
-| `pnpm typecheck` | TypeScript strict check |
+| `pnpm worker:dev` | pg-boss worker |
+| `pnpm build` | Production build (standalone) |
 | `pnpm lint` | ESLint |
-| `pnpm test` | Vitest (unit + integration) |
-| `pnpm test:e2e` | Playwright E2E |
-| `pnpm build` | Build standalone produzione |
-| `pnpm db:generate` | Genera SQL migration da diff schema |
-| `pnpm db:migrate` | Applica migrations al DB |
-| `pnpm db:push` | Sync schema diretto (solo dev) |
-| `pnpm db:seed` | Popola dati demo |
-| `pnpm db:studio` | GUI Drizzle Studio |
-| `pnpm auth:generate` | Riconcilia schema Better Auth |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | Vitest |
+| `pnpm test:e2e` | Playwright |
+| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:seed` | Demo data |
 
-## Struttura del progetto
+For architecture, auth, and domain layer conventions → **[AGENTS.md](AGENTS.md)**.
+
+## Structure
 
 ```
-app/                  Next.js App Router
-  (auth)/             Routes pubbliche (sign-in, verify-request)
-  (app)/              Routes autenticate (today, inbox, projects, ...)
-  api/auth/[...all]/  Better Auth handler
-  layout.tsx          Root layout + Providers
-  providers.tsx       TanStack Query provider
-components/
-  ui/                 Primitives shadcn (button, input, dialog, ...)
-  features/           Componenti per dominio (popolati dalle fasi)
-lib/
-  auth/               Better Auth config + client + workspace helpers
-  db/                 Drizzle schema + client + seed
-  jobs/               pg-boss singleton + job definitions
-  parsers/            (Fase 1+) NLP Quick Add, RRULE, filter DSL
-  integrations/       (Fase 4+) Google/Outlook calendar, Resend
-  stores/             Zustand stores
-  utils/              Utility puri
-worker/               Entry point del worker pg-boss
-drizzle/              SQL migrations generate
-tests/
-  unit/               Test unit (Vitest)
-  integration/        Test integration (Vitest)
-  e2e/                Test end-to-end (Playwright)
-docs/
-  architecture/       Data model, ADR
-  deployment/         Guida Coolify
-  phases/             README di ogni fase quando completata
+app/           App Router (landing, auth, authenticated app)
+components/    ui/ + features/
+lib/           auth, db, domain, jobs, integrations
+worker/        pg-boss entry
+drizzle/       SQL migrations
+tests/         unit, integration, e2e
+docs/          deployment, architecture
 ```
 
-## Deploy produzione (Coolify)
+## License
 
-Vedi `docs/deployment/coolify.md`.
+The code is public on GitHub; **license TBD** — check the `LICENSE` file in the repo before redistributing.
 
-## Fasi di sviluppo
+## Development
 
-| Fase | Stato | Tema |
-|---|---|---|
-| 0 | ✅ Setup | Bootstrap, schema, auth, layout, CI, Docker |
-| 1 | ⏳ | Task management core (Todoist-like) |
-| 2 | ⏳ | Time tracking core |
-| 3 | ⏳ | Integrazione Task ↔ Timer |
-| 4 | ⏳ | Calendar + Notifications |
-| 5 | ⏳ | Report + Analytics |
-| 6 | ⏳ | Polish (PWA, import, command palette, a11y) |
-
-Dettaglio in `PROGRESS.md`.
+Roadmap and phase status: [PROGRESS.md](PROGRESS.md).

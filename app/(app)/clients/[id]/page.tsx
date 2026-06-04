@@ -10,7 +10,7 @@ import {
   startOfYear,
   subMonths,
 } from "date-fns";
-import { Mail, Pencil, Receipt } from "lucide-react";
+import { Mail, Receipt } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getClient, listClients } from "@/lib/domain/clients";
@@ -23,7 +23,7 @@ import {
 } from "@/lib/domain/time-entries";
 import { getTasksForClient } from "@/lib/domain/tasks";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
-import { EditClientDialog } from "@/components/features/clients/edit-client-dialog";
+import { EditClientDialogHeaderButton } from "@/components/features/clients/edit-client-dialog";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { ClientBillingFilters } from "@/components/features/timer/client-billing-filters";
@@ -31,7 +31,6 @@ import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-e
 import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { TaskList } from "@/components/features/tasks/task-list";
 import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
@@ -203,15 +202,7 @@ export default async function ClientDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <QuickStartButton target={{ kind: "client", id, label: client.name }} />
-            <EditClientDialog
-              client={client}
-              trigger={
-                <Button type="button" variant="outline" size="sm" className="gap-1.5">
-                  <Pencil className="size-3.5" />
-                  Modifica
-                </Button>
-              }
-            />
+            <EditClientDialogHeaderButton client={client} />
           </div>
         }
         meta={

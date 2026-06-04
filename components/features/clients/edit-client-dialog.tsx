@@ -248,3 +248,21 @@ export function EditClientDialogButton({
     />
   );
 }
+
+export function EditClientDialogHeaderButton({
+  client,
+}: {
+  client: ClientForEdit;
+}) {
+  return (
+    <EditClientDialog
+      client={client}
+      trigger={
+        <Button type="button" variant="outline" size="sm" className="gap-1.5">
+          <Pencil className="size-3.5" />
+          Modifica
+        </Button>
+      }
+    />
+  );
+}

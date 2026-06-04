@@ -4,18 +4,19 @@ test.describe("landing & sign-in (public)", () => {
   test("landing renders e link sign-in funziona", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: /todoist \+ time tracker/i }),
+      page.getByRole("heading", { name: /hours you actually billed/i }),
     ).toBeVisible();
-    await expect(page.getByRole("link", { name: /accedi/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /log in/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /github/i }).first()).toBeVisible();
 
-    await page.getByRole("link", { name: /accedi/i }).click();
+    await page.getByRole("link", { name: /log in/i }).click();
     await expect(page).toHaveURL(/\/sign-in/);
-    await expect(page.getByRole("heading", { name: /accedi/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /welcome/i })).toBeVisible();
   });
 
   test("sign-in page mostra il form email", async ({ page }) => {
     await page.goto("/sign-in");
-    await expect(page.getByRole("heading", { name: /accedi/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /welcome/i })).toBeVisible();
     await expect(page.getByPlaceholder(/email/i)).toBeVisible();
   });
 
