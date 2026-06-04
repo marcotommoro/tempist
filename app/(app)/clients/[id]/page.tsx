@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import {
   addDays,
@@ -29,9 +30,9 @@ import { ClientBillingFilters } from "@/components/features/timer/client-billing
 import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-entry-grid";
 import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { TaskList } from "@/components/features/tasks/task-list";
-import { Stat } from "@/components/ui/stat";
 import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 import { PageHeader } from "@/components/features/page-header/page-header";
@@ -244,34 +245,31 @@ export default async function ClientDetailPage({
         }
       />
 
-      <ClientBillingFilters
-        clientId={id}
-        from={from}
-        to={to}
-        presetActive={active}
-      />
+      {/* KPI a sinistra + filtri a destra su un'unica riga */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {/* Totali — strip KPI compatto, a sinistra */}
+        <section className="flex items-stretch divide-x divide-border overflow-hidden rounded-lg border border-border bg-card">
+          <CompactKpi label="Hours" value={formatDuration(totals.totalSeconds)} />
+          <CompactKpi
+            label="Billable"
+            accent="billable"
+            value={formatDuration(totals.billableSeconds)}
+          />
+          <CompactKpi label="Internal" value={formatDuration(totals.internalSeconds)} />
+          <CompactKpi
+            label={`Amount (${client.currency})`}
+            accent="coral"
+            value={totals.billableAmount.toFixed(2)}
+          />
+        </section>
 
-      {/* Totali — editorial KPI grid */}
-      <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        <Stat className="bg-card" label="Hours" value={formatDuration(totals.totalSeconds)} />
-        <Stat
-          className="bg-card"
-          label="Billable"
-          accent="billable"
-          value={formatDuration(totals.billableSeconds)}
+        <ClientBillingFilters
+          clientId={id}
+          from={from}
+          to={to}
+          presetActive={active}
         />
-        <Stat
-          className="bg-card"
-          label="Internal"
-          value={formatDuration(totals.internalSeconds)}
-        />
-        <Stat
-          className="bg-card"
-          label={`Amount (${client.currency})`}
-          value={totals.billableAmount.toFixed(2)}
-          accent="coral"
-        />
-      </section>
+      </div>
 
       <ClientQuickEntryGrid
         clientId={id}
@@ -389,6 +387,32 @@ export default async function ClientDetailPage({
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+/** Cella KPI compatta: label mono + valore tabular su una sola riga. */
+function CompactKpi({
+  label,
+  value,
+  accent,
+}: {
+  label: ReactNode;
+  value: ReactNode;
+  accent?: "coral" | "billable";
+}) {
+  return (
+    <div className="flex items-baseline gap-1.5 whitespace-nowrap px-2.5 py-1.5">
+      <span className="text-eyebrow">{label}</span>
+      <span
+        className={cn(
+          "font-mono text-xs font-medium tabular-nums text-foreground",
+          accent === "coral" && "text-coral",
+          accent === "billable" && "text-billable",
+        )}
+      >
+        {value}
+      </span>
     </div>
   );
 }

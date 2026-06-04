@@ -16,6 +16,8 @@ interface DatePickerProps {
   allowClear?: boolean;
   align?: "start" | "center" | "end";
   className?: string;
+  /** date-fns format per l'etichetta del trigger. Default: "EEE d MMM yyyy". */
+  displayFormat?: string;
 }
 
 export function DatePicker({
@@ -26,6 +28,7 @@ export function DatePicker({
   allowClear = true,
   align = "start",
   className,
+  displayFormat = "EEE d MMM yyyy",
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
@@ -45,7 +48,7 @@ export function DatePicker({
         >
           <CalendarIcon className="size-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate">
-            {value ? format(value, "EEE d MMM yyyy") : placeholder}
+            {value ? format(value, displayFormat) : placeholder}
           </span>
         </button>
       </PopoverTrigger>

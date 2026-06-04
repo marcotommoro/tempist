@@ -66,12 +66,14 @@ export function ClientBillingFilters({ clientId, from, to, presetActive }: Props
         />
       </div>
 
-      <div className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card p-1">
+      <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
         <DatePicker
           value={customFrom}
           onChange={(d) => d && setCustomFrom(d)}
           allowClear={false}
           placeholder="Da"
+          displayFormat="d MMM yy"
+          className="h-7 gap-1.5 px-2"
         />
         <span className="font-mono text-[0.625em] text-muted-foreground">→</span>
         <DatePicker
@@ -79,6 +81,8 @@ export function ClientBillingFilters({ clientId, from, to, presetActive }: Props
           onChange={(d) => d && setCustomTo(d)}
           allowClear={false}
           placeholder="A"
+          displayFormat="d MMM yy"
+          className="h-7 gap-1.5 px-2"
         />
         <Button
           type="button"
@@ -94,10 +98,11 @@ export function ClientBillingFilters({ clientId, from, to, presetActive }: Props
       <a
         href={exportHref}
         download
-        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground hover:bg-accent"
+        title="Export CSV"
+        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-card px-2.5 text-xs font-medium text-foreground hover:bg-accent"
       >
         <Download className="size-3.5" />
-        Export CSV
+        CSV
       </a>
     </div>
   );
@@ -116,7 +121,7 @@ function PresetLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex h-9 items-center px-3 font-mono text-[0.625em] uppercase tracking-wider transition-colors",
+        "inline-flex h-8 items-center px-2.5 font-mono text-[0.625em] uppercase tracking-wider transition-colors",
         active
           ? "bg-foreground text-background"
           : "text-muted-foreground hover:bg-accent hover:text-foreground",
