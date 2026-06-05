@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { getPlatformRole } from "@/lib/auth/platform-role";
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listClients } from "@/lib/domain/clients";
 import { listProjects, listSharedProjects } from "@/lib/domain/projects";
@@ -188,7 +189,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Account + theme pinned at bottom */}
-        <SidebarAccount email={user.email} />
+        <SidebarAccount
+          email={user.email}
+          isPlatformAdmin={getPlatformRole(user) === "admin"}
+        />
       </aside>
 
       {/* Topbar — workspace tools only. Pinned by the parent grid row; the row never scrolls. */}

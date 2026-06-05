@@ -15,6 +15,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx lib/db/seed.ts",
+    "admin:promote": "tsx lib/db/promote-admin.ts",
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "worker:dev": "tsx watch worker/index.ts",

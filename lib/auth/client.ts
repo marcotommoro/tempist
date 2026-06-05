@@ -4,7 +4,7 @@
  */
 
 import { createAuthClient } from "better-auth/react";
-import { magicLinkClient, organizationClient } from "better-auth/client/plugins";
+import { adminClient, magicLinkClient, organizationClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
   // When baseURL is undefined, Better Auth uses window.location.origin in the
@@ -17,7 +17,7 @@ export const authClient = createAuthClient({
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL?.trim() ||
     undefined,
-  plugins: [magicLinkClient(), organizationClient()],
+  plugins: [magicLinkClient(), organizationClient(), adminClient()],
 });
 
 export const { signIn, signOut, useSession, organization } = authClient;

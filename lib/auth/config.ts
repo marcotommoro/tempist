@@ -12,7 +12,7 @@
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { magicLink, organization } from "better-auth/plugins";
+import { admin, magicLink, organization } from "better-auth/plugins";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db";
@@ -172,6 +172,10 @@ export const auth = betterAuth({
           `Clicca qui per accedere:\n\n${url}\n\nIl link scade tra 5 minuti.`,
         );
       },
+    }),
+    admin({
+      defaultRole: "user",
+      adminRoles: ["admin"],
     }),
     organization({
       allowUserToCreateOrganization: true,

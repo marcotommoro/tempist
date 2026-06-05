@@ -95,6 +95,10 @@ export const user = pgTable(
     // additionalFields configurati in betterAuth({ user: { additionalFields: ... } })
     timezone: text("timezone").default("Europe/Rome").notNull(),
     locale: text("locale").default("it").notNull(),
+    role: text("role").default("user").notNull(),
+    banned: boolean("banned").default(false).notNull(),
+    banReason: text("ban_reason"),
+    banExpires: timestamp("ban_expires", { withTimezone: true, mode: "date" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -114,6 +118,9 @@ export const session = pgTable(
     userAgent: text("user_agent"),
     // From organization plugin
     activeOrganizationId: text("active_organization_id"),
+    impersonatedBy: text("impersonated_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

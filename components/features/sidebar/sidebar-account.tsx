@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Settings, User as UserIcon } from "lucide-react";
+import { LogOut, Settings, Shield, User as UserIcon } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -15,7 +15,13 @@ import {
 import { ThemeSwitcher } from "@/components/features/topbar/theme-switcher";
 import { signOut } from "@/lib/auth/client";
 
-export function SidebarAccount({ email }: { email: string }) {
+export function SidebarAccount({
+  email,
+  isPlatformAdmin = false,
+}: {
+  email: string;
+  isPlatformAdmin?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const initials = (email ?? "?").slice(0, 2).toUpperCase();
@@ -66,6 +72,12 @@ export function SidebarAccount({ email }: { email: string }) {
               <Settings />
               Settings
             </DropdownMenuItem>
+            {isPlatformAdmin ? (
+              <DropdownMenuItem onSelect={() => router.push("/admin")}>
+                <Shield />
+                Admin
+              </DropdownMenuItem>
+            ) : null}
             <DropdownMenuItem
               onSelect={(e) => {
                 e.preventDefault();

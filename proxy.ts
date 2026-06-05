@@ -9,7 +9,16 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/today", "/inbox", "/upcoming", "/projects", "/clients", "/reports", "/settings"];
+const PROTECTED_PREFIXES = [
+  "/today",
+  "/inbox",
+  "/upcoming",
+  "/projects",
+  "/clients",
+  "/reports",
+  "/settings",
+  "/admin",
+];
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
