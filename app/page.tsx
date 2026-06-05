@@ -13,7 +13,12 @@ export const metadata: Metadata = {
     "Un time tracker per freelance e piccoli studi. Scrivi cosa hai fatto, premi invio, manda la fattura.",
 };
 
-const navLinks = ["Product", "For freelancers", "Pricing", "Changelog"];
+const navLinks = [
+  { label: "Product", href: "#product" },
+  { label: "For freelancers", href: "#freelancers" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Changelog", href: `${GITHUB_REPO}/releases` },
+] as const;
 
 const features = [
   {
@@ -106,10 +111,15 @@ export default function LandingPage() {
           <span className="text-lg font-semibold tracking-[-0.02em]">Tempist</span>
         </Link>
         <div className="ml-10 hidden items-center gap-7 text-sm text-ink-2 lg:flex">
-          {navLinks.map((l) => (
-            <span key={l} className="cursor-default transition-colors hover:text-foreground">
-              {l}
-            </span>
+          {navLinks.map(({ label, href }) => (
+            <a
+              key={label}
+              href={href}
+              {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className="transition-colors hover:text-foreground"
+            >
+              {label}
+            </a>
           ))}
           <a
             href={GITHUB_REPO}
@@ -255,7 +265,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-t border-line-soft px-6 py-20 md:px-12">
+      <section id="product" className="scroll-mt-20 border-t border-line-soft px-6 py-20 md:px-12">
         <div className="mx-auto max-w-[1200px]">
           <div className="mb-5 font-mono text-[11.5px] tracking-[0.1em] text-muted-foreground">
             §01 · WHAT&apos;S IN THE BOX
@@ -294,7 +304,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-t border-line-soft px-6 py-24 md:px-12">
+      <section id="freelancers" className="scroll-mt-20 border-t border-line-soft px-6 py-24 md:px-12">
         <div className="mx-auto grid max-w-[1200px] items-center gap-14 lg:grid-cols-[1fr_1.1fr]">
           <div>
             <div className="mb-5 font-mono text-[11.5px] tracking-[0.1em] text-coral">
@@ -370,7 +380,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-t border-line-soft px-6 py-24 md:px-12">
+      <section id="pricing" className="scroll-mt-20 border-t border-line-soft px-6 py-24 md:px-12">
         <div className="mx-auto max-w-[1100px]">
           <div className="mb-5 font-mono text-[11.5px] tracking-[0.1em] text-muted-foreground">
             §03 · PRICING
