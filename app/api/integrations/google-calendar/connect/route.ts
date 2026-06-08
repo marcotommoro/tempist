@@ -15,7 +15,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: Request): Promise<Response> {
+export async function GET(): Promise<Response> {
   const { user, organizationId } = await requireActiveOrganization();
 
   const clientId = process.env.GOOGLE_CLIENT_ID;

@@ -11,6 +11,7 @@ import { requireActiveOrganization } from "@/lib/auth/workspace";
 import {
   exchangeCodeForTokens,
   fetchUserInfo,
+  resolveAppBaseUrl,
   resolveCalendarRedirectUri,
 } from "@/lib/integrations/google-calendar";
 import { upsertGoogleAccount } from "@/lib/domain/calendar-accounts";
@@ -26,32 +27,38 @@ export async function GET(req: Request): Promise<Response> {
   const stateParam = url.searchParams.get("state");
   const errorParam = url.searchParams.get("error");
 
+  // Base pubblico per i redirect: NON usare `url` (req.url), che dietro il proxy
+  // ha host 0.0.0.0. I query param invece si leggono da `url` senza problemi.
+  const appBase = resolveAppBaseUrl();
+
   if (errorParam) {
     return NextResponse.redirect(
-      new URL(`/settings?gcal_error=${encodeURIComponent(errorParam)}`, url),
+      new URL(`/settings?gcal_error=${encodeURIComponent(errorParam)}`, appBase),
     );
   }
   if (!code || !stateParam) {
-    return NextResponse.redirect(new URL("/settings?gcal_error=invalid", url));
+    return NextResponse.redirect(new URL("/settings?gcal_error=invalid", appBase));
   }
 
   let state: { u: string; o: string };
   try {
     state = JSON.parse(Buffer.from(stateParam, "base64url").toString("utf8"));
   } catch {
-    return NextResponse.redirect(new URL("/settings?gcal_error=state", url));
+    return NextResponse.redirect(new URL("/settings?gcal_error=state", appBase));
   }
 
   if (state.u !== user.id || state.o !== organizationId) {
     return NextResponse.redirect(
-      new URL("/settings?gcal_error=session_mismatch", url),
+      new URL("/settings?gcal_error=session_mismatch", appBase),
     );
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    return NextResponse.redirect(new URL("/settings?gcal_error=missing_env", url));
+    return NextResponse.redirect(
+      new URL("/settings?gcal_error=missing_env", appBase),
+    );
   }
 
   // Deve combaciare ESATTAMENTE col redirect_uri della richiesta authorize.
@@ -78,13 +85,13 @@ export async function GET(req: Request): Promise<Response> {
     } catch (syncErr) {
       console.error("[gcal.callback] initial sync", syncErr);
     }
-    return NextResponse.redirect(new URL("/settings?gcal_connected=1", url));
+    return NextResponse.redirect(new URL("/settings?gcal_connected=1", appBase));
   } catch (err) {
     console.error("[gcal.callback]", err);
     return NextResponse.redirect(
       new URL(
         `/settings?gcal_error=${encodeURIComponent((err as Error).message)}`,
-        url,
+        appBase,
       ),
     );
   }
