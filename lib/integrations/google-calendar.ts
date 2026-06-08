@@ -373,10 +373,43 @@ export function buildAuthorizeUrl(opts: {
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
 
+/**
+ * Base URL pubblico dell'app, usato per costruire i redirect_uri OAuth.
+ *
+ * NON derivarlo da `req.url`: dietro un proxy o quando il dev server è esposto
+ * su 0.0.0.0 l'host della richiesta finisce nel redirect_uri e Google lo rifiuta
+ * (`Error 400: invalid_request` — host non-loopback / schema insicuro).
+ *
+ * Fonte canonica: `BETTER_AUTH_URL` (come `resolveAuthURL` in lib/auth/config.ts),
+ * così login e Calendar OAuth puntano allo stesso dominio. In produzione la var è
+ * obbligatoria; in dev fallback a localhost. Ritorna senza slash finale.
+ */
+export function resolveAppBaseUrl(): string {
+  const url = process.env.BETTER_AUTH_URL?.trim();
+  if (url) return url.replace(/\/$/, "");
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "BETTER_AUTH_URL mancante in produzione: imposta il dominio pubblico " +
+        "(es. https://tempist.app), altrimenti i redirect_uri OAuth puntano a localhost.",
+    );
+  }
+  return "http://localhost:3000";
+}
+
+/** Redirect URI registrato su Google Cloud Console per il callback Calendar. */
+export function resolveCalendarRedirectUri(): string {
+  return `${resolveAppBaseUrl()}/api/integrations/google-calendar/callback`;
+}
+
 export function resolveCalendarWebhookUrl(): string | null {
-  const explicit = process.env.GOOGLE_CALENDAR_WEBHOOK_URL;
-  if (explicit) return explicit;
-  const base = process.env.NEXT_PUBLIC_APP_URL;
-  if (!base) return null;
-  return `${base.replace(/\/$/, "")}/api/integrations/google-calendar/webhook`;
+  // Override esplicito utile in dev (es. URL ngrok raggiungibile da Google).
+  const explicit = process.env.GOOGLE_CALENDAR_WEBHOOK_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  // Stessa fonte del redirect OAuth. Google non può raggiungere localhost:
+  // in quel caso ritorna null così il caller salta la registrazione del watch.
+  const base = resolveAppBaseUrl();
+  if (base.includes("localhost") || base.includes("127.0.0.1")) return null;
+  return `${base}/api/integrations/google-calendar/webhook`;
 }

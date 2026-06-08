@@ -11,6 +11,7 @@ import { requireActiveOrganization } from "@/lib/auth/workspace";
 import {
   exchangeCodeForTokens,
   fetchUserInfo,
+  resolveCalendarRedirectUri,
 } from "@/lib/integrations/google-calendar";
 import { upsertGoogleAccount } from "@/lib/domain/calendar-accounts";
 import { syncAccountById } from "@/lib/domain/calendar-sync";
@@ -53,7 +54,8 @@ export async function GET(req: Request): Promise<Response> {
     return NextResponse.redirect(new URL("/settings?gcal_error=missing_env", url));
   }
 
-  const redirectUri = `${url.protocol}//${url.host}/api/integrations/google-calendar/callback`;
+  // Deve combaciare ESATTAMENTE col redirect_uri della richiesta authorize.
+  const redirectUri = resolveCalendarRedirectUri();
 
   try {
     const tok = await exchangeCodeForTokens({

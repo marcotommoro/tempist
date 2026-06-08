@@ -8,7 +8,10 @@
 import { redirect } from "next/navigation";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
-import { buildAuthorizeUrl } from "@/lib/integrations/google-calendar";
+import {
+  buildAuthorizeUrl,
+  resolveCalendarRedirectUri,
+} from "@/lib/integrations/google-calendar";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +26,9 @@ export async function GET(req: Request): Promise<Response> {
     );
   }
 
-  const url = new URL(req.url);
-  const origin = `${url.protocol}//${url.host}`;
-  const redirectUri = `${origin}/api/integrations/google-calendar/callback`;
+  // redirect_uri dal base URL configurato (NON da req.url): deve essere identico
+  // a quello usato nel callback e registrato su Google Cloud Console.
+  const redirectUri = resolveCalendarRedirectUri();
 
   // state = userId|orgId — il callback verifica che l'org sia ancora attiva
   const state = Buffer.from(
