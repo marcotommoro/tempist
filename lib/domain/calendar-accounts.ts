@@ -88,6 +88,29 @@ export async function upsertGoogleAccount(opts: {
   return created;
 }
 
+/**
+ * Attiva/disattiva l'import degli eventi dal calendario esterno per un account.
+ * Scoped per userId + organizationId per evitare modifiche cross-tenant.
+ * Con `pullEnabled = false`, `pullAccount` salta il pull (vedi calendar-pull.ts).
+ */
+export async function setAccountPullEnabled(opts: {
+  accountId: string;
+  userId: string;
+  organizationId: string;
+  enabled: boolean;
+}): Promise<void> {
+  await db
+    .update(schema.calendarAccount)
+    .set({ pullEnabled: opts.enabled, updatedAt: new Date() })
+    .where(
+      and(
+        eq(schema.calendarAccount.id, opts.accountId),
+        eq(schema.calendarAccount.userId, opts.userId),
+        eq(schema.calendarAccount.organizationId, opts.organizationId),
+      ),
+    );
+}
+
 export async function deleteAccount(opts: {
   accountId: string;
   userId: string;
