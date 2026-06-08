@@ -1,4 +1,4 @@
-import { and, eq, gt, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, gt, isNotNull, isNull, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db";
 import type { CalendarAccount, Task } from "@/lib/db/schema";
@@ -20,20 +20,61 @@ export type SyncStats = {
   pushed: { inserted: number; updated: number; deleted: number };
 };
 
-export async function syncAccount(account: CalendarAccount): Promise<SyncStats> {
-  const pulled = await pullAccount(account);
-  await ensureWatchChannel(account);
+const EMPTY_STATS: SyncStats = {
+  pulled: { imported: 0, updated: 0, deleted: 0 },
+  pushed: { inserted: 0, updated: 0, deleted: 0 },
+};
 
-  const fresh = await db.query.calendarAccount.findFirst({
-    where: eq(schema.calendarAccount.id, account.id),
+/**
+ * Esegue `fn` tenendo un advisory lock Postgres legato all'account.
+ *
+ * Pull e push sono check-then-act (leggono "manca il link" → creano evento/task):
+ * due sync concorrenti — callback in-process, job del webhook nel worker, tick del
+ * cron, anche su processi diversi — duplicherebbero eventi Google e task. Il lock
+ * serializza per account. È un *try*-lock: se un altro sync è già in corso si salta,
+ * perché quel sync copre già lo stesso lavoro.
+ *
+ * `pg_try_advisory_xact_lock` lega il lock alla transazione: resta preso per tutta
+ * la durata di `fn` e viene rilasciato automaticamente al commit/rollback. La
+ * transazione non scrive nulla — pull/push usano il pool normale: serve solo a
+ * tenere il lock vivo. `hashtextextended` mappa l'id testuale dell'account al
+ * bigint richiesto dal lock.
+ */
+async function withAccountSyncLock<T>(
+  accountId: string,
+  fn: () => Promise<T>,
+): Promise<T | null> {
+  return db.transaction(async (tx) => {
+    const res = await tx.execute(
+      sql`select pg_try_advisory_xact_lock(hashtextextended(${`calendar_sync:${accountId}`}, 0)) as locked`,
+    );
+    const locked = (res.rows[0] as { locked: boolean } | undefined)?.locked === true;
+    if (!locked) {
+      console.warn(`[calendar.sync] account=${accountId} skip: sync già in corso`);
+      return null;
+    }
+    return fn();
   });
-  if (!fresh) {
-    return { pulled, pushed: { inserted: 0, updated: 0, deleted: 0 } };
-  }
+}
 
-  const pushed = await pushAccount(fresh);
-  await markSynced(fresh.id);
-  return { pulled, pushed };
+export async function syncAccount(account: CalendarAccount): Promise<SyncStats> {
+  const result = await withAccountSyncLock(account.id, async () => {
+    const pulled = await pullAccount(account);
+    await ensureWatchChannel(account);
+
+    const fresh = await db.query.calendarAccount.findFirst({
+      where: eq(schema.calendarAccount.id, account.id),
+    });
+    if (!fresh) {
+      return { pulled, pushed: { inserted: 0, updated: 0, deleted: 0 } };
+    }
+
+    const pushed = await pushAccount(fresh);
+    await markSynced(fresh.id);
+    return { pulled, pushed };
+  });
+
+  return result ?? EMPTY_STATS;
 }
 
 async function pushAccount(account: CalendarAccount): Promise<{
