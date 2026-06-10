@@ -20,7 +20,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { parseISO } from "date-fns";
-import { Plus } from "lucide-react";
 
 import type { Task } from "@/lib/db/schema";
 import { setTaskScheduledAtAction } from "@/lib/actions/tasks";
@@ -28,7 +27,7 @@ import { cn } from "@/lib/utils";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
 import { TaskItem } from "@/components/features/tasks/task-item";
 import { type ProjectMeta } from "@/components/features/tasks/task-list";
-import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
+import { AddTaskForDay } from "./add-task-for-day";
 
 export type UpcomingDay = {
   /** yyyy-MM-dd locale, usato come id droppable e anchor #day-… */
@@ -261,10 +260,6 @@ function DaySection({
   const incomplete = tasks.filter((t) => !t.completedAt);
   const completed = tasks.filter((t) => t.completedAt);
 
-  // Default creazione: giorno alle 09:00 locali (come il vecchio AddTaskForDay).
-  const dayAt9 = parseISO(day.key);
-  dayAt9.setHours(9, 0, 0, 0);
-
   return (
     <section id={`day-${day.key}`} className="space-y-2">
       <div className="flex items-baseline gap-3 border-b border-border pb-1.5">
@@ -338,18 +333,7 @@ function DaySection({
           })}
         </ul>
       )}
-      <CreateTaskDialog
-        defaultScheduledAt={dayAt9}
-        timezone={timezone}
-        trigger={
-          <button
-            type="button"
-            className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
-          >
-            <Plus className="size-3" /> Aggiungi attività
-          </button>
-        }
-      />
+      <AddTaskForDay dayKey={day.key} timezone={timezone} />
     </section>
   );
 }

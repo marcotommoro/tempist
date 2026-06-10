@@ -22,6 +22,7 @@ import { TaskListByGroup } from "@/components/features/tasks/task-list-by-group"
 import { TaskListViewToggle } from "@/components/features/tasks/task-list-view-toggle";
 import { type ProjectMeta } from "@/components/features/tasks/task-list";
 import { OverdueSection } from "@/components/features/upcoming/overdue-section";
+import { AddTaskForDay } from "@/components/features/upcoming/add-task-for-day";
 import {
   UpcomingDaysBoard,
   type UpcomingDay,
@@ -32,7 +33,6 @@ import {
   WeekStrip,
 } from "@/components/features/upcoming/week-strip";
 import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
-import { Plus } from "lucide-react";
 import { groupByDay } from "@/lib/utils/group-by-day";
 import { buildClientByTask } from "@/lib/utils/client-by-task";
 import {
@@ -217,9 +217,6 @@ export default async function UpcomingPage({
         <div className="space-y-5">
           {boardDays.map((day) => {
             const dayTasks = tasksByDay[day.key] ?? [];
-            // Default: giorno alle 09:00 locali (come il vecchio AddTaskForDay).
-            const dayAt9 = parseISO(day.key);
-            dayAt9.setHours(9, 0, 0, 0);
             return (
               <section key={day.key} id={`day-${day.key}`} className="space-y-2">
                 <div className="flex items-baseline gap-3 border-b border-border pb-1.5">
@@ -245,18 +242,7 @@ export default async function UpcomingPage({
                     Nessuna attività.
                   </p>
                 )}
-                <CreateTaskDialog
-                  defaultScheduledAt={dayAt9}
-                  timezone={timezone}
-                  trigger={
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
-                    >
-                      <Plus className="size-3" /> Aggiungi attività
-                    </button>
-                  }
-                />
+                <AddTaskForDay dayKey={day.key} timezone={timezone} />
               </section>
             );
           })}
