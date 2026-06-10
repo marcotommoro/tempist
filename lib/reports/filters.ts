@@ -12,6 +12,8 @@
 import {
   addDays,
   addMonths,
+  differenceInCalendarDays,
+  differenceInCalendarMonths,
   format,
   parseISO,
   startOfDay,
@@ -268,18 +270,48 @@ export function resolveDateRange(
  * Periodo di CONFRONTO (modalità "confronto periodi"): dato il periodo corrente,
  * ritorna quello precedente con cui calcolare il delta %.
  *
- * TODO(contributo utente): implementare la logica. Vedi la richiesta nel messaggio.
- * Approccio consigliato (calendar-aware per i preset, duration-shift per il custom):
- *  - preset calendario (this-month/quarter/year/last-month): sposta `now` indietro
- *    di un periodo e ri-risolvi con `resolveDateRange` → mese/trimestre/anno precedente.
- *  - custom (N giorni): gli N giorni immediatamente prima di `from`.
- *  - months[]: a tua scelta (es. stesso numero di mesi appena prima).
+ * Strategia: calendar-aware per i preset (sposta `now` indietro di un periodo e
+ * ri-risolvi con `resolveDateRange`), duration-shift per il custom (gli N giorni
+ * immediatamente prima di `from`), stesso numero di mesi appena prima per months[].
  */
 export function resolvePreviousRange(
   filters: ReportFilters,
   timezone: string,
   now: Date = new Date(),
 ): ResolvedRange {
-  // STUB: ritorna il periodo corrente (volutamente sbagliato) così i test sono RED.
-  return resolveDateRange(filters, timezone, now);
+  const toUtc = (local: Date) => fromZonedTime(local, timezone);
+
+  // Chip mese: stesso numero di mesi immediatamente prima del più vecchio.
+  if (filters.months.length > 0) {
+    const sorted = [...filters.months].sort();
+    const earliest = monthStartLocal(sorted[0]!);
+    const latest = monthStartLocal(sorted[sorted.length - 1]!);
+    const spanMonths = differenceInCalendarMonths(addMonths(latest, 1), earliest);
+    const fromLocal = addMonths(earliest, -spanMonths);
+    const lastLocal = addMonths(earliest, -1);
+    const label =
+      spanMonths === 1
+        ? format(fromLocal, "MMMM yyyy", { locale: it })
+        : `${format(fromLocal, "MMM yyyy", { locale: it })} – ${format(lastLocal, "MMM yyyy", { locale: it })}`;
+    return { from: toUtc(fromLocal), to: toUtc(earliest), label };
+  }
+
+  // Custom (N giorni): duration-shift, gli N giorni subito prima di `from`.
+  if (filters.preset === "custom" && filters.from && filters.to) {
+    const fromLocal = startOfDay(parseISO(filters.from));
+    const toLocal = addDays(startOfDay(parseISO(filters.to)), 1); // esclusivo
+    const days = differenceInCalendarDays(toLocal, fromLocal);
+    const prevFromLocal = addDays(fromLocal, -days);
+    const prevLastLocal = addDays(fromLocal, -1);
+    return {
+      from: toUtc(prevFromLocal),
+      to: toUtc(fromLocal),
+      label: `${format(prevFromLocal, "d MMM", { locale: it })} – ${format(prevLastLocal, "d MMM yyyy", { locale: it })}`,
+    };
+  }
+
+  // Preset calendario: ri-risolvi con `now` spostato indietro di un periodo.
+  const shiftMonths =
+    filters.preset === "quarter" ? 3 : filters.preset === "year" ? 12 : 1;
+  return resolveDateRange(filters, timezone, addMonths(now, -shiftMonths));
 }

@@ -31,18 +31,23 @@ export const TASK_LIST_ITEM_RE = /^(\s*(?:[-*+]|\d+[.)])\s+)\[( |x|X)\]/;
  * @returns        una NUOVA stringa con quella sola checkbox invertita
  */
 export function toggleTaskListItem(markdown: string, index: number): string {
-  // TODO(user): implementa la logica di toggle.
-  //
-  // Suggerimenti / vincoli (coperti dai test in tests/unit/markdown-tasklist.test.ts):
-  //   - Conta SOLO le righe che matchano TASK_LIST_ITEM_RE (in ordine di documento).
-  //     Una riga "- foo" senza `[ ]` NON conta e non sposta l'indice.
-  //   - Un `[ ]` che NON è in posizione di marker di lista (es. dentro un
-  //     paragrafo) NON conta: àncora il match all'inizio riga (TASK_LIST_ITEM_RE).
-  //   - Indice fuori range -> ritorna `markdown` invariato.
-  //   - Inverti solo lo stato: " " <-> "x" (normalizza "X" a "x" oppure " ").
-  //   - Limite noto accettabile per la v1: i `- [ ]` dentro un fenced code block
-  //     possono essere ignorati o contati (documentalo nel test se li salti).
-  throw new Error("toggleTaskListItem non implementata");
+  if (index < 0) return markdown;
+  // Limite noto v1: i `- [ ]` dentro un fenced code block vengono contati
+  // come item (stessa semplificazione riga-per-riga del renderer).
+  const lines = markdown.split("\n");
+  let seen = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line === undefined || !TASK_LIST_ITEM_RE.test(line)) continue;
+    if (seen === index) {
+      lines[i] = line.replace(TASK_LIST_ITEM_RE, (_full, marker, state) =>
+        `${marker}[${state === " " ? "x" : " "}]`,
+      );
+      return lines.join("\n");
+    }
+    seen++;
+  }
+  return markdown;
 }
 
 /**
@@ -50,6 +55,7 @@ export function toggleTaskListItem(markdown: string, index: number): string {
  * {@link toggleTaskListItem}). Usata da test e, volendo, dalla UI.
  */
 export function countTaskListItems(markdown: string): number {
-  // TODO(user): implementa il conteggio (stessa definizione di task-list item).
-  throw new Error("countTaskListItems non implementata");
+  return markdown
+    .split("\n")
+    .filter((line) => TASK_LIST_ITEM_RE.test(line)).length;
 }
