@@ -40,7 +40,12 @@ export function TaskItem({
   commentCount = 0,
   projectName = null,
   projectColor = null,
+  clientName = null,
+  clientColor = null,
   currentUserId,
+  liRef,
+  liStyle,
+  liProps,
 }: {
   task: Task;
   trackedSeconds?: number;
@@ -48,7 +53,13 @@ export function TaskItem({
   commentCount?: number;
   projectName?: string | null;
   projectColor?: string | null;
+  clientName?: string | null;
+  clientColor?: string | null;
   currentUserId?: string;
+  /** Hook per drag&drop (dnd-kit): ref/style/listeners applicati al <li>. */
+  liRef?: React.Ref<HTMLLIElement>;
+  liStyle?: React.CSSProperties;
+  liProps?: Record<string, unknown>;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +142,9 @@ export function TaskItem({
 
   return (
     <li
+      ref={liRef}
+      style={liStyle}
+      {...(liProps as React.LiHTMLAttributes<HTMLLIElement>)}
       className={cn(
         "group relative flex items-start gap-3 px-3 py-2 transition-colors duration-[var(--dur-fast)] hover:bg-accent/40",
         pending && "opacity-50",
@@ -195,6 +209,19 @@ export function TaskItem({
           </button>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875em] tabular-nums text-muted-foreground">
+          {clientName && (
+            <span
+              className="inline-flex max-w-44 items-center gap-1 truncate rounded-full border px-2 py-px font-mono text-[0.875em] font-semibold normal-case leading-snug"
+              style={{
+                color: clientColor ?? undefined,
+                borderColor: clientColor ? `${clientColor}66` : undefined,
+                backgroundColor: clientColor ? `${clientColor}1a` : undefined,
+              }}
+              title={`Cliente: ${clientName}`}
+            >
+              {clientName}
+            </span>
+          )}
           {projectName && (
             <span className="inline-flex items-center gap-1.5 normal-case">
               {projectColor && (

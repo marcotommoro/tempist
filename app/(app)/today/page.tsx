@@ -20,6 +20,7 @@ import {
   userTimezone,
 } from "@/lib/utils/default-task-scheduled-at";
 import { todayBoundsUtc } from "@/lib/utils/today-bounds";
+import { buildClientByTask } from "@/lib/utils/client-by-task";
 import type { Task } from "@/lib/db/schema";
 
 type Search = { group?: string };
@@ -68,6 +69,7 @@ export default async function TodayPage({
   const projectsById = new Map<string, ProjectMeta>(
     projects.map((p) => [p.id, { name: p.name, color: p.color }]),
   );
+  const clientByTask = buildClientByTask(tasks, projects, clients);
 
   const todayLocal = toZonedTime(new Date(), timezone);
   const { startUtc } = todayBoundsUtc(timezone);
@@ -133,6 +135,7 @@ export default async function TodayPage({
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}
             projectsById={projectsById}
+            clientByTask={clientByTask}
             currentUserId={user.id}
           />
 
@@ -144,6 +147,7 @@ export default async function TodayPage({
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}
             projectsById={projectsById}
+            clientByTask={clientByTask}
             currentUserId={user.id}
           />
         </div>

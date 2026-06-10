@@ -1,6 +1,7 @@
 import type { Task } from "@/lib/db/schema";
 import type { Project } from "@/lib/db/schema";
 import { groupByProject, type TaskGroupMode } from "@/lib/utils/group-by-project";
+import type { ClientMeta } from "@/lib/utils/client-by-task";
 import { TaskList, type ProjectMeta } from "./task-list";
 import { ProjectTaskSections } from "./project-task-sections";
 
@@ -12,6 +13,7 @@ export function TaskListByGroup({
   remindersByTask,
   commentsByTask,
   projectsById,
+  clientByTask,
   currentUserId,
   emptyMessage,
 }: {
@@ -22,6 +24,7 @@ export function TaskListByGroup({
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
   projectsById?: Map<string, ProjectMeta>;
+  clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
   emptyMessage?: string;
 }) {
@@ -34,6 +37,7 @@ export function TaskListByGroup({
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
         projectsById={projectsById}
+        clientByTask={clientByTask}
         currentUserId={currentUserId}
         emptyMessage={emptyMessage}
       />
@@ -47,6 +51,7 @@ export function TaskListByGroup({
       remindersByTask={remindersByTask}
       commentsByTask={commentsByTask}
       projectsById={projectsById}
+      clientByTask={clientByTask}
       currentUserId={currentUserId}
       emptyMessage={emptyMessage}
       showProjectBadge

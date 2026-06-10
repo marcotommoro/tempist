@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Project, Task } from "@/lib/db/schema";
+import type { ClientMeta } from "@/lib/utils/client-by-task";
 import type { TaskGroupMode } from "@/lib/utils/group-by-project";
 
 export function OverdueSection({
@@ -27,6 +28,7 @@ export function OverdueSection({
   remindersByTask,
   commentsByTask,
   projectsById,
+  clientByTask,
   currentUserId,
 }: {
   tasks: Task[];
@@ -37,6 +39,7 @@ export function OverdueSection({
   remindersByTask: Map<string, number>;
   commentsByTask?: Map<string, number>;
   projectsById?: Map<string, ProjectMeta>;
+  clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
 }) {
   const [open, setOpen] = useState(true);
@@ -134,6 +137,7 @@ export function OverdueSection({
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}
             projectsById={projectsById}
+            clientByTask={clientByTask}
             currentUserId={currentUserId}
             emptyMessage="Nessuna scadenza in arretrato."
           />

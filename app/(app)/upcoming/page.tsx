@@ -1,4 +1,11 @@
-import { addDays, format, isSameDay, isToday, isTomorrow, parseISO, startOfWeek } from "date-fns";
+import {
+  addDays,
+  format,
+  isSameDay,
+  parseISO,
+  startOfDay,
+  startOfWeek,
+} from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
@@ -15,6 +22,10 @@ import { TaskListByGroup } from "@/components/features/tasks/task-list-by-group"
 import { TaskListViewToggle } from "@/components/features/tasks/task-list-view-toggle";
 import { type ProjectMeta } from "@/components/features/tasks/task-list";
 import { OverdueSection } from "@/components/features/upcoming/overdue-section";
+import {
+  UpcomingDaysBoard,
+  type UpcomingDay,
+} from "@/components/features/upcoming/upcoming-days-board";
 import { parseTaskGroupMode } from "@/lib/utils/group-by-project";
 import {
   WeekDays,
@@ -23,11 +34,14 @@ import {
 import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { Plus } from "lucide-react";
 import { groupByDay } from "@/lib/utils/group-by-day";
+import { buildClientByTask } from "@/lib/utils/client-by-task";
 import {
   defaultTaskScheduledAt,
   userTimezone,
 } from "@/lib/utils/default-task-scheduled-at";
 import { PageHeader } from "@/components/features/page-header/page-header";
+
+const DAYS_SHOWN = 7;
 
 const WEEKDAY_IT = [
   "domenica",
@@ -41,10 +55,11 @@ const WEEKDAY_IT = [
 
 type Search = { cursor?: string; group?: string };
 
-function dayLabel(day: Date, todayLocal: Date): string {
-  if (isSameDay(day, todayLocal)) return "Oggi";
-  if (isTomorrow(day) && isSameDay(day, addDays(todayLocal, 1))) return "Domani";
-  return WEEKDAY_IT[day.getDay()] ?? "";
+function dayEyebrow(day: Date, todayLocal: Date): string {
+  const weekday = WEEKDAY_IT[day.getDay()] ?? "";
+  if (isSameDay(day, todayLocal)) return `Oggi · ${weekday}`;
+  if (isSameDay(day, addDays(todayLocal, 1))) return `Domani · ${weekday}`;
+  return weekday;
 }
 
 export default async function UpcomingPage({
@@ -70,11 +85,14 @@ export default async function UpcomingPage({
       ? parseISO(cursorParam)
       : todayLocal;
 
-  // 14 giorni: da oggi se il cursore è oggi, altrimenti dal lunedì della settimana del cursore
+  // Una settimana: da inizio di oggi se il cursore è oggi (startOfDay, non
+  // l'istante corrente: altrimenti le task già pianificate per oggi più presto
+  // dell'ora attuale sparirebbero dal range), altrimenti dal lunedì della
+  // settimana del cursore.
   const rangeStartLocal = isSameDay(cursorLocal, todayLocal)
-    ? todayLocal
+    ? startOfDay(todayLocal)
     : startOfWeek(cursorLocal, { weekStartsOn: 1 });
-  const rangeEndLocal = addDays(rangeStartLocal, 14);
+  const rangeEndLocal = addDays(rangeStartLocal, DAYS_SHOWN);
 
   const rangeStartUtc = fromZonedTime(rangeStartLocal, timezone);
   const rangeEndUtc = fromZonedTime(rangeEndLocal, timezone);
@@ -103,13 +121,27 @@ export default async function UpcomingPage({
   const projectsById = new Map<string, ProjectMeta>(
     projects.map((p) => [p.id, { name: p.name, color: p.color }]),
   );
+  const clientByTask = buildClientByTask(
+    [...overdueTasks, ...rangeTasks],
+    projects,
+    clients,
+  );
 
   // Raggruppa per giorno locale
-  const tasksByDay = groupByDay(rangeTasks, (t) => t.scheduledAt, timezone);
+  const tasksByDayMap = groupByDay(rangeTasks, (t) => t.scheduledAt, timezone);
 
-  // Lista 14 giorni consecutivi
+  // Lista giorni consecutivi della settimana mostrata
   const days: Date[] = [];
-  for (let i = 0; i < 14; i++) days.push(addDays(rangeStartLocal, i));
+  for (let i = 0; i < DAYS_SHOWN; i++) days.push(addDays(rangeStartLocal, i));
+
+  const boardDays: UpcomingDay[] = days.map((day) => ({
+    key: format(day, "yyyy-MM-dd"),
+    heading: format(day, "d MMM"),
+    eyebrow: dayEyebrow(day, todayLocal),
+  }));
+  const tasksByDay = Object.fromEntries(
+    boardDays.map((d) => [d.key, tasksByDayMap.get(d.key) ?? []]),
+  );
 
   const totalUpcoming = rangeTasks.length;
   const overdueCount = overdueTasks.length;
@@ -117,23 +149,23 @@ export default async function UpcomingPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Upcoming"
+        title="Attività"
         meta={
           <>
             <span>
               <span className="text-foreground tabular-nums">{totalUpcoming}</span>{" "}
-              scheduled
+              pianificate
             </span>
             {overdueCount > 0 ? (
               <>
                 <span aria-hidden>·</span>
                 <span className="text-destructive">
-                  <span className="tabular-nums">{overdueCount}</span> overdue
+                  <span className="tabular-nums">{overdueCount}</span> scadute
                 </span>
               </>
             ) : null}
             <span aria-hidden>·</span>
-            <span>{format(rangeStartLocal, "d LLL")} → {format(addDays(rangeStartLocal, 13), "d LLL")}</span>
+            <span>{format(rangeStartLocal, "d LLL")} → {format(addDays(rangeStartLocal, DAYS_SHOWN - 1), "d LLL")}</span>
           </>
         }
         actions={
@@ -165,60 +197,71 @@ export default async function UpcomingPage({
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
         projectsById={projectsById}
+        clientByTask={clientByTask}
         currentUserId={user.id}
       />
 
-      <div className="space-y-5">
-        {days.map((day) => {
-          const key = format(day, "yyyy-MM-dd");
-          const dayTasks = tasksByDay.get(key) ?? [];
-          const label = dayLabel(day, todayLocal);
-          // Default: giorno alle 09:00 locali (come il vecchio AddTaskForDay).
-          const dayAt9 = new Date(day);
-          dayAt9.setHours(9, 0, 0, 0);
-          return (
-            <section key={key} id={`day-${key}`} className="space-y-2">
-              <div className="flex items-baseline gap-3 border-b border-border pb-1.5">
-                <h2 className="font-display text-xl leading-none text-foreground">
-                  {format(day, "d MMM")}
-                </h2>
-                <span className="text-eyebrow">
-                  {isToday(day) ? "Oggi · " : isTomorrow(day) ? "Domani · " : ""}
-                  {label}
-                </span>
-              </div>
-              {dayTasks.length > 0 ? (
-                <TaskListByGroup
-                  group={group}
-                  tasks={dayTasks}
-                  projects={projects}
-                  trackedByTask={trackedByTask}
-                  remindersByTask={remindersByTask}
-                  commentsByTask={commentsByTask}
-                  projectsById={projectsById}
-                  currentUserId={user.id}
+      {group === "flat" ? (
+        <UpcomingDaysBoard
+          days={boardDays}
+          tasksByDay={tasksByDay}
+          timezone={timezone}
+          trackedByTask={trackedByTask}
+          remindersByTask={remindersByTask}
+          commentsByTask={commentsByTask}
+          projectsById={projectsById}
+          clientByTask={clientByTask}
+          currentUserId={user.id}
+        />
+      ) : (
+        <div className="space-y-5">
+          {boardDays.map((day) => {
+            const dayTasks = tasksByDay[day.key] ?? [];
+            // Default: giorno alle 09:00 locali (come il vecchio AddTaskForDay).
+            const dayAt9 = parseISO(day.key);
+            dayAt9.setHours(9, 0, 0, 0);
+            return (
+              <section key={day.key} id={`day-${day.key}`} className="space-y-2">
+                <div className="flex items-baseline gap-3 border-b border-border pb-1.5">
+                  <h2 className="font-display text-xl leading-none text-foreground">
+                    {day.heading}
+                  </h2>
+                  <span className="text-eyebrow">{day.eyebrow}</span>
+                </div>
+                {dayTasks.length > 0 ? (
+                  <TaskListByGroup
+                    group={group}
+                    tasks={dayTasks}
+                    projects={projects}
+                    trackedByTask={trackedByTask}
+                    remindersByTask={remindersByTask}
+                    commentsByTask={commentsByTask}
+                    projectsById={projectsById}
+                    clientByTask={clientByTask}
+                    currentUserId={user.id}
+                  />
+                ) : (
+                  <p className="px-1 font-serif text-sm italic text-muted-foreground">
+                    Nessuna attività.
+                  </p>
+                )}
+                <CreateTaskDialog
+                  defaultScheduledAt={dayAt9}
+                  timezone={timezone}
+                  trigger={
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
+                    >
+                      <Plus className="size-3" /> Aggiungi attività
+                    </button>
+                  }
                 />
-              ) : (
-                <p className="px-1 font-serif text-sm italic text-muted-foreground">
-                  Nessuna attività.
-                </p>
-              )}
-              <CreateTaskDialog
-                defaultScheduledAt={dayAt9}
-                timezone={timezone}
-                trigger={
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 px-3 py-1 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground transition-colors hover:text-coral"
-                  >
-                    <Plus className="size-3" /> Aggiungi attività
-                  </button>
-                }
-              />
-            </section>
-          );
-        })}
-      </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

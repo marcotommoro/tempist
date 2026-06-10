@@ -12,6 +12,7 @@ import {
   defaultTaskScheduledAt,
   userTimezone,
 } from "@/lib/utils/default-task-scheduled-at";
+import { buildClientByTask } from "@/lib/utils/client-by-task";
 
 export default async function InboxPage() {
   const { user, organizationId } = await requireActiveOrganization();
@@ -27,6 +28,8 @@ export default async function InboxPage() {
       listProjects({ organizationId }),
       listClients({ organizationId }),
     ]);
+
+  const clientByTask = buildClientByTask(tasks, projects, clients);
 
   return (
     <div className="space-y-6">
@@ -57,6 +60,7 @@ export default async function InboxPage() {
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
+        clientByTask={clientByTask}
         currentUserId={user.id}
         emptyMessage="Inbox vuota."
       />

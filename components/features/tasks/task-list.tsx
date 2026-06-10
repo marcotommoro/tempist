@@ -1,5 +1,6 @@
 import { TaskItem } from "./task-item";
 import type { Task } from "@/lib/db/schema";
+import type { ClientMeta } from "@/lib/utils/client-by-task";
 
 export type ProjectMeta = { name: string; color: string };
 
@@ -9,6 +10,7 @@ export function TaskList({
   remindersByTask,
   commentsByTask,
   projectsById,
+  clientByTask,
   currentUserId,
   emptyMessage = "Nessun task.",
   showProjectBadge = true,
@@ -22,6 +24,8 @@ export function TaskList({
   commentsByTask?: Map<string, number>;
   /** Map<projectId, {name, color}> per visualizzare il nome del progetto nel dialog */
   projectsById?: Map<string, ProjectMeta>;
+  /** Map<taskId, {name, color}> per il badge cliente sulla card */
+  clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
   emptyMessage?: string;
   showProjectBadge?: boolean;
@@ -51,6 +55,7 @@ export function TaskList({
             const projectMeta = t.projectId
               ? projectsById?.get(t.projectId)
               : undefined;
+            const clientMeta = clientByTask?.get(t.id);
             return (
               <TaskItem
                 key={t.id}
@@ -60,6 +65,8 @@ export function TaskList({
                 commentCount={commentsByTask?.get(t.id) ?? 0}
                 projectName={showProjectBadge ? (projectMeta?.name ?? null) : null}
                 projectColor={showProjectBadge ? (projectMeta?.color ?? null) : null}
+                clientName={clientMeta?.name ?? null}
+                clientColor={clientMeta?.color ?? null}
                 currentUserId={currentUserId}
               />
             );
@@ -81,6 +88,7 @@ export function TaskList({
               const projectMeta = t.projectId
                 ? projectsById?.get(t.projectId)
                 : undefined;
+              const clientMeta = clientByTask?.get(t.id);
               return (
                 <TaskItem
                   key={t.id}
@@ -90,6 +98,8 @@ export function TaskList({
                   commentCount={commentsByTask?.get(t.id) ?? 0}
                   projectName={showProjectBadge ? (projectMeta?.name ?? null) : null}
                   projectColor={showProjectBadge ? (projectMeta?.color ?? null) : null}
+                  clientName={clientMeta?.name ?? null}
+                  clientColor={clientMeta?.color ?? null}
                   currentUserId={currentUserId}
                 />
               );

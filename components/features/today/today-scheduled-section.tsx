@@ -1,6 +1,7 @@
 import { TaskListByGroup } from "@/components/features/tasks/task-list-by-group";
 import { type ProjectMeta } from "@/components/features/tasks/task-list";
 import type { Project, Task } from "@/lib/db/schema";
+import type { ClientMeta } from "@/lib/utils/client-by-task";
 import type { TaskGroupMode } from "@/lib/utils/group-by-project";
 
 export function TodayScheduledSection({
@@ -11,6 +12,7 @@ export function TodayScheduledSection({
   remindersByTask,
   commentsByTask,
   projectsById,
+  clientByTask,
   currentUserId,
 }: {
   tasks: Task[];
@@ -20,6 +22,7 @@ export function TodayScheduledSection({
   remindersByTask: Map<string, number>;
   commentsByTask?: Map<string, number>;
   projectsById?: Map<string, ProjectMeta>;
+  clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
 }) {
   const openCount = tasks.filter((t) => !t.completedAt).length;
@@ -42,6 +45,7 @@ export function TodayScheduledSection({
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
         projectsById={projectsById}
+        clientByTask={clientByTask}
         currentUserId={currentUserId}
         emptyMessage="Nessuna attività per oggi."
       />

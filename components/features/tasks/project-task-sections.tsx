@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 import type { ProjectTaskGroup } from "@/lib/utils/group-by-project";
 import type { Task } from "@/lib/db/schema";
+import type { ClientMeta } from "@/lib/utils/client-by-task";
 import { TaskList, type ProjectMeta } from "./task-list";
 
 export function ProjectTaskSections({
@@ -13,6 +14,7 @@ export function ProjectTaskSections({
   remindersByTask,
   commentsByTask,
   projectsById,
+  clientByTask,
   currentUserId,
   emptyMessage = "Nessun task.",
 }: {
@@ -21,6 +23,7 @@ export function ProjectTaskSections({
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
   projectsById?: Map<string, ProjectMeta>;
+  clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
   emptyMessage?: string;
 }) {
@@ -44,6 +47,7 @@ export function ProjectTaskSections({
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
           projectsById={projectsById}
+          clientByTask={clientByTask}
           currentUserId={currentUserId}
         />
       ))}
@@ -57,6 +61,7 @@ function ProjectTaskSection({
   remindersByTask,
   commentsByTask,
   projectsById,
+  clientByTask,
   currentUserId,
 }: {
   group: ProjectTaskGroup<Task>;
@@ -64,6 +69,7 @@ function ProjectTaskSection({
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
   projectsById?: Map<string, ProjectMeta>;
+  clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
 }) {
   const [open, setOpen] = useState(true);
@@ -104,6 +110,7 @@ function ProjectTaskSection({
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
           projectsById={projectsById}
+          clientByTask={clientByTask}
           currentUserId={currentUserId}
           showProjectBadge={false}
         />
