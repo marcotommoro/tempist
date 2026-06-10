@@ -1,17 +1,3 @@
-import Link from "next/link";
-import {
-  BarChart3,
-  CalendarDays,
-  Calendar,
-  Clock,
-  Filter as FilterIcon,
-  FolderKanban,
-  Inbox,
-  Settings,
-  Star,
-  Users,
-} from "lucide-react";
-
 import { getPlatformRole } from "@/lib/auth/platform-role";
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { listClients } from "@/lib/domain/clients";
@@ -22,26 +8,8 @@ import { GlobalManualEntryServer } from "@/components/features/timer/global-manu
 import { NotificationsBellServer } from "@/components/features/notifications/notifications-bell-server";
 import { CommandPalette } from "@/components/features/command-palette/command-palette";
 import { TopbarBreadcrumb } from "@/components/features/topbar/topbar-breadcrumb";
-import {
-  ClientLink,
-  ProjectLink,
-  SidebarLink,
-} from "@/components/features/sidebar/sidebar-link";
-import { SidebarAccount } from "@/components/features/sidebar/sidebar-account";
-import { WorkspaceSwitcher } from "@/components/features/workspaces/workspace-switcher";
-
-const mainNav = [
-  { href: "/today", label: "Today", icon: Calendar },
-  { href: "/inbox", label: "Inbox", icon: Inbox },
-  { href: "/upcoming", label: "Attività", icon: CalendarDays },
-];
-
-const bottomNav = [
-  { href: "/filters", label: "Filters", icon: FilterIcon },
-  { href: "/timesheet", label: "Timesheet", icon: Clock },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+import { MobileSidebar } from "@/components/features/sidebar/mobile-sidebar";
+import { SidebarContent } from "@/components/features/sidebar/sidebar-content";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, organizationId } = await requireActiveOrganization();
@@ -55,8 +23,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const favorites = projects.filter((p) => p.isFavorite);
   const others = projects.filter((p) => !p.isFavorite);
 
+  // Props condivise: il fetch avviene una sola volta qui, il markup della
+  // sidebar viene riusato sia nell'aside desktop sia nel drawer mobile.
+  const sidebarProps = {
+    workspaces,
+    activeOrganizationId: organizationId,
+    favorites,
+    others,
+    sharedProjects,
+    clients,
+    userEmail: user.email,
+    isPlatformAdmin: getPlatformRole(user) === "admin",
+  };
+
   return (
-    <div className="grid h-[100dvh] max-h-[100dvh] grid-cols-[252px_1fr] grid-rows-[60px_minmax(0,1fr)] overflow-hidden">
+    <div className="grid h-[100dvh] max-h-[100dvh] grid-cols-1 grid-rows-[60px_minmax(0,1fr)] overflow-hidden lg:grid-cols-[252px_1fr]">
       {/* Skip to main content (accessibility) */}
       <a
         href="#main-content"
@@ -65,138 +46,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         Salta al contenuto
       </a>
 
-      {/* Sidebar */}
+      {/* Sidebar — visibile solo da lg; sotto è sostituita dal drawer in topbar */}
       <aside
-        className="row-span-2 flex min-h-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+        className="row-span-2 hidden min-h-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex"
         aria-label="Navigazione principale"
       >
-        {/* Workspace switcher */}
-        <WorkspaceSwitcher workspaces={workspaces} activeId={organizationId} />
-
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          <nav className="space-y-0.5" aria-label="Viste task">
-            {mainNav.map(({ href, label, icon: Icon }) => (
-              <SidebarLink
-                key={href}
-                href={href}
-                icon={<Icon className="h-4 w-4" />}
-                exact
-              >
-                {label}
-              </SidebarLink>
-            ))}
-          </nav>
-
-          {favorites.length > 0 && (
-            <div className="mt-6">
-              <div className="flex items-center gap-1.5 px-3 pb-1.5 text-eyebrow">
-                <Star className="h-3 w-3" aria-hidden />
-                <span>Favorites</span>
-              </div>
-              <div className="space-y-0.5" role="list">
-                {favorites.map((p) => (
-                  <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-6">
-            <div className="flex items-center justify-between px-3 pb-1.5 text-eyebrow">
-              <span>Projects</span>
-              <Link
-                href="/projects"
-                className="rounded-sm p-0.5 transition-colors hover:bg-sidebar-accent hover:text-foreground"
-                aria-label="Vedi tutti i progetti / nuovo"
-              >
-                <FolderKanban className="h-3.5 w-3.5" aria-hidden />
-              </Link>
-            </div>
-            <div className="space-y-0.5">
-              {others.length === 0 && favorites.length === 0 ? (
-                <p className="px-3 py-1.5 text-xs text-muted-foreground">
-                  Nessun progetto.{" "}
-                  <Link href="/projects" className="text-coral underline-offset-2 hover:underline">
-                    Crea il primo
-                  </Link>
-                  .
-                </p>
-              ) : (
-                others.map((p) => (
-                  <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
-                ))
-              )}
-            </div>
-          </div>
-
-          {sharedProjects.length > 0 && (
-            <div className="mt-6">
-              <div className="px-3 pb-1.5 text-eyebrow">
-                Shared with me
-              </div>
-              <div className="space-y-0.5" role="list">
-                {sharedProjects.map((p) => (
-                  <ProjectLink key={p.id} id={p.id} name={p.name} color={p.color} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-6">
-            <div className="flex items-center justify-between px-3 pb-1.5 text-eyebrow">
-              <span>Clients</span>
-              <Link
-                href="/clients"
-                className="rounded-sm p-0.5 transition-colors hover:bg-sidebar-accent hover:text-foreground"
-                aria-label="Vedi tutti i clienti / nuovo"
-              >
-                <Users className="h-3.5 w-3.5" aria-hidden />
-              </Link>
-            </div>
-            <div className="space-y-0.5">
-              {clients.length === 0 ? (
-                <p className="px-3 py-1.5 text-xs text-muted-foreground">
-                  Nessun cliente.{" "}
-                  <Link href="/clients" className="text-coral underline-offset-2 hover:underline">
-                    Crea il primo
-                  </Link>
-                  .
-                </p>
-              ) : (
-                clients.map((c) => (
-                  <ClientLink key={c.id} id={c.id} name={c.name} color={c.color} />
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="px-3 pb-1.5 text-eyebrow">
-              Workspace
-            </div>
-            <nav className="space-y-0.5" aria-label="Strumenti workspace">
-              {bottomNav.map(({ href, label, icon: Icon }) => (
-                <SidebarLink
-                  key={href}
-                  href={href}
-                  icon={<Icon className="h-4 w-4" />}
-                >
-                  {label}
-                </SidebarLink>
-              ))}
-            </nav>
-          </div>
-        </div>
-
-        {/* Account + theme pinned at bottom */}
-        <SidebarAccount
-          email={user.email}
-          isPlatformAdmin={getPlatformRole(user) === "admin"}
-        />
+        <SidebarContent {...sidebarProps} />
       </aside>
 
       {/* Topbar — workspace tools only. Pinned by the parent grid row; the row never scrolls. */}
-      <header className="z-20 flex items-center gap-3 border-b border-border bg-background/95 px-6 backdrop-blur-sm">
+      <header className="z-20 flex items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur-sm lg:px-6">
+        <MobileSidebar>
+          <SidebarContent {...sidebarProps} />
+        </MobileSidebar>
         <TopbarBreadcrumb />
         <div className="ml-auto flex items-center gap-2.5">
           <GlobalManualEntryServer />
@@ -212,7 +74,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         className="min-h-0 overflow-y-auto overflow-x-hidden"
         tabIndex={-1}
       >
-        <div className="mx-auto w-full max-w-3xl px-6 pb-16">{children}</div>
+        <div className="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6">{children}</div>
       </main>
 
       {/* Command palette globale (Cmd+K) */}

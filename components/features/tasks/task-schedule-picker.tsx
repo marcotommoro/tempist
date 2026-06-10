@@ -87,7 +87,7 @@ export function TaskSchedulePicker({
           <CalendarIcon className="size-3.5" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 p-2">
+      <PopoverContent align="end" className="w-72 max-w-[calc(100vw-1rem)] p-2">
         <div className="space-y-0.5">
           <div className="px-2 py-1 font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
             Pianifica per

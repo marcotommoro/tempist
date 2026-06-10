@@ -148,7 +148,9 @@ export function ProjectBoard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        {/* Snap "proximity" (non mandatory): guida lo scroll su mobile senza
+            interferire con l'auto-scroll di dnd-kit durante il drag */}
+        <div className="flex snap-x gap-3 overflow-x-auto pb-4 lg:snap-none">
           <Column
             id={NO_SECTION_KEY}
             title="Senza sezione"
@@ -185,7 +187,7 @@ function Column({
   return (
     <div
       id={id}
-      className="flex flex-col w-72 shrink-0 rounded-md border bg-muted/30 p-3"
+      className="flex w-64 shrink-0 snap-start flex-col rounded-md border bg-muted/30 p-3 sm:w-72"
     >
       <header className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold">

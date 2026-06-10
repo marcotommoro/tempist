@@ -29,7 +29,9 @@ export function LinkedTimeRangeFields({
   durationId?: string;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    // Tre colonne anche su mobile: gli input time sono stretti e
+    // l'affiancamento inizio/fine/durata è semanticamente importante
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
       <div>
         <Label htmlFor={startId}>Ora inizio</Label>
         <Input

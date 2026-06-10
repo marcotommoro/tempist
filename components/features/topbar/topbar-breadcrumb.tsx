@@ -22,10 +22,11 @@ export function TopbarBreadcrumb() {
     : "Today";
 
   return (
-    <div className="flex items-center gap-1.5 text-[0.8125em] text-muted-foreground">
-      <span>Workspace</span>
-      <span className="text-mute">/</span>
-      <span className="font-medium text-foreground">{label}</span>
+    <div className="flex min-w-0 items-center gap-1.5 text-[0.8125em] text-muted-foreground">
+      {/* Su mobile lo spazio in topbar è conteso dall'hamburger: resta solo il label */}
+      <span className="hidden md:inline">Workspace</span>
+      <span className="hidden text-mute md:inline">/</span>
+      <span className="truncate font-medium text-foreground">{label}</span>
     </div>
   );
 }

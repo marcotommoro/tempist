@@ -31,7 +31,16 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         storageState: STORAGE_STATE,
       },
-      testIgnore: /\.public\.spec\.ts$/,
+      testIgnore: [/\.public\.spec\.ts$/, /\.mobile\.spec\.ts$/],
+    },
+    // Smoke test responsive su viewport mobile (Chromium, nessun browser extra)
+    {
+      name: "mobile",
+      use: {
+        ...devices["Pixel 7"],
+        storageState: STORAGE_STATE,
+      },
+      testMatch: /\.mobile\.spec\.ts$/,
     },
   ],
   webServer: process.env.PLAYWRIGHT_BASE_URL

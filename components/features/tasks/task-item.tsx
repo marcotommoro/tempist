@@ -215,7 +215,7 @@ export function TaskItem({
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875em] tabular-nums text-muted-foreground">
           {clientName && (
             <span
-              className="inline-flex max-w-44 items-center gap-1 truncate rounded-full border px-2 py-px font-mono text-[0.875em] font-semibold normal-case leading-snug"
+              className="inline-flex max-w-28 items-center gap-1 truncate rounded-full border px-2 py-px font-mono text-[0.875em] font-semibold normal-case leading-snug sm:max-w-44"
               style={{
                 color: clientColor ?? undefined,
                 borderColor: clientColor ? `${clientColor}66` : undefined,

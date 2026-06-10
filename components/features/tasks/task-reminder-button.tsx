@@ -116,7 +116,7 @@ export function TaskReminderButton({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 p-3">
+      <PopoverContent align="end" className="w-72 max-w-[calc(100vw-1rem)] p-3">
         <div className="space-y-3">
           <div>
             <div className="mb-2 font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
