@@ -1,5 +1,6 @@
 import type { Task } from "@/lib/db/schema";
 import type { Project } from "@/lib/db/schema";
+import type { SubtaskCounts } from "@/lib/domain/tasks";
 import { groupByProject, type TaskGroupMode } from "@/lib/utils/group-by-project";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
 import { TaskList, type ProjectMeta } from "./task-list";
@@ -12,6 +13,7 @@ export function TaskListByGroup({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -23,6 +25,7 @@ export function TaskListByGroup({
   trackedByTask?: Map<string, number>;
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   projectsById?: Map<string, ProjectMeta>;
   clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
@@ -36,6 +39,7 @@ export function TaskListByGroup({
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
+        subtaskCountsByTask={subtaskCountsByTask}
         projectsById={projectsById}
         clientByTask={clientByTask}
         currentUserId={currentUserId}
@@ -50,6 +54,7 @@ export function TaskListByGroup({
       trackedByTask={trackedByTask}
       remindersByTask={remindersByTask}
       commentsByTask={commentsByTask}
+      subtaskCountsByTask={subtaskCountsByTask}
       projectsById={projectsById}
       clientByTask={clientByTask}
       currentUserId={currentUserId}

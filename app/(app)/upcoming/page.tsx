@@ -11,6 +11,7 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import {
   getOverdueTasks,
+  getSubtaskCountsByParent,
   getTasksInRange,
 } from "@/lib/domain/tasks";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
@@ -110,14 +111,21 @@ export default async function UpcomingPage({
     ...overdueTasks.map((t) => t.id),
     ...rangeTasks.map((t) => t.id),
   ];
-  const [trackedByTask, remindersByTask, commentsByTask, projects, clients] =
-    await Promise.all([
-      getTrackedSecondsByTask({ organizationId, taskIds: allTaskIds }),
-      getPendingReminderCountByTask(allTaskIds),
-      getCommentCountByTask({ taskIds: allTaskIds }),
-      listProjects({ organizationId }),
-      listClients({ organizationId }),
-    ]);
+  const [
+    trackedByTask,
+    remindersByTask,
+    commentsByTask,
+    subtaskCountsByTask,
+    projects,
+    clients,
+  ] = await Promise.all([
+    getTrackedSecondsByTask({ organizationId, taskIds: allTaskIds }),
+    getPendingReminderCountByTask(allTaskIds),
+    getCommentCountByTask({ taskIds: allTaskIds }),
+    getSubtaskCountsByParent({ organizationId, taskIds: allTaskIds }),
+    listProjects({ organizationId }),
+    listClients({ organizationId }),
+  ]);
   const projectsById = new Map<string, ProjectMeta>(
     projects.map((p) => [p.id, { name: p.name, color: p.color }]),
   );
@@ -196,6 +204,7 @@ export default async function UpcomingPage({
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
+        subtaskCountsByTask={subtaskCountsByTask}
         projectsById={projectsById}
         clientByTask={clientByTask}
         currentUserId={user.id}
@@ -209,6 +218,7 @@ export default async function UpcomingPage({
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
+          subtaskCountsByTask={subtaskCountsByTask}
           projectsById={projectsById}
           clientByTask={clientByTask}
           currentUserId={user.id}
@@ -233,6 +243,7 @@ export default async function UpcomingPage({
                     trackedByTask={trackedByTask}
                     remindersByTask={remindersByTask}
                     commentsByTask={commentsByTask}
+                    subtaskCountsByTask={subtaskCountsByTask}
                     projectsById={projectsById}
                     clientByTask={clientByTask}
                     currentUserId={user.id}

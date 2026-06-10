@@ -23,8 +23,11 @@ import {
   defaultTaskScheduledAt,
   userTimezone,
 } from "@/lib/utils/default-task-scheduled-at";
+import type { Task } from "@/lib/db/schema";
 import {
+  createSubtask,
   createTask,
+  listSubtasks,
   rescheduleOverdueToToday,
   softDeleteTask,
   toggleTaskComplete,
@@ -168,6 +171,56 @@ export async function toggleTaskAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Errore toggle task",
+    };
+  }
+}
+
+export async function fetchSubtasksAction(
+  parentId: string,
+): Promise<ActionResult<Task[]>> {
+  try {
+    const { organizationId } = await requireActiveOrganization();
+    const subtasks = await listSubtasks({ parentId, organizationId });
+    return { ok: true, data: subtasks };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Errore caricamento sottoattività",
+    };
+  }
+}
+
+const createSubtaskSchema = z.object({
+  parentId: z.string().min(1),
+  title: z.string().trim().min(1, "Titolo richiesto").max(500),
+});
+
+export async function createSubtaskAction(
+  parentId: string,
+  title: string,
+): Promise<ActionResult<Task>> {
+  try {
+    const parsed = createSubtaskSchema.safeParse({ parentId, title });
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      return { ok: false, error: first?.message ?? "Input non valido" };
+    }
+    const { user, organizationId } = await requireActiveOrganization();
+    // Titolo puro, niente NLP: una sottoattività non ha data/progetto propri.
+    const created = await createSubtask({
+      organizationId,
+      createdById: user.id,
+      parentId: parsed.data.parentId,
+      title: parsed.data.title,
+    });
+    revalidateTaskViews();
+    return { ok: true, data: created };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "Errore creazione sottoattività",
     };
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MessageSquare, Play, Repeat, Trash2 } from "lucide-react";
+import { ListChecks, MessageSquare, Play, Repeat, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import {
   startTimerFromTaskAction,
 } from "@/lib/actions/timer";
 import type { Task } from "@/lib/db/schema";
+import type { SubtaskCounts } from "@/lib/domain/tasks";
 import { TaskProgress } from "./task-progress";
 import {
   CompleteWithDurationDialog,
@@ -38,6 +39,7 @@ export function TaskItem({
   trackedSeconds = 0,
   reminderCount = 0,
   commentCount = 0,
+  subtaskCounts = null,
   projectName = null,
   projectColor = null,
   clientName = null,
@@ -51,6 +53,8 @@ export function TaskItem({
   trackedSeconds?: number;
   reminderCount?: number;
   commentCount?: number;
+  /** Conteggio sottoattività {total, completed} per il badge "2/5". */
+  subtaskCounts?: SubtaskCounts | null;
   projectName?: string | null;
   projectColor?: string | null;
   clientName?: string | null;
@@ -258,6 +262,15 @@ export function TaskItem({
           {commentCount > 0 && (
             <span className="inline-flex items-center gap-1">
               <MessageSquare className="size-3" /> {commentCount}
+            </span>
+          )}
+          {subtaskCounts && subtaskCounts.total > 0 && (
+            <span
+              className="inline-flex items-center gap-1"
+              title={`Sottoattività: ${subtaskCounts.completed}/${subtaskCounts.total}`}
+            >
+              <ListChecks className="size-3" /> {subtaskCounts.completed}/
+              {subtaskCounts.total}
             </span>
           )}
           <TaskProgress

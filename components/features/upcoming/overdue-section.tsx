@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Project, Task } from "@/lib/db/schema";
+import type { SubtaskCounts } from "@/lib/domain/tasks";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
 import type { TaskGroupMode } from "@/lib/utils/group-by-project";
 
@@ -27,6 +28,7 @@ export function OverdueSection({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -38,6 +40,7 @@ export function OverdueSection({
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
   commentsByTask?: Map<string, number>;
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   projectsById?: Map<string, ProjectMeta>;
   clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
@@ -136,6 +139,7 @@ export function OverdueSection({
             trackedByTask={trackedByTask}
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}
+            subtaskCountsByTask={subtaskCountsByTask}
             projectsById={projectsById}
             clientByTask={clientByTask}
             currentUserId={currentUserId}

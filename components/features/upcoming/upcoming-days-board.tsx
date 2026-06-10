@@ -22,6 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { parseISO } from "date-fns";
 
 import type { Task } from "@/lib/db/schema";
+import type { SubtaskCounts } from "@/lib/domain/tasks";
 import { setTaskScheduledAtAction } from "@/lib/actions/tasks";
 import { cn } from "@/lib/utils";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
@@ -54,6 +55,7 @@ export function UpcomingDaysBoard({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -64,6 +66,7 @@ export function UpcomingDaysBoard({
   trackedByTask?: Map<string, number>;
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   projectsById?: Map<string, ProjectMeta>;
   clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
@@ -201,6 +204,7 @@ export function UpcomingDaysBoard({
             trackedByTask={trackedByTask}
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}
+            subtaskCountsByTask={subtaskCountsByTask}
             projectsById={projectsById}
             clientByTask={clientByTask}
             currentUserId={currentUserId}
@@ -220,6 +224,7 @@ export function UpcomingDaysBoard({
               task={activeTask}
               trackedSeconds={trackedByTask?.get(activeTask.id) ?? 0}
               commentCount={commentsByTask?.get(activeTask.id) ?? 0}
+              subtaskCounts={subtaskCountsByTask?.get(activeTask.id) ?? null}
               projectName={activeMeta?.project?.name ?? null}
               projectColor={activeMeta?.project?.color ?? null}
               clientName={activeMeta?.client?.name ?? null}
@@ -239,6 +244,7 @@ function DaySection({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -250,6 +256,7 @@ function DaySection({
   trackedByTask?: Map<string, number>;
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   projectsById?: Map<string, ProjectMeta>;
   clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
@@ -288,6 +295,7 @@ function DaySection({
                   trackedSeconds={trackedByTask?.get(t.id) ?? 0}
                   reminderCount={remindersByTask?.get(t.id) ?? 0}
                   commentCount={commentsByTask?.get(t.id) ?? 0}
+                  subtaskCounts={subtaskCountsByTask?.get(t.id) ?? null}
                   projectMeta={
                     t.projectId ? projectsById?.get(t.projectId) : undefined
                   }
@@ -323,6 +331,7 @@ function DaySection({
                 trackedSeconds={trackedByTask?.get(t.id) ?? 0}
                 reminderCount={remindersByTask?.get(t.id) ?? 0}
                 commentCount={commentsByTask?.get(t.id) ?? 0}
+                subtaskCounts={subtaskCountsByTask?.get(t.id) ?? null}
                 projectName={projectMeta?.name ?? null}
                 projectColor={projectMeta?.color ?? null}
                 clientName={clientMeta?.name ?? null}
@@ -343,6 +352,7 @@ function SortableTaskItem({
   trackedSeconds,
   reminderCount,
   commentCount,
+  subtaskCounts,
   projectMeta,
   clientMeta,
   currentUserId,
@@ -352,6 +362,7 @@ function SortableTaskItem({
   trackedSeconds: number;
   reminderCount: number;
   commentCount: number;
+  subtaskCounts?: SubtaskCounts | null;
   projectMeta?: ProjectMeta;
   clientMeta?: ClientMeta;
   currentUserId?: string;
@@ -366,6 +377,7 @@ function SortableTaskItem({
       trackedSeconds={trackedSeconds}
       reminderCount={reminderCount}
       commentCount={commentCount}
+      subtaskCounts={subtaskCounts}
       projectName={projectMeta?.name ?? null}
       projectColor={projectMeta?.color ?? null}
       clientName={clientMeta?.name ?? null}

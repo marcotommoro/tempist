@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
-import { getTodayTasks } from "@/lib/domain/tasks";
+import { getSubtaskCountsByParent, getTodayTasks } from "@/lib/domain/tasks";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
@@ -57,14 +57,21 @@ export default async function TodayPage({
 
   const tasks = await getTodayTasks({ organizationId, timezone });
   const taskIds = tasks.map((t) => t.id);
-  const [trackedByTask, remindersByTask, commentsByTask, projects, clients] =
-    await Promise.all([
-      getTrackedSecondsByTask({ organizationId, taskIds }),
-      getPendingReminderCountByTask(taskIds),
-      getCommentCountByTask({ taskIds }),
-      listProjects({ organizationId }),
-      listClients({ organizationId }),
-    ]);
+  const [
+    trackedByTask,
+    remindersByTask,
+    commentsByTask,
+    subtaskCountsByTask,
+    projects,
+    clients,
+  ] = await Promise.all([
+    getTrackedSecondsByTask({ organizationId, taskIds }),
+    getPendingReminderCountByTask(taskIds),
+    getCommentCountByTask({ taskIds }),
+    getSubtaskCountsByParent({ organizationId, taskIds }),
+    listProjects({ organizationId }),
+    listClients({ organizationId }),
+  ]);
 
   const projectsById = new Map<string, ProjectMeta>(
     projects.map((p) => [p.id, { name: p.name, color: p.color }]),
@@ -134,6 +141,7 @@ export default async function TodayPage({
             trackedByTask={trackedByTask}
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}
+            subtaskCountsByTask={subtaskCountsByTask}
             projectsById={projectsById}
             clientByTask={clientByTask}
             currentUserId={user.id}
@@ -146,6 +154,7 @@ export default async function TodayPage({
             trackedByTask={trackedByTask}
             remindersByTask={remindersByTask}
             commentsByTask={commentsByTask}
+            subtaskCountsByTask={subtaskCountsByTask}
             projectsById={projectsById}
             clientByTask={clientByTask}
             currentUserId={user.id}

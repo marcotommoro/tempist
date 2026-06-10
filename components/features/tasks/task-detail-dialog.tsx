@@ -12,6 +12,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
+  fetchSubtasksAction,
   fetchTaskPickerOptionsAction,
   setTaskClientAction,
   setTaskDueDateAction,
@@ -28,6 +29,7 @@ import { formatDuration } from "@/lib/utils/format-duration";
 
 import { TaskCommentsSection } from "./task-comments-section";
 import { TaskDescriptionEditor } from "./task-description-editor";
+import { TaskSubtasksSection } from "./task-subtasks-section";
 import { TaskPrioritySelect } from "./task-priority-select";
 import { TaskEstimateField } from "./task-estimate-field";
 import { Picker, type PickItem } from "./quick-add-panel";
@@ -61,10 +63,15 @@ export function TaskDetailDialog({
   const [error, setError] = useState<string | null>(null);
 
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
+  const [subtasks, setSubtasks] = useState<Task[] | null>(null);
   const [options, setOptions] = useState<{
     projects: PickItem[];
     clients: PickItem[];
   } | null>(null);
+
+  // Le sottoattività hanno un solo livello: nel dialog di una sottoattività
+  // la sezione non esiste proprio.
+  const isSubtask = task.parentId != null;
 
   useEffect(() => {
     if (!open) return;
@@ -77,6 +84,18 @@ export function TaskDetailDialog({
       cancelled = true;
     };
   }, [open, task.id]);
+
+  useEffect(() => {
+    if (!open || isSubtask) return;
+    let cancelled = false;
+    fetchSubtasksAction(task.id).then((res) => {
+      if (cancelled) return;
+      if (res.ok) setSubtasks(res.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, task.id, isSubtask]);
 
   useEffect(() => {
     if (!open || options) return;
@@ -121,7 +140,16 @@ export function TaskDetailDialog({
     setError(null);
     startTransition(async () => {
       const res = await toggleTaskAction(task.id);
-      if (!res.ok) setError(res.error);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      // Completare il padre completa anche le sottoattività (cascata
+      // server-side): ricarica la lista per riflettere lo stato.
+      if (!isDone && !isSubtask) {
+        const refreshed = await fetchSubtasksAction(task.id);
+        if (refreshed.ok) setSubtasks(refreshed.data);
+      }
     });
   }
 
@@ -250,6 +278,37 @@ export function TaskDetailDialog({
               taskId={task.id}
               initialDescription={task.descriptionMarkdown}
             />
+
+            {!isSubtask && (
+              <>
+                <hr className="border-border" />
+
+                <div>
+                  <div className="mb-2 flex items-baseline justify-between">
+                    <h3 className="font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
+                      Sottoattività
+                    </h3>
+                    {subtasks && subtasks.length > 0 && (
+                      <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
+                        {subtasks.filter((s) => s.completedAt).length}/
+                        {subtasks.length}
+                      </span>
+                    )}
+                  </div>
+                  {open && subtasks === null ? (
+                    <p className="font-serif text-sm italic text-muted-foreground">
+                      Caricamento sottoattività...
+                    </p>
+                  ) : (
+                    <TaskSubtasksSection
+                      parentTaskId={task.id}
+                      subtasks={subtasks ?? []}
+                      onSubtasksChange={setSubtasks}
+                    />
+                  )}
+                </div>
+              </>
+            )}
 
             <hr className="border-border" />
 

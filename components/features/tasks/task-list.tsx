@@ -1,5 +1,6 @@
 import { TaskItem } from "./task-item";
 import type { Task } from "@/lib/db/schema";
+import type { SubtaskCounts } from "@/lib/domain/tasks";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
 
 export type ProjectMeta = { name: string; color: string };
@@ -9,6 +10,7 @@ export function TaskList({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -22,6 +24,8 @@ export function TaskList({
   remindersByTask?: Map<string, number>;
   /** Map<taskId, count> commenti */
   commentsByTask?: Map<string, number>;
+  /** Map<taskId, {total, completed}> sottoattività per il badge "2/5" */
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   /** Map<projectId, {name, color}> per visualizzare il nome del progetto nel dialog */
   projectsById?: Map<string, ProjectMeta>;
   /** Map<taskId, {name, color}> per il badge cliente sulla card */
@@ -63,6 +67,7 @@ export function TaskList({
                 trackedSeconds={trackedByTask?.get(t.id) ?? 0}
                 reminderCount={remindersByTask?.get(t.id) ?? 0}
                 commentCount={commentsByTask?.get(t.id) ?? 0}
+                subtaskCounts={subtaskCountsByTask?.get(t.id) ?? null}
                 projectName={showProjectBadge ? (projectMeta?.name ?? null) : null}
                 projectColor={showProjectBadge ? (projectMeta?.color ?? null) : null}
                 clientName={clientMeta?.name ?? null}

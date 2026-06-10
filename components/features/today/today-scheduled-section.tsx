@@ -1,6 +1,7 @@
 import { TaskListByGroup } from "@/components/features/tasks/task-list-by-group";
 import { type ProjectMeta } from "@/components/features/tasks/task-list";
 import type { Project, Task } from "@/lib/db/schema";
+import type { SubtaskCounts } from "@/lib/domain/tasks";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
 import type { TaskGroupMode } from "@/lib/utils/group-by-project";
 
@@ -11,6 +12,7 @@ export function TodayScheduledSection({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -21,6 +23,7 @@ export function TodayScheduledSection({
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
   commentsByTask?: Map<string, number>;
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   projectsById?: Map<string, ProjectMeta>;
   clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
@@ -44,6 +47,7 @@ export function TodayScheduledSection({
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
+        subtaskCountsByTask={subtaskCountsByTask}
         projectsById={projectsById}
         clientByTask={clientByTask}
         currentUserId={currentUserId}

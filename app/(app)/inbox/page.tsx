@@ -1,5 +1,5 @@
 import { requireActiveOrganization } from "@/lib/auth/workspace";
-import { getInboxTasks } from "@/lib/domain/tasks";
+import { getInboxTasks, getSubtaskCountsByParent } from "@/lib/domain/tasks";
 import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
@@ -20,14 +20,21 @@ export default async function InboxPage() {
   const defaultScheduledAt = defaultTaskScheduledAt(timezone);
   const tasks = await getInboxTasks({ organizationId });
   const taskIds = tasks.map((t) => t.id);
-  const [trackedByTask, remindersByTask, commentsByTask, projects, clients] =
-    await Promise.all([
-      getTrackedSecondsByTask({ organizationId, taskIds }),
-      getPendingReminderCountByTask(taskIds),
-      getCommentCountByTask({ taskIds }),
-      listProjects({ organizationId }),
-      listClients({ organizationId }),
-    ]);
+  const [
+    trackedByTask,
+    remindersByTask,
+    commentsByTask,
+    subtaskCountsByTask,
+    projects,
+    clients,
+  ] = await Promise.all([
+    getTrackedSecondsByTask({ organizationId, taskIds }),
+    getPendingReminderCountByTask(taskIds),
+    getCommentCountByTask({ taskIds }),
+    getSubtaskCountsByParent({ organizationId, taskIds }),
+    listProjects({ organizationId }),
+    listClients({ organizationId }),
+  ]);
 
   const clientByTask = buildClientByTask(tasks, projects, clients);
 
@@ -60,6 +67,7 @@ export default async function InboxPage() {
         trackedByTask={trackedByTask}
         remindersByTask={remindersByTask}
         commentsByTask={commentsByTask}
+        subtaskCountsByTask={subtaskCountsByTask}
         clientByTask={clientByTask}
         currentUserId={user.id}
         emptyMessage="Inbox vuota."

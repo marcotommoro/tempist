@@ -8,7 +8,7 @@
  * conversione tz avviene qui per i bound dei range (today/upcoming).
  */
 
-import { and, asc, desc, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { addDays } from "date-fns";
 
 import { db, schema } from "@/lib/db";
@@ -52,13 +52,15 @@ export async function getTodayTasks(
 
 /**
  * Inbox: task senza project, non cancellati. Include i completati che restano
- * visibili (barrati) per coerenza con Today/Upcoming.
+ * visibili (barrati) per coerenza con Today/Upcoming. Esclude le sottoattività
+ * (senza progetto per costruzione): vivono nel dialog del padre.
  */
 export async function getInboxTasks(ctx: ListContext): Promise<Task[]> {
   return db.query.task.findMany({
     where: and(
       eq(schema.task.organizationId, ctx.organizationId),
       isNull(schema.task.projectId),
+      isNull(schema.task.parentId),
       isNull(schema.task.deletedAt),
     ),
     orderBy: [asc(schema.task.order), desc(schema.task.createdAt)],
@@ -199,6 +201,7 @@ export type CreateTaskInput = {
   sectionId?: string | null;
   clientId?: string | null;
   recurrenceRule?: string | null;
+  parentId?: string | null;
 };
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
@@ -217,10 +220,102 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
       sectionId: input.sectionId ?? null,
       clientId: input.clientId ?? null,
       recurrenceRule: input.recurrenceRule ?? null,
+      parentId: input.parentId ?? null,
     })
     .returning();
   if (!created) throw new Error("Insert task failed");
   return created;
+}
+
+// ----------------------------------------------------------------------------
+// Subtasks
+// ----------------------------------------------------------------------------
+
+/**
+ * Crea una sottoattività (1 solo livello: un figlio non può avere figli).
+ * Non eredita nulla dal padre — niente progetto/cliente/data/priorità: la
+ * sottoattività vive nel dialog del padre e non compare in board né viste data.
+ */
+export async function createSubtask(opts: {
+  organizationId: string;
+  createdById: string;
+  parentId: string;
+  title: string;
+}): Promise<Task> {
+  const parent = await db.query.task.findFirst({
+    where: and(
+      eq(schema.task.id, opts.parentId),
+      eq(schema.task.organizationId, opts.organizationId),
+      isNull(schema.task.deletedAt),
+    ),
+    columns: { id: true, parentId: true },
+  });
+  if (!parent) throw new Error("Attività padre non trovata");
+  if (parent.parentId) {
+    throw new Error("Le sottoattività non possono avere altre sottoattività");
+  }
+  return createTask({
+    organizationId: opts.organizationId,
+    createdById: opts.createdById,
+    title: opts.title,
+    parentId: opts.parentId,
+  });
+}
+
+/** Sottoattività vive di un task, in ordine di creazione. */
+export async function listSubtasks(opts: {
+  parentId: string;
+  organizationId: string;
+}): Promise<Task[]> {
+  return db.query.task.findMany({
+    where: and(
+      eq(schema.task.parentId, opts.parentId),
+      eq(schema.task.organizationId, opts.organizationId),
+      isNull(schema.task.deletedAt),
+    ),
+    orderBy: [asc(schema.task.createdAt), asc(schema.task.id)],
+  });
+}
+
+export type SubtaskCounts = { total: number; completed: number };
+
+/**
+ * Conteggi {total, completed} delle sottoattività vive per ciascun padre in
+ * una sola query (GROUP BY su task_parent_idx) — niente N+1 nelle liste.
+ * I padri senza figli non compaiono nella mappa.
+ */
+export async function getSubtaskCountsByParent(opts: {
+  organizationId: string;
+  taskIds: string[];
+}): Promise<Map<string, SubtaskCounts>> {
+  const map = new Map<string, SubtaskCounts>();
+  if (opts.taskIds.length === 0) return map;
+
+  const rows = await db
+    .select({
+      parentId: schema.task.parentId,
+      total: sql<number>`COUNT(*)::int`,
+      completed: sql<number>`COUNT(*) FILTER (WHERE ${schema.task.completedAt} IS NOT NULL)::int`,
+    })
+    .from(schema.task)
+    .where(
+      and(
+        eq(schema.task.organizationId, opts.organizationId),
+        inArray(schema.task.parentId, opts.taskIds),
+        isNull(schema.task.deletedAt),
+      ),
+    )
+    .groupBy(schema.task.parentId);
+
+  for (const r of rows) {
+    if (r.parentId) {
+      map.set(r.parentId, {
+        total: Number(r.total),
+        completed: Number(r.completed),
+      });
+    }
+  }
+  return map;
 }
 
 /**
@@ -241,13 +336,33 @@ export async function toggleTaskComplete(opts: {
   if (!current) throw new Error("Task non trovato o cancellato");
 
   const isCompleting = !current.completedAt;
+  const now = new Date();
 
-  const [updated] = await db
-    .update(schema.task)
-    .set({ completedAt: isCompleting ? new Date() : null })
-    .where(eq(schema.task.id, opts.taskId))
-    .returning();
-  if (!updated) throw new Error("Update task fallito");
+  const updated = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .update(schema.task)
+      .set({ completedAt: isCompleting ? now : null })
+      .where(eq(schema.task.id, opts.taskId))
+      .returning();
+    if (!row) throw new Error("Update task fallito");
+
+    // Completare il padre completa anche le sottoattività aperte (stesso
+    // timestamp). Riaprire NON le riapre. No-op sui figli (depth 1).
+    if (isCompleting) {
+      await tx
+        .update(schema.task)
+        .set({ completedAt: now })
+        .where(
+          and(
+            eq(schema.task.parentId, opts.taskId),
+            eq(schema.task.organizationId, opts.organizationId),
+            isNull(schema.task.completedAt),
+            isNull(schema.task.deletedAt),
+          ),
+        );
+    }
+    return row;
+  });
 
   // Spawn next occurrence se: stiamo COMPLETANDO + recurrenceRule + scheduledAt
   let spawned: Task | null = null;
@@ -324,21 +439,35 @@ export async function rescheduleOverdueToToday(opts: {
 }
 
 /**
- * Soft delete: setta deletedAt. Nessun cascade — il task resta in DB per recovery.
+ * Soft delete: setta deletedAt sul task e, in cascata, sulle sue sottoattività
+ * vive. I record restano in DB per recovery.
  */
 export async function softDeleteTask(opts: {
   taskId: string;
   organizationId: string;
 }): Promise<void> {
-  await db
-    .update(schema.task)
-    .set({ deletedAt: new Date() })
-    .where(
-      and(
-        eq(schema.task.id, opts.taskId),
-        eq(schema.task.organizationId, opts.organizationId),
-      ),
-    );
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    await tx
+      .update(schema.task)
+      .set({ deletedAt: now })
+      .where(
+        and(
+          eq(schema.task.id, opts.taskId),
+          eq(schema.task.organizationId, opts.organizationId),
+        ),
+      );
+    await tx
+      .update(schema.task)
+      .set({ deletedAt: now })
+      .where(
+        and(
+          eq(schema.task.parentId, opts.taskId),
+          eq(schema.task.organizationId, opts.organizationId),
+          isNull(schema.task.deletedAt),
+        ),
+      );
+  });
 }
 
 export async function updateTaskDescription(opts: {

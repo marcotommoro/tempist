@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 
 import type { ProjectTaskGroup } from "@/lib/utils/group-by-project";
 import type { Task } from "@/lib/db/schema";
+import type { SubtaskCounts } from "@/lib/domain/tasks";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
 import { TaskList, type ProjectMeta } from "./task-list";
 
@@ -13,6 +14,7 @@ export function ProjectTaskSections({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -22,6 +24,7 @@ export function ProjectTaskSections({
   trackedByTask?: Map<string, number>;
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   projectsById?: Map<string, ProjectMeta>;
   clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
@@ -46,6 +49,7 @@ export function ProjectTaskSections({
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
+          subtaskCountsByTask={subtaskCountsByTask}
           projectsById={projectsById}
           clientByTask={clientByTask}
           currentUserId={currentUserId}
@@ -60,6 +64,7 @@ function ProjectTaskSection({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  subtaskCountsByTask,
   projectsById,
   clientByTask,
   currentUserId,
@@ -68,6 +73,7 @@ function ProjectTaskSection({
   trackedByTask?: Map<string, number>;
   remindersByTask?: Map<string, number>;
   commentsByTask?: Map<string, number>;
+  subtaskCountsByTask?: Map<string, SubtaskCounts>;
   projectsById?: Map<string, ProjectMeta>;
   clientByTask?: Map<string, ClientMeta>;
   currentUserId?: string;
@@ -109,6 +115,7 @@ function ProjectTaskSection({
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
+          subtaskCountsByTask={subtaskCountsByTask}
           projectsById={projectsById}
           clientByTask={clientByTask}
           currentUserId={currentUserId}
