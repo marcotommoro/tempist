@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import { uniqueSuffix } from "./helpers/utils";
+import { createTaskViaQuickAdd, uniqueSuffix } from "./helpers/utils";
 
 test.describe("projects + sections", () => {
   test("crea progetto e lo vede in sidebar", async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe("projects + sections", () => {
     await page.goto("/projects");
 
     await page.getByPlaceholder(/Nome nuovo progetto/i).fill(projectName);
-    await page.getByRole("button", { name: /^crea$/i }).click();
+    await page.getByRole("button", { name: /^create$/i }).click();
 
     // Appare nella lista projects
     // Sidebar + main-list contengono il link → ne prendiamo uno specifico via #main-content
@@ -16,26 +16,24 @@ test.describe("projects + sections", () => {
     await expect(mainLink).toBeVisible({ timeout: 5_000 });
     await mainLink.click();
     await expect(page).toHaveURL(/\/projects\/[\w-]+/);
-    await expect(page.getByRole("heading", { name: projectName })).toBeVisible();
+    // Il titolo è un button editabile dentro l'h1: l'accessible name dell'h1
+    // è "Rinomina progetto", quindi si verifica il testo, non il name.
+    await expect(page.locator("h1")).toContainText(projectName);
   });
 
   test("crea task in un progetto + switch List/Board", async ({ page }) => {
     const projectName = `Proj ${uniqueSuffix()}`;
     await page.goto("/projects");
     await page.getByPlaceholder(/Nome nuovo progetto/i).fill(projectName);
-    await page.getByRole("button", { name: /^crea$/i }).click();
+    await page.getByRole("button", { name: /^create$/i }).click();
     await page
       .locator("#main-content")
       .getByRole("link", { name: new RegExp(projectName) })
       .click();
 
-    // Espandi il form "Aggiungi task" (in Senza sezione)
-    await page.getByRole("button", { name: /^aggiungi task$/i }).first().click();
-
+    // "Aggiungi task" apre il dialog QuickAdd condiviso
     const taskTitle = `Task progetto ${uniqueSuffix()}`;
-    const addInput = page.getByPlaceholder(/Titolo task/i).first();
-    await addInput.fill(taskTitle);
-    await addInput.press("Enter");
+    await createTaskViaQuickAdd(page, taskTitle);
     await expect(page.getByText(taskTitle)).toBeVisible({ timeout: 5_000 });
 
     // Switch a Board view
@@ -55,7 +53,7 @@ test.describe("projects + sections", () => {
     await page.goto("/projects");
 
     await page.getByPlaceholder(/Nome nuovo progetto/i).fill(projectName);
-    await page.getByRole("button", { name: /^crea$/i }).click();
+    await page.getByRole("button", { name: /^create$/i }).click();
     await page
       .locator("#main-content")
       .getByRole("link", { name: new RegExp(projectName) })
@@ -79,22 +77,21 @@ test.describe("projects + sections", () => {
     const projectName = `Proj sec ${uniqueSuffix()}`;
     await page.goto("/projects");
     await page.getByPlaceholder(/Nome nuovo progetto/i).fill(projectName);
-    await page.getByRole("button", { name: /^crea$/i }).click();
+    await page.getByRole("button", { name: /^create$/i }).click();
     await page
       .locator("#main-content")
       .getByRole("link", { name: new RegExp(projectName) })
       .click();
 
     const sectionName = `Sezione ${uniqueSuffix()}`;
+    // L'input compare solo dopo il bottone "Nuova sezione".
+    await page.getByRole("button", { name: /nuova sezione/i }).click();
     const sectionInput = page.getByPlaceholder(/Nome sezione/i);
-    if (await sectionInput.isVisible().catch(() => false)) {
-      await sectionInput.fill(sectionName);
-      await sectionInput.press("Enter");
-      await expect(
-        page.getByRole("heading", { name: new RegExp(sectionName, "i") }),
-      ).toBeVisible({ timeout: 5_000 });
-    } else {
-      test.skip(true, "Section input non trovato in questo flusso UI");
-    }
+    await expect(sectionInput).toBeVisible();
+    await sectionInput.fill(sectionName);
+    await sectionInput.press("Enter");
+    await expect(
+      page.getByRole("heading", { name: new RegExp(sectionName, "i") }),
+    ).toBeVisible({ timeout: 5_000 });
   });
 });

@@ -4,24 +4,24 @@ test.describe("reports + export + print", () => {
   test("dashboard /reports renderizza con range toggle e KPI cards", async ({ page }) => {
     await page.goto("/reports");
     await expect(page.getByRole("heading", { name: /^reports$/i })).toBeVisible();
-    // Range toggle
-    await expect(page.getByRole("link", { name: /^settimana$/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /^mese$/i })).toBeVisible();
+    // Range toggle (label inglesi: Week / Last / Month)
+    await expect(page.getByRole("link", { name: /^week$/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^month$/i })).toBeVisible();
     // KPI labels — selezioniamo la prima occorrenza (le KPI cards, non gli header tabella)
-    await expect(page.getByText(/ore totali/i).first()).toBeVisible();
-    await expect(page.getByText(/task completati/i).first()).toBeVisible();
+    await expect(page.getByText(/^hours$/i).first()).toBeVisible();
+    await expect(page.getByText(/^completed$/i).first()).toBeVisible();
     // Export CSV link
     await expect(page.getByRole("link", { name: /export csv/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /versione stampa/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^print$/i })).toBeVisible();
   });
 
   test("switch range week → month → last-week aggiorna URL", async ({ page }) => {
     await page.goto("/reports");
-    await page.getByRole("link", { name: /^mese$/i }).click();
+    await page.getByRole("link", { name: /^month$/i }).click();
     await expect(page).toHaveURL(/range=month/);
-    await page.getByRole("link", { name: /^scorsa$/i }).click();
+    await page.getByRole("link", { name: /^last$/i }).click();
     await expect(page).toHaveURL(/range=last-week/);
-    await page.getByRole("link", { name: /^settimana$/i }).click();
+    await page.getByRole("link", { name: /^week$/i }).click();
     await expect(page).toHaveURL(/range=week/);
   });
 

@@ -1,20 +1,6 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
-import { uniqueSuffix } from "./helpers/utils";
-
-/** Crea un task via QuickAdd (dialog "Aggiungi task") e chiude il dialog. */
-async function createTaskViaQuickAdd(page: Page, title: string) {
-  await page.getByRole("button", { name: /aggiungi task/i }).click();
-  const input = page.getByPlaceholder(/Chiamare Mario/i);
-  await expect(input).toBeVisible();
-  await input.fill(title);
-  await input.press("Enter");
-  // Attende che il task compaia in lista, poi chiude il dialog di creazione.
-  await expect(
-    page.locator("li").filter({ hasText: title }).first(),
-  ).toBeVisible({ timeout: 5_000 });
-  await page.keyboard.press("Escape");
-}
+import { createTaskViaQuickAdd, uniqueSuffix } from "./helpers/utils";
 
 test.describe("sottoattività", () => {
   test("crea sottoattività dal dialog e completa il padre con cascata", async ({
@@ -47,6 +33,13 @@ test.describe("sottoattività", () => {
     await dialog
       .getByRole("checkbox", { name: /completa task/i })
       .click({ force: true });
+
+    // Il revalidate sposta la riga nella sezione "Completed" e il remount
+    // chiude il dialog: riapriamo il dettaglio e verifichiamo la cascata.
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    const completedRow = page.locator("li").filter({ hasText: title }).first();
+    await completedRow.getByRole("button", { name: title }).click();
     await expect(dialog.getByText("1/1")).toBeVisible({ timeout: 5_000 });
     await expect(
       dialog.locator("span.line-through", { hasText: childTitle }),

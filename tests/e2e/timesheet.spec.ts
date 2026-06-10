@@ -9,8 +9,8 @@ test.describe("timesheet", () => {
     const updatedDescription = `Voce aggiornata ${uniqueSuffix()}`;
 
     await page.goto("/clients");
-    await page.getByLabel(/^Nome \*/).fill(clientName);
-    await page.getByRole("button", { name: /crea cliente/i }).click();
+    await page.getByLabel(/^Name \*/).fill(clientName);
+    await page.getByRole("button", { name: /create client/i }).click();
     await page
       .locator("#main-content")
       .getByRole("link", { name: new RegExp(clientName) })
@@ -40,8 +40,8 @@ test.describe("timesheet", () => {
     const description = `Voce timesheet ${uniqueSuffix()}`;
 
     await page.goto("/clients");
-    await page.getByLabel(/^Nome \*/).fill(clientName);
-    await page.getByRole("button", { name: /crea cliente/i }).click();
+    await page.getByLabel(/^Name \*/).fill(clientName);
+    await page.getByRole("button", { name: /create client/i }).click();
     await page
       .locator("#main-content")
       .getByRole("link", { name: new RegExp(clientName) })
@@ -63,15 +63,17 @@ test.describe("timesheet", () => {
     const description = `Voce CSV ${uniqueSuffix()}`;
 
     await page.goto("/clients");
-    await page.getByLabel(/^Nome \*/).fill(clientName);
-    await page.getByRole("button", { name: /crea cliente/i }).click();
+    await page.getByLabel(/^Name \*/).fill(clientName);
+    await page.getByRole("button", { name: /create client/i }).click();
     await page
       .locator("#main-content")
       .getByRole("link", { name: new RegExp(clientName) })
       .first()
       .click();
 
-    // Estrai clientId dall'URL della pagina cliente
+    // Estrai clientId dall'URL della pagina cliente (attende la navigazione:
+    // page.url() letto subito dopo il click è una race)
+    await page.waitForURL(/\/clients\/[^/?]+/);
     const clientUrl = page.url();
     const clientId = clientUrl.match(/\/clients\/([^/?]+)/)?.[1];
     expect(clientId).toBeDefined();
@@ -82,8 +84,9 @@ test.describe("timesheet", () => {
     await expect(page.getByText(description)).toBeVisible({ timeout: 5_000 });
 
     // Cliente carica già il preset "Questo mese", quindi la voce manuale è inclusa.
+    // Il link ha testo "CSV" (title="Export CSV" non è l'accessible name).
     const csvHref = await page
-      .getByRole("link", { name: /export csv/i })
+      .getByRole("link", { name: /^csv$/i })
       .getAttribute("href");
     expect(csvHref).toBeTruthy();
 

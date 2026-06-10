@@ -1,67 +1,52 @@
 import { test, expect } from "@playwright/test";
 
-import { uniqueSuffix } from "./helpers/utils";
+import { createTaskViaQuickAdd, uniqueSuffix } from "./helpers/utils";
 
 test.describe("task CRUD su Today/Inbox", () => {
   test("crea task in Inbox via QuickAdd e lo vede in lista", async ({ page }) => {
     const title = `Task inbox ${uniqueSuffix()}`;
     await page.goto("/inbox");
 
-    const input = page.getByPlaceholder(/Chiamare Mario/i);
-    await expect(input).toBeVisible();
-    await input.fill(title);
-    await input.press("Enter");
+    await createTaskViaQuickAdd(page, title);
 
     // Task appare nella lista
     await expect(page.getByText(title)).toBeVisible({ timeout: 5_000 });
   });
 
   test("crea task in Today con scheduledAt automatico e lo completa", async ({ page }) => {
-    const title = `Task oggi ${uniqueSuffix()}`;
+    // "oggi" è un token NLP: schedula il task per oggi e sparisce dal titolo.
+    const title = `Task odierno ${uniqueSuffix()}`;
     await page.goto("/today");
 
-    const input = page.getByPlaceholder(/Chiamare Mario/i);
-    await input.fill(title);
-    await input.press("Enter");
+    await createTaskViaQuickAdd(page, `${title} oggi`, title);
 
-    await expect(page.getByText(title)).toBeVisible({ timeout: 5_000 });
-
-    // Trova la row col task e clicca la checkbox.
-    // Usiamo click() invece di check() perché il revalidate fa sparire il task
-    // o cambia lo stato della checkbox prima che check() veda lo stato finale.
+    // Trova la row e clicca la LABEL (il cerchio visivo): l'input è sr-only
+    // (1px clippato) e un click forzato sulle sue coordinate può atterrare
+    // sul titolo aprendo il dialog invece di completare.
     const row = page
       .locator("li")
       .filter({ hasText: title })
       .first();
-    await row.getByRole("checkbox", { name: /completato/i }).click();
+    await row.locator("label").first().click();
 
-    // Dopo il revalidate il task può essere ancora visibile con line-through
-    // (Today include task con scheduledAt entro fine giornata anche completati)
-    // oppure rimanere visibile con stato updated.
-    await page.waitForTimeout(1_000);
-    // Verifica che almeno UNA delle due condizioni sia vera:
-    //   - task assente
-    //   - task visibile con line-through
-    const stillVisible = await page.getByText(title).isVisible().catch(() => false);
-    if (stillVisible) {
-      const updatedRow = page.locator("li").filter({ hasText: title }).first();
-      await expect(updatedRow.locator("p.line-through")).toBeVisible({
-        timeout: 3_000,
-      });
-    }
+    // Dopo il revalidate la riga resta visibile in Today (sezione Completed)
+    // con checkbox spuntata e titolo barrato. Il locator è live: si riaggancia
+    // alla riga anche dopo il remount.
+    await expect(row.getByRole("checkbox")).toBeChecked({ timeout: 10_000 });
+    await expect(row.locator(".line-through").first()).toBeVisible();
   });
 
   test("crea task con priority via NLP (p1) ed elimina", async ({ page }) => {
     const title = `Priority test ${uniqueSuffix()}`;
     await page.goto("/inbox");
 
-    const input = page.getByPlaceholder(/Chiamare Mario/i);
-    await input.fill(`${title} p1`);
-    await input.press("Enter");
+    // Il token "p1" viene parsato dal QuickAdd e rimosso dal titolo visibile.
+    await createTaskViaQuickAdd(page, `${title} p1`, title);
 
     const row = page.locator("li").filter({ hasText: title }).first();
     await expect(row).toBeVisible({ timeout: 5_000 });
-    await expect(row.getByText("P1", { exact: true })).toBeVisible();
+    // La priorità è un dot colorato con aria-label, non testo "P1".
+    await expect(row.getByLabel(/^priority 1$/i)).toBeVisible();
 
     // Hover per mostrare action buttons, poi elimina
     await row.hover();
@@ -70,11 +55,12 @@ test.describe("task CRUD su Today/Inbox", () => {
     await expect(page.getByText(title)).not.toBeVisible({ timeout: 5_000 });
   });
 
-  test("naviga Today → Inbox → Upcoming via sidebar", async ({ page }) => {
+  test("naviga Today → Inbox → Attività via sidebar", async ({ page }) => {
     await page.goto("/today");
     await page.getByRole("link", { name: /inbox/i }).first().click();
     await expect(page).toHaveURL(/\/inbox/);
-    await page.getByRole("link", { name: /upcoming/i }).first().click();
+    // La vista /upcoming si chiama "Attività" nella sidebar.
+    await page.getByRole("link", { name: /attività/i }).first().click();
     await expect(page).toHaveURL(/\/upcoming/);
     await page.getByRole("link", { name: /today/i }).first().click();
     await expect(page).toHaveURL(/\/today/);

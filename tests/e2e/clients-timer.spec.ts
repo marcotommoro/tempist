@@ -7,8 +7,8 @@ test.describe("clients + timer", () => {
     const clientName = `Cliente ${uniqueSuffix()}`;
     await page.goto("/clients");
 
-    await page.getByLabel(/^Nome \*/).fill(clientName);
-    await page.getByRole("button", { name: /crea cliente/i }).click();
+    await page.getByLabel(/^Name \*/).fill(clientName);
+    await page.getByRole("button", { name: /create client/i }).click();
 
     await expect(
       page.locator("#main-content").getByRole("link", { name: new RegExp(clientName) }).first(),
@@ -50,8 +50,8 @@ test.describe("clients + timer", () => {
   test("crea manual entry retroattiva sul cliente", async ({ page }) => {
     const clientName = `Manual ${uniqueSuffix()}`;
     await page.goto("/clients");
-    await page.getByLabel(/^Nome \*/).fill(clientName);
-    await page.getByRole("button", { name: /crea cliente/i }).click();
+    await page.getByLabel(/^Name \*/).fill(clientName);
+    await page.getByRole("button", { name: /create client/i }).click();
 
     await page.locator("#main-content").getByRole("link", { name: new RegExp(clientName) }).first().click();
 
