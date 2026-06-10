@@ -28,6 +28,7 @@
  */
 
 import * as chrono from "chrono-node";
+import { getTimezoneOffset } from "date-fns-tz";
 
 import { applyDefaultTaskTime } from "@/lib/utils/apply-default-task-time";
 import {
@@ -185,7 +186,12 @@ function extractDate(
     return { date, rest, sourceText: supplement.matchedText };
   }
 
-  const ref = { instant: refDate, timezone };
+  // chrono-node non riconosce i nomi IANA ("Europe/Rome") e farebbe fallback
+  // silenzioso al tz di sistema del server (UTC in produzione): convertiamo in
+  // offset minuti calcolato all'istante di riferimento. Nota: per date oltre un
+  // cambio DST l'offset può differire di 1h dal reale.
+  const offsetMinutes = getTimezoneOffset(timezone, refDate) / 60_000;
+  const ref = { instant: refDate, timezone: offsetMinutes };
   const opts = { forwardDate: true as const };
 
   const chronoResults = [

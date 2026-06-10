@@ -84,6 +84,30 @@ describe("parseQuickAdd", () => {
     expect(r.scheduledAt?.toISOString()).toBe("2026-05-22T07:00:00.000Z");
   });
 
+  // Regression: chrono-node non riconosce i nomi IANA ("Europe/Rome") e senza
+  // conversione in offset farebbe fallback al tz di sistema del server.
+  // In produzione (Docker, UTC) "10:30" veniva salvato come 10:30Z → mostrato 12:30.
+  it("parses bare time 10:30 in user timezone, not system timezone", () => {
+    // 10:30 Roma < ore 14:00 locali del riferimento → forwardDate spinge a domani
+    const r = parse("Task 10:30");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-21T08:30:00.000Z");
+    expect(r.title).toBe("Task");
+  });
+
+  it("parses domani alle 10:30 in user timezone", () => {
+    const r = parse("Task domani alle 10:30");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-21T08:30:00.000Z");
+    expect(r.title).toBe("Task");
+  });
+
+  it("honors a non-default IANA timezone option", () => {
+    const r = parseQuickAdd("Task tomorrow at 10:30", {
+      now: NOW,
+      timezone: "America/New_York", // EDT = UTC-4 a maggio
+    });
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-21T14:30:00.000Z");
+  });
+
   it("parses la settimana prossima as next Monday 09:00", () => {
     const r = parse("Riunione la settimana prossima");
     expect(r.scheduledAt?.toISOString()).toBe("2026-05-25T07:00:00.000Z");

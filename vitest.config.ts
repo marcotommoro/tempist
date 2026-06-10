@@ -6,6 +6,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     globals: true,
+    // TZ=UTC simula il server di produzione (Docker): i bug di timezone
+    // diventano riproducibili invece di sparire sul Mac in Europe/Rome.
+    env: { TZ: "UTC" },
     coverage: {
       reporter: ["text", "html"],
       exclude: [
