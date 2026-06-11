@@ -25,6 +25,7 @@ import {
   renameProject,
   renameSection,
   setProjectClient,
+  setProjectColor,
   setProjectDescription,
   toggleProjectFavorite,
 } from "@/lib/domain/projects";
@@ -97,6 +98,33 @@ export async function renameProjectAction(
       projectId,
       organizationId: project.organizationId,
       name,
+    });
+    revalidateProjects(projectId);
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+const projectColorSchema = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/u, "Colore deve essere hex #RRGGBB");
+
+export async function setProjectColorAction(
+  projectId: string,
+  color: string,
+): Promise<ActionResult> {
+  try {
+    const { role, project } = await requireProjectAccess(projectId);
+    assertProjectRole(role, ["editor"]);
+    const parsed = projectColorSchema.safeParse(color);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Colore non valido" };
+    }
+    await setProjectColor({
+      projectId,
+      organizationId: project.organizationId,
+      color: parsed.data,
     });
     revalidateProjects(projectId);
     return { ok: true, data: undefined };

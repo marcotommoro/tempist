@@ -9,6 +9,7 @@ import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { ProjectClientSelect } from "@/components/features/projects/project-client-select";
+import { ProjectColorSelect } from "@/components/features/projects/project-color-select";
 import { ProjectDescription } from "@/components/features/projects/project-description";
 import { ProjectEditableTitle } from "@/components/features/projects/project-editable-title";
 import { ProjectMembersButton } from "@/components/features/projects/members/project-members-button";
@@ -103,6 +104,11 @@ export default async function ProjectDetailPage({
       />
 
       <div className="flex flex-wrap items-center gap-3">
+        <ProjectColorSelect
+          projectId={id}
+          initialColor={project.color}
+          canEdit={canEdit}
+        />
         {accessType === "workspace" && (
           <ProjectClientSelect
             projectId={id}

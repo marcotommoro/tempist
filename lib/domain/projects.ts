@@ -116,6 +116,22 @@ export async function renameProject(opts: {
     );
 }
 
+export async function setProjectColor(opts: {
+  projectId: string;
+  organizationId: string;
+  color: string;
+}): Promise<void> {
+  await db
+    .update(schema.project)
+    .set({ color: opts.color })
+    .where(
+      and(
+        eq(schema.project.id, opts.projectId),
+        eq(schema.project.organizationId, opts.organizationId),
+      ),
+    );
+}
+
 export async function setProjectDescription(opts: {
   projectId: string;
   /** Nullable: stringa vuota o null → cancella la descrizione. */
