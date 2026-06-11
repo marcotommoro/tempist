@@ -13,6 +13,7 @@ import DOMPurify from "isomorphic-dompurify";
 const ALLOWED_TAGS = [
   "p",
   "br",
+  "hr",
   "strong",
   "em",
   "u",

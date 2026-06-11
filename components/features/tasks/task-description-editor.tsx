@@ -15,6 +15,9 @@ function isEmptyHtml(html: string): boolean {
   return t === "" || t === "<p></p>";
 }
 
+// Allineato al limite Zod dell'action (stringa HTML, non testo visibile).
+const MAX_DESCRIPTION_LENGTH = 20_000;
+
 export function TaskDescriptionEditor({
   taskId,
   initialDescription,
@@ -61,6 +64,8 @@ export function TaskDescriptionEditor({
           onChange={setDraft}
           disabled={pending}
           autoFocus
+          expandable
+          maxLength={MAX_DESCRIPTION_LENGTH}
           placeholder="Aggiungi una descrizione… (⌘↵ per salvare, Esc per annullare)"
           onSubmit={save}
           onCancel={cancel}
@@ -69,7 +74,7 @@ export function TaskDescriptionEditor({
           <button
             type="button"
             onClick={save}
-            disabled={pending}
+            disabled={pending || draft.length > MAX_DESCRIPTION_LENGTH}
             className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             Salva

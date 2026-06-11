@@ -15,6 +15,9 @@ function isEmptyHtml(html: string): boolean {
   return t === "" || t === "<p></p>";
 }
 
+// Allineato al limite Zod di setProjectDescriptionAction (stringa HTML).
+const MAX_DESCRIPTION_LENGTH = 10_000;
+
 export function ProjectDescription({
   projectId,
   initialDescription,
@@ -64,6 +67,8 @@ export function ProjectDescription({
           onChange={setDraft}
           disabled={pending}
           autoFocus
+          expandable
+          maxLength={MAX_DESCRIPTION_LENGTH}
           placeholder="Aggiungi una descrizione… (⌘↵ per salvare, Esc per annullare)"
           onSubmit={save}
           onCancel={cancel}
@@ -72,7 +77,7 @@ export function ProjectDescription({
           <button
             type="button"
             onClick={save}
-            disabled={pending}
+            disabled={pending || draft.length > MAX_DESCRIPTION_LENGTH}
             className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             Salva

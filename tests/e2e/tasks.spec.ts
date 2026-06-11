@@ -55,6 +55,89 @@ test.describe("task CRUD su Today/Inbox", () => {
     await expect(page.getByText(title)).not.toBeVisible({ timeout: 5_000 });
   });
 
+  test("descrizione rich-text: formattazione, divisore e salvataggio", async ({
+    page,
+  }) => {
+    const title = `Desc richtext ${uniqueSuffix()}`;
+    await page.goto("/inbox");
+    await createTaskViaQuickAdd(page, title);
+
+    const row = page.locator("li").filter({ hasText: title }).first();
+    await row.getByRole("button", { name: title }).click();
+    const dialog = page.getByRole("dialog");
+
+    // Apri l'editor dallo stato vuoto "Descrizione".
+    await dialog.getByRole("button", { name: /descrizione/i }).first().click();
+    const editor = dialog.locator('.ProseMirror[contenteditable="true"]');
+    await expect(editor).toBeVisible();
+    await editor.click();
+
+    // Input rule markdown: "- " crea un elenco puntato.
+    await editor.pressSequentially("- primo elemento");
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Enter"); // esce dalla lista
+
+    // Divisore da toolbar (round-trip <hr>: prima del fix spariva al salvataggio).
+    await dialog.getByRole("button", { name: "Divisore" }).click();
+
+    // Grassetto da toolbar: il testo digitato dopo è bold.
+    await dialog.getByRole("button", { name: "Grassetto" }).click();
+    await editor.pressSequentially("in grassetto");
+
+    await dialog.getByRole("button", { name: "Salva" }).click();
+
+    // Render di sola lettura: lista, divisore e bold sopravvivono al round-trip.
+    await expect(
+      dialog.locator("ul li").filter({ hasText: "primo elemento" }),
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      dialog.locator('.ProseMirror[contenteditable="false"] hr'),
+    ).toHaveCount(1);
+    await expect(
+      dialog.locator("strong").filter({ hasText: "in grassetto" }),
+    ).toBeVisible();
+  });
+
+  test("descrizione rich-text: popover link e modalità espansa", async ({
+    page,
+  }) => {
+    const title = `Desc url ${uniqueSuffix()}`;
+    await page.goto("/inbox");
+    await createTaskViaQuickAdd(page, title);
+
+    const row = page.locator("li").filter({ hasText: title }).first();
+    await row.getByRole("button", { name: title }).click();
+    const dialog = page.getByRole("dialog");
+
+    await dialog.getByRole("button", { name: /descrizione/i }).first().click();
+    const editor = dialog.locator('.ProseMirror[contenteditable="true"]');
+    await editor.click();
+    await editor.pressSequentially("sito di esempio");
+    await editor.press("ControlOrMeta+a");
+
+    // Link via popover (niente window.prompt): URL senza schema → https:// aggiunto.
+    await dialog.getByRole("button", { name: "Link", exact: true }).click();
+    const urlInput = page.getByPlaceholder("https://esempio.com");
+    await expect(urlInput).toBeVisible();
+    await urlInput.fill("esempio.com");
+    await urlInput.press("Enter");
+    await expect(
+      editor.locator('a[href="https://esempio.com"]'),
+    ).toBeVisible();
+
+    // Modalità espansa: Esc a due stadi (prima collassa, l'editor resta aperto).
+    await dialog.getByRole("button", { name: "Espandi" }).click();
+    await expect(page.getByRole("button", { name: "Riduci" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog.getByRole("button", { name: "Espandi" })).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Salva" })).toBeVisible();
+
+    await dialog.getByRole("button", { name: "Salva" }).click();
+    await expect(
+      dialog.locator('a[href="https://esempio.com"]'),
+    ).toBeVisible({ timeout: 5_000 });
+  });
+
   test("naviga Today → Inbox → Attività via sidebar", async ({ page }) => {
     await page.goto("/today");
     await page.getByRole("link", { name: /inbox/i }).first().click();

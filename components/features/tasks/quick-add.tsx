@@ -275,6 +275,8 @@ export function QuickAddForm({
             value={description}
             onChange={setDescription}
             disabled={pending}
+            size="compact"
+            maxLength={20_000}
           />
           <QuickAddPickers
             projects={projects}

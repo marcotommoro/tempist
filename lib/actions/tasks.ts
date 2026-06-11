@@ -301,16 +301,26 @@ export async function deleteTaskAction(
   }
 }
 
+// Stesso limite di createTaskSchema: vale sulla stringa HTML, non sul testo visibile.
+const taskDescriptionSchema = z
+  .string()
+  .max(20000, "Descrizione troppo lunga (max 20k caratteri)")
+  .nullable();
+
 export async function setTaskDescriptionAction(
   taskId: string,
   descriptionMarkdown: string | null,
 ): Promise<ActionResult> {
   try {
     const { organizationId } = await requireActiveOrganization();
+    const parsed = taskDescriptionSchema.safeParse(descriptionMarkdown);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Input non valido" };
+    }
     await updateTaskDescription({
       taskId,
       organizationId,
-      descriptionMarkdown: normalizeDescriptionHtml(descriptionMarkdown),
+      descriptionMarkdown: normalizeDescriptionHtml(parsed.data),
     });
     revalidateTaskViews();
     return { ok: true, data: undefined };
