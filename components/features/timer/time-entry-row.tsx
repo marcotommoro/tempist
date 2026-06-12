@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { AlertTriangle, Pencil, Trash2 } from "lucide-react";
@@ -38,6 +38,14 @@ export function TimeEntryRow({
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Tick locale: solo per la voce in corso, così la durata "scorre" come in header.
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!entry.isRunning) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [entry.isRunning]);
 
   const clientName = useMemo(
     () => clients.find((c) => c.id === entry.clientId)?.name,
@@ -62,10 +70,7 @@ export function TimeEntryRow({
 
   const duration =
     entry.durationSeconds ??
-    Math.max(
-      0,
-      Math.floor((new Date().getTime() - entry.startedAt.getTime()) / 1000),
-    );
+    Math.max(0, Math.floor((now - entry.startedAt.getTime()) / 1000));
 
   const billableValue =
     entry.hourlyRateSnapshot && duration > 0

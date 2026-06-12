@@ -5,7 +5,7 @@ import { requireProjectAccess } from "@/lib/auth/project-access";
 import { getProjectBoard } from "@/lib/domain/projects";
 import { listProjectInvitations, listProjectMembers } from "@/lib/domain/project-members";
 import { listClients } from "@/lib/domain/clients";
-import { getTrackedSecondsByTask } from "@/lib/domain/time-entries";
+import { getRunningTimer, getTrackedSecondsByTask } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
 import { ProjectClientSelect } from "@/components/features/projects/project-client-select";
@@ -53,11 +53,18 @@ export default async function ProjectDetailPage({
   for (const arr of tasksBySection.values()) {
     for (const t of arr) allTaskIds.push(t.id);
   }
-  const [trackedByTask, remindersByTask, commentsByTask] = await Promise.all([
-    getTrackedSecondsByTask({ organizationId, taskIds: allTaskIds }),
-    getPendingReminderCountByTask(allTaskIds),
-    getCommentCountByTask({ taskIds: allTaskIds }),
-  ]);
+  const [trackedByTask, remindersByTask, commentsByTask, runningTimer] =
+    await Promise.all([
+      getTrackedSecondsByTask({ organizationId, taskIds: allTaskIds }),
+      getPendingReminderCountByTask(allTaskIds),
+      getCommentCountByTask({ taskIds: allTaskIds }),
+      getRunningTimer({ userId: user.id, organizationId }),
+    ]);
+
+  // Se il timer in corso è agganciato a un task di questo progetto, il suo
+  // totale dovrà scorrere live (vedi TaskItem.runningSince).
+  const runningTaskId = runningTimer?.taskId ?? null;
+  const runningStartedAt = runningTimer?.startedAt ?? null;
 
   const isBoard = view === "board";
   const taskCount = allTaskIds.length;
@@ -144,6 +151,8 @@ export default async function ProjectDetailPage({
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
+          runningTaskId={runningTaskId}
+          runningStartedAt={runningStartedAt}
         />
       )}
     </div>
@@ -190,6 +199,8 @@ function ListView({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  runningTaskId,
+  runningStartedAt,
 }: {
   projectId: string;
   projectName: string;
@@ -201,6 +212,8 @@ function ListView({
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
   commentsByTask: Map<string, number>;
+  runningTaskId: string | null;
+  runningStartedAt: Date | null;
 }) {
   const tasksNoSection = tasksBySection.get(null) ?? [];
 
@@ -219,6 +232,8 @@ function ListView({
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
+          runningTaskId={runningTaskId}
+          runningStartedAt={runningStartedAt}
         />
       )}
       {sections.map((s) => (
@@ -235,6 +250,8 @@ function ListView({
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
           commentsByTask={commentsByTask}
+          runningTaskId={runningTaskId}
+          runningStartedAt={runningStartedAt}
         />
       ))}
       <div>
@@ -256,6 +273,8 @@ function SectionBlock({
   trackedByTask,
   remindersByTask,
   commentsByTask,
+  runningTaskId,
+  runningStartedAt,
 }: {
   name: string;
   projectId: string;
@@ -268,6 +287,8 @@ function SectionBlock({
   trackedByTask: Map<string, number>;
   remindersByTask: Map<string, number>;
   commentsByTask: Map<string, number>;
+  runningTaskId: string | null;
+  runningStartedAt: Date | null;
 }) {
   return (
     <section className="space-y-3">
@@ -292,6 +313,7 @@ function SectionBlock({
                 projectName={projectName}
                 projectColor={projectColor}
                 currentUserId={currentUserId}
+                runningSince={runningTaskId === t.id ? runningStartedAt : null}
               />
             ))}
           </ul>
