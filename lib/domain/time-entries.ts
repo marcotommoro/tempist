@@ -785,6 +785,53 @@ export async function reassignRunningTimer(opts: {
   return updated ?? null;
 }
 
+/**
+ * Modifica un timer IN CORSO senza fermarlo: corregge startedAt e/o description.
+ * A differenza di updateTimeEntry (che blocca i running), qui isRunning resta true
+ * e durationSeconds resta null — l'elapsed lo ricalcola il client da startedAt.
+ * Ritorna null se non c'è alcun timer attivo.
+ */
+export async function updateRunningTimer(opts: {
+  userId: string;
+  organizationId: string;
+  startedAt: Date;
+  description?: string | null;
+}): Promise<TimeEntry | null> {
+  const running = await getRunningTimer({
+    userId: opts.userId,
+    organizationId: opts.organizationId,
+  });
+  if (!running) return null;
+
+  // >>> CONTRIBUTO UTENTE — regola di validazione di startedAt <<<
+  // Vincoli di prodotto da decidere: futuro → elapsed negativo; passato troppo
+  // remoto → probabile errore di battitura. Lancia Error (msg in italiano) se non valido.
+  if (opts.startedAt.getTime() > Date.now()) {
+    throw new Error("L'ora di inizio non può essere nel futuro");
+  }
+  // <<< FINE CONTRIBUTO UTENTE >>>
+
+  const [updated] = await db
+    .update(schema.timeEntry)
+    .set({
+      startedAt: opts.startedAt,
+      description: opts.description ?? running.description,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.timeEntry.id, running.id))
+    .returning();
+  if (updated) {
+    await writeAudit({
+      timeEntryId: updated.id,
+      actorId: opts.userId,
+      action: "UPDATE",
+      before: running,
+      after: updated,
+    });
+  }
+  return updated ?? null;
+}
+
 export type UpdateTimeEntryInput = {
   timeEntryId: string;
   organizationId: string;

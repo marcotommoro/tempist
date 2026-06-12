@@ -1,22 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { ListChecks, MessageSquare, Play, Repeat, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { deleteTaskAction, toggleTaskAction } from "@/lib/actions/tasks";
-import {
-  createManualEntryAction,
-  startTimerFromTaskAction,
-} from "@/lib/actions/timer";
+import { startTimerFromTaskAction } from "@/lib/actions/timer";
 import type { Task } from "@/lib/db/schema";
 import type { SubtaskCounts } from "@/lib/domain/tasks";
 import { TaskProgress } from "./task-progress";
-import {
-  CompleteWithDurationDialog,
-  type CompleteDecision,
-} from "./complete-with-duration-dialog";
 import { TaskReminderButton } from "./task-reminder-button";
 import { TaskSchedulePicker } from "./task-schedule-picker";
 import { TaskDetailDialog } from "./task-detail-dialog";
@@ -45,6 +38,7 @@ export function TaskItem({
   clientName = null,
   clientColor = null,
   currentUserId,
+  runningSince = null,
   liRef,
   liStyle,
   liProps,
@@ -60,6 +54,11 @@ export function TaskItem({
   clientName?: string | null;
   clientColor?: string | null;
   currentUserId?: string;
+  /**
+   * Se valorizzato, questo task ha il timer attivo (startedAt della voce in
+   * corso): il totale tracciato scorre live sommando il delta dalla partenza.
+   */
+  runningSince?: Date | null;
   /** Hook per drag&drop (dnd-kit): ref/style/listeners applicati al <li>. */
   liRef?: React.Ref<HTMLLIElement>;
   liStyle?: React.CSSProperties;
@@ -67,57 +66,14 @@ export function TaskItem({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const isDone = !!task.completedAt;
 
-  const shouldPromptDuration =
-    !isDone &&
-    !!task.estimatedMinutes &&
-    task.estimatedMinutes > 0 &&
-    trackedSeconds === 0;
-
-  function runToggle() {
+  function onCheckboxChange() {
     setError(null);
     startTransition(async () => {
       const res = await toggleTaskAction(task.id);
       if (!res.ok) setError(res.error);
-    });
-  }
-
-  function onCheckboxChange() {
-    if (shouldPromptDuration) {
-      setDialogOpen(true);
-      return;
-    }
-    runToggle();
-  }
-
-  function onDurationDecision(d: CompleteDecision) {
-    setError(null);
-    startTransition(async () => {
-      if (d.type === "confirm") {
-        const endedAt = new Date();
-        const startedAt = new Date(endedAt.getTime() - d.minutes * 60_000);
-        const entry = await createManualEntryAction({
-          startedAt: startedAt.toISOString(),
-          endedAt: endedAt.toISOString(),
-          description: task.title,
-          taskId: task.id,
-          projectId: task.projectId,
-          clientId: task.clientId,
-        });
-        if (!entry.ok) {
-          setError(entry.error);
-          return;
-        }
-      }
-      const res = await toggleTaskAction(task.id);
-      if (!res.ok) {
-        setError(res.error);
-        return;
-      }
-      setDialogOpen(false);
     });
   }
 
@@ -143,6 +99,19 @@ export function TaskItem({
     task.dueDate ? new Date(task.dueDate).getTime() < Date.now() : false,
   );
   const isOverdue = !isDone && overdueAtMount;
+
+  // Tick locale solo se il task ha il timer attivo: il totale scorre come header.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!runningSince) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [runningSince]);
+
+  const liveTrackedSeconds = runningSince
+    ? trackedSeconds +
+      Math.max(0, Math.floor((now - runningSince.getTime()) / 1000))
+    : trackedSeconds;
 
   return (
     <li
@@ -274,8 +243,9 @@ export function TaskItem({
             </span>
           )}
           <TaskProgress
-            trackedSeconds={trackedSeconds}
+            trackedSeconds={liveTrackedSeconds}
             estimatedMinutes={task.estimatedMinutes}
+            live={!!runningSince}
           />
           {error && <span className="text-destructive normal-case">{error}</span>}
         </div>
@@ -317,22 +287,12 @@ export function TaskItem({
           <Trash2 className="size-3.5" />
         </button>
       </div>
-      {shouldPromptDuration && task.estimatedMinutes != null && (
-        <CompleteWithDurationDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          taskTitle={task.title}
-          defaultMinutes={task.estimatedMinutes}
-          pending={pending}
-          onDecision={onDurationDecision}
-        />
-      )}
       {currentUserId && (
         <TaskDetailDialog
           task={task}
           projectName={projectName}
           projectColor={projectColor}
-          trackedSeconds={trackedSeconds}
+          trackedSeconds={liveTrackedSeconds}
           currentUserId={currentUserId}
           open={detailOpen}
           onOpenChange={setDetailOpen}

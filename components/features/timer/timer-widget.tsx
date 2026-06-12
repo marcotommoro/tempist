@@ -1,5 +1,6 @@
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { getRunningTimer } from "@/lib/domain/time-entries";
+import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 import { TimerWidgetClient } from "./timer-widget-client";
 
 /**
@@ -9,5 +10,7 @@ import { TimerWidgetClient } from "./timer-widget-client";
 export async function TimerWidget() {
   const { user, organizationId } = await requireActiveOrganization();
   const running = await getRunningTimer({ userId: user.id, organizationId });
-  return <TimerWidgetClient running={running} />;
+  return (
+    <TimerWidgetClient running={running} userTimezone={userTimezone(user)} />
+  );
 }

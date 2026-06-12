@@ -16,6 +16,7 @@ import {
   startTimerFromProject,
   startTimerFromTask,
   stopTimer,
+  updateRunningTimer,
   updateTimeEntry,
   upsertQuickEntry,
 } from "@/lib/domain/time-entries";
@@ -361,6 +362,34 @@ export async function updateTimeEntryAction(input: {
       taskId: input.taskId ?? null,
       isBillable: input.isBillable,
     });
+    revalidateAll();
+    return { ok: true, data: { id: entry.id } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+/**
+ * Aggiorna il timer in corso (ora di inizio + descrizione) senza fermarlo.
+ * Usato dal popover nell'header. Non passa endedAt: la voce resta running.
+ */
+export async function updateRunningTimerAction(input: {
+  startedAt: string;
+  description?: string | null;
+}): Promise<ActionResult<{ id: string }>> {
+  try {
+    const { user, organizationId } = await requireActiveOrganization();
+    const startedAt = new Date(input.startedAt);
+    if (Number.isNaN(startedAt.getTime())) {
+      return { ok: false, error: "Data non valida" };
+    }
+    const entry = await updateRunningTimer({
+      userId: user.id,
+      organizationId,
+      startedAt,
+      description: input.description ?? null,
+    });
+    if (!entry) return { ok: false, error: "Nessun timer attivo" };
     revalidateAll();
     return { ok: true, data: { id: entry.id } };
   } catch (err) {

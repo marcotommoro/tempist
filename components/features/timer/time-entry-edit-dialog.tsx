@@ -2,7 +2,7 @@
 
 import { useState, useTransition, type FormEvent } from "react";
 import { format } from "date-fns";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 import { Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateTimeEntryAction } from "@/lib/actions/timer";
+import { combineDateTime } from "@/lib/utils/combine-date-time";
 import type { Client, Project, TimeEntry } from "@/lib/db/schema";
 
 import { LinkedTimeRangeFields } from "./linked-time-range-fields";
@@ -25,18 +26,6 @@ import { useLinkedTimeRange } from "./use-linked-time-range";
 
 type ClientPick = Pick<Client, "id" | "name">;
 type ProjectPick = Pick<Project, "id" | "name" | "clientId">;
-
-/**
- * Compone una data calendariale (Date) + un time string "HH:mm" in un istante UTC,
- * interpretando il tempo nel fuso dell'utente (non in quello del browser).
- *
- * Senza la conversione esplicita via fromZonedTime, `new Date('YYYY-MM-DDTHH:mm:00')`
- * userebbe il fuso locale del browser → bug quando l'utente è in viaggio.
- */
-function combineDateTime(dateLocal: Date, timeStr: string, tz: string): Date {
-  const dateStr = format(dateLocal, "yyyy-MM-dd");
-  return fromZonedTime(`${dateStr}T${timeStr}:00`, tz);
-}
 
 function TimeEntryEditForm({
   entry,
