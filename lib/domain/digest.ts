@@ -172,6 +172,10 @@ export async function processDailyDigest(now: Date = new Date()): Promise<{
       userId: c.user.id,
       now,
     });
+    // Niente task di oggi né promemoria in scadenza → nessuna email.
+    if (data.tasksToday.length === 0 && data.remindersDue.length === 0) {
+      continue;
+    }
     await sendEmail({
       to: c.user.email,
       subject: `Digest — ${data.date}`,
