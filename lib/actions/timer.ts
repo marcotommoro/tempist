@@ -6,9 +6,12 @@ import { and, eq, isNull } from "drizzle-orm";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { db, schema } from "@/lib/db";
+import { listClients } from "@/lib/domain/clients";
+import { listProjects } from "@/lib/domain/projects";
 import {
   createManualEntry,
   deleteTimeEntry,
+  listTimeEntriesForTask,
   discardRunningTimer,
   reassignRunningTimer,
   startTimer,
@@ -22,6 +25,7 @@ import {
 } from "@/lib/domain/time-entries";
 import type { TimeEntry } from "@/lib/db/schema";
 import { validateTimeEntryRange } from "@/lib/utils/compute-duration-seconds";
+import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 import type { ActionResult } from "./tasks";
 
 /** Info minima sul timer in corso, serializzata per il client (conflitto quick-start). */
@@ -305,6 +309,46 @@ export async function resolveTimerConflictAction(input: {
     return { ok: true, data: { id: started.entry.id } };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+/**
+ * Voci di tempo di un task + il minimo contesto per poterle modificare inline
+ * (liste cliente/progetto del dialog di edit e fuso dell'utente).
+ */
+export async function fetchTaskTimeEntriesAction(taskId: string): Promise<
+  ActionResult<{
+    entries: TimeEntry[];
+    clients: Array<{ id: string; name: string }>;
+    projects: Array<{ id: string; name: string; clientId: string | null }>;
+    userTimezone: string;
+  }>
+> {
+  try {
+    const { user, organizationId } = await requireActiveOrganization();
+    const [entries, clients, projects] = await Promise.all([
+      listTimeEntriesForTask({ taskId, organizationId }),
+      listClients({ organizationId }),
+      listProjects({ organizationId }),
+    ]);
+    return {
+      ok: true,
+      data: {
+        entries,
+        clients: clients.map((c) => ({ id: c.id, name: c.name })),
+        projects: projects.map((p) => ({
+          id: p.id,
+          name: p.name,
+          clientId: p.clientId,
+        })),
+        userTimezone: userTimezone(user),
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Errore caricamento voci",
+    };
   }
 }
 

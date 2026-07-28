@@ -31,7 +31,7 @@ import { TaskCommentsSection } from "./task-comments-section";
 import { TaskDescriptionEditor } from "./task-description-editor";
 import { TaskSubtasksSection } from "./task-subtasks-section";
 import { TaskPrioritySelect } from "./task-priority-select";
-import { TaskEstimateField } from "./task-estimate-field";
+import { TaskTimeEntries } from "./task-time-entries";
 import { Picker, type PickItem } from "./quick-add-panel";
 
 export function TaskDetailDialog({
@@ -312,6 +312,10 @@ export function TaskDetailDialog({
 
             <hr className="border-border" />
 
+            <TaskTimeEntries taskId={task.id} open={open} />
+
+            <hr className="border-border" />
+
             <div>
               <div className="mb-2 flex items-baseline justify-between">
                 <h3 className="font-mono text-[0.625em] uppercase tracking-[0.16em] text-muted-foreground">
@@ -396,31 +400,13 @@ export function TaskDetailDialog({
             </Field>
 
             <Field label="Time">
-              <div className="space-y-2.5">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="flex flex-col">
-                    <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em] text-muted-foreground">
-                      tracked
-                    </span>
-                    <span className="font-mono text-base tabular-nums text-foreground">
-                      {trackedSeconds > 0 ? formatDuration(trackedSeconds) : "—"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em] text-muted-foreground">
-                      estimate
-                    </span>
-                    <span className="font-mono text-base tabular-nums text-muted-foreground">
-                      {task.estimatedMinutes != null
-                        ? formatMinutes(task.estimatedMinutes)
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
-                <TaskEstimateField
-                  taskId={task.id}
-                  estimatedMinutes={task.estimatedMinutes}
-                />
+              <div className="flex flex-col">
+                <span className="font-mono text-[0.5625em] uppercase tracking-[0.16em] text-muted-foreground">
+                  tracked
+                </span>
+                <span className="font-mono text-base tabular-nums text-foreground">
+                  {trackedSeconds > 0 ? formatDuration(trackedSeconds) : "—"}
+                </span>
               </div>
             </Field>
           </aside>
@@ -439,13 +425,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
-}
-
-function formatMinutes(min: number): string {
-  if (min <= 0) return "0m";
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  if (h === 0) return `${m}m`;
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
 }

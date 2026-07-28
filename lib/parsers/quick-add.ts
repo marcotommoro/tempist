@@ -2,7 +2,7 @@
  * Quick Add NLP parser.
  *
  * Input esempio:
- *   "Chiamare Mario domani 15:00 #ProjectAcme @urgent p1 60min !cliente:Rossi"
+ *   "Chiamare Mario domani 15:00 #ProjectAcme @urgent p1 !cliente:Rossi"
  *
  * Output:
  *   {
@@ -11,7 +11,6 @@
  *     priority: "P1",
  *     projectName: "ProjectAcme",
  *     labelNames: ["urgent"],
- *     estimatedMinutes: 60,
  *     clientName: "Rossi",
  *   }
  *
@@ -20,9 +19,10 @@
  *   @NAME       → labelNames   (multipli)
  *   p1..p4      → priority     (case-insensitive, l'ultimo vince)
  *   !cliente:NAME | !client:NAME → clientName
- *   60min | 60mins | 60m        → estimatedMinutes
- *   1h | 1h30 | 1h30m           → estimatedMinutes (con ore)
  *   chrono-node: domani 15:00, "tomorrow at 3pm", ecc.
+ *
+ * Le stime di durata non esistono più (si tiene solo il tempo segnato): token
+ * come "30m"/"2h" finiscono a chrono, che li legge come "fra 30 minuti".
  *
  * Tutto il resto, dopo aver tolto i token, e' il title.
  */
@@ -46,7 +46,6 @@ export type ParsedQuickAdd = {
   priority: Priority;
   projectName: string | null;
   labelNames: string[];
-  estimatedMinutes: number | null;
   clientName: string | null;
   recurrenceRule: string | null;
   /** Testo grezzo della data come è apparso nell'input (per highlight inline). */
@@ -109,33 +108,6 @@ function extractClient(text: string): { value: string | null; rest: string } {
     return " ";
   });
   return { value: last, rest };
-}
-
-function extractDuration(text: string): { minutes: number | null; rest: string } {
-  // Ordine: piu' specifici prima
-  // 1) 1h30m, 1h30
-  const hmRe = /\b(\d+)h(\d+)m?\b/i;
-  const hmMatch = text.match(hmRe);
-  if (hmMatch) {
-    const h = parseInt(hmMatch[1] ?? "0", 10);
-    const m = parseInt(hmMatch[2] ?? "0", 10);
-    return { minutes: h * 60 + m, rest: text.replace(hmRe, " ") };
-  }
-  // 2) 1h (solo ore)
-  const hRe = /\b(\d+)h\b/i;
-  const hMatch = text.match(hRe);
-  if (hMatch) {
-    const h = parseInt(hMatch[1] ?? "0", 10);
-    return { minutes: h * 60, rest: text.replace(hRe, " ") };
-  }
-  // 3) 60min, 60mins, 60m (con suffisso esplicito)
-  const minRe = /\b(\d+)(?:mins?|m)\b/i;
-  const minMatch = text.match(minRe);
-  if (minMatch) {
-    const mins = parseInt(minMatch[1] ?? "0", 10);
-    return { minutes: mins, rest: text.replace(minRe, " ") };
-  }
-  return { minutes: null, rest: text };
 }
 
 const DEFAULT_TIMEZONE = "Europe/Rome";
@@ -254,9 +226,6 @@ export function parseQuickAdd(
   const prio = extractPriority(working);
   working = prio.rest;
 
-  const dur = extractDuration(working);
-  working = dur.rest;
-
   const date = extractDate(working, now, timezone);
   working = date.rest;
 
@@ -268,7 +237,6 @@ export function parseQuickAdd(
     priority: prio.value,
     projectName: proj.value,
     labelNames: labels.values,
-    estimatedMinutes: dur.minutes,
     clientName: client.value,
     recurrenceRule: repeats.value,
     dateSourceText: date.sourceText,

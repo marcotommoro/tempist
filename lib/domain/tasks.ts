@@ -196,6 +196,11 @@ export type CreateTaskInput = {
   priority?: "P1" | "P2" | "P3" | "P4";
   scheduledAt?: Date | null;
   dueDate?: Date | null;
+  /**
+   * Durata dell'evento di calendario collegato, non una stima di lavoro:
+   * la scrive solo il pull da Google, la rileggono push calendario e feed iCal.
+   * Nell'app non è più visibile né modificabile (si tiene solo il tempo segnato).
+   */
   estimatedMinutes?: number | null;
   projectId?: string | null;
   sectionId?: string | null;
@@ -576,30 +581,6 @@ export async function updateTaskClient(opts: {
   await db
     .update(schema.task)
     .set({ clientId: opts.clientId })
-    .where(
-      and(
-        eq(schema.task.id, opts.taskId),
-        eq(schema.task.organizationId, opts.organizationId),
-      ),
-    );
-}
-
-export async function updateTaskEstimatedMinutes(opts: {
-  taskId: string;
-  organizationId: string;
-  estimatedMinutes: number | null;
-}): Promise<void> {
-  if (
-    opts.estimatedMinutes !== null &&
-    (!Number.isFinite(opts.estimatedMinutes) ||
-      opts.estimatedMinutes < 0 ||
-      opts.estimatedMinutes > 60 * 24 * 30)
-  ) {
-    throw new Error("Stima non valida");
-  }
-  await db
-    .update(schema.task)
-    .set({ estimatedMinutes: opts.estimatedMinutes })
     .where(
       and(
         eq(schema.task.id, opts.taskId),

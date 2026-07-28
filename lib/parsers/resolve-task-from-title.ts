@@ -7,13 +7,11 @@ export function resolveTaskFromTitle(
   title: string;
   scheduledAt: Date | null;
   priority: Priority;
-  estimatedMinutes: number | null;
 } {
   const parsed = parseQuickAdd(rawTitle, options);
   return {
     title: parsed.title || rawTitle.trim(),
     scheduledAt: parsed.scheduledAt,
     priority: parsed.priority,
-    estimatedMinutes: parsed.estimatedMinutes,
   };
 }

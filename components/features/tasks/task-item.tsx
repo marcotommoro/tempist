@@ -244,7 +244,6 @@ export function TaskItem({
           )}
           <TaskProgress
             trackedSeconds={liveTrackedSeconds}
-            estimatedMinutes={task.estimatedMinutes}
             live={!!runningSince}
           />
           {error && <span className="text-destructive normal-case">{error}</span>}

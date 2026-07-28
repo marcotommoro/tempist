@@ -28,11 +28,17 @@ export function TimeEntryRow({
   clients = [],
   projects = [],
   userTimezone = "Europe/Rome",
+  onChanged,
 }: {
   entry: TimeEntry;
   clients?: ClientPick[];
   projects?: ProjectPick[];
   userTimezone?: string;
+  /**
+   * Chi tiene le voci in stato client (es. dialog del task) non vede la
+   * revalidate server-side: qui ricarica dopo modifica/eliminazione.
+   */
+  onChanged?: () => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +71,7 @@ export function TimeEntryRow({
         return;
       }
       setConfirmDelete(false);
+      onChanged?.();
     });
   }
 
@@ -161,16 +168,17 @@ export function TimeEntryRow({
         )}
       </li>
 
-      {clients.length > 0 && (
-        <TimeEntryEditDialog
-          entry={entry}
-          clients={clients}
-          projects={projects}
-          userTimezone={userTimezone}
-          open={editing}
-          onOpenChange={setEditing}
-        />
-      )}
+      <TimeEntryEditDialog
+        entry={entry}
+        clients={clients}
+        projects={projects}
+        userTimezone={userTimezone}
+        open={editing}
+        onOpenChange={(v) => {
+          setEditing(v);
+          if (!v) onChanged?.();
+        }}
+      />
 
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent className="sm:max-w-sm">

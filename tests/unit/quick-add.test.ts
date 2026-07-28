@@ -15,7 +15,6 @@ describe("parseQuickAdd", () => {
     expect(r.priority).toBe("P4");
     expect(r.projectName).toBeNull();
     expect(r.labelNames).toEqual([]);
-    expect(r.estimatedMinutes).toBeNull();
     expect(r.clientName).toBeNull();
   });
 
@@ -49,16 +48,12 @@ describe("parseQuickAdd", () => {
     expect(parse("Task !client:Acme_Inc").clientName).toBe("Acme_Inc");
   });
 
-  it("extracts duration in minutes only", () => {
-    expect(parse("Task 60min").estimatedMinutes).toBe(60);
-    expect(parse("Task 30mins").estimatedMinutes).toBe(30);
-    expect(parse("Task 15m").estimatedMinutes).toBe(15);
-  });
-
-  it("extracts duration in hours and combined", () => {
-    expect(parse("Task 2h").estimatedMinutes).toBe(120);
-    expect(parse("Task 1h30m").estimatedMinutes).toBe(90);
-    expect(parse("Task 1h30").estimatedMinutes).toBe(90);
+  it("treats bare durations as relative times, non come stima", () => {
+    // Senza estimate, "30m" resta solo un'espressione temporale per chrono:
+    // pianifica il task fra 30 minuti (visibile nell'anteprima prima di salvare).
+    const r = parse("Fix bug 30m");
+    expect(r.title).toBe("Fix bug");
+    expect(r.scheduledAt?.toISOString()).toBe("2026-05-20T12:30:00.000Z");
   });
 
   it("parses relative date with chrono (tomorrow EN)", () => {
@@ -130,25 +125,23 @@ describe("parseQuickAdd", () => {
 
   it("handles the full spec example", () => {
     const r = parse(
-      "Chiamare Mario tomorrow 15:00 #ProjectAcme @urgent p1 60min !cliente:Rossi",
+      "Chiamare Mario tomorrow 15:00 #ProjectAcme @urgent p1 !cliente:Rossi",
     );
     expect(r.title).toBe("Chiamare Mario");
     expect(r.scheduledAt).not.toBeNull();
     expect(r.priority).toBe("P1");
     expect(r.projectName).toBe("ProjectAcme");
     expect(r.labelNames).toEqual(["urgent"]);
-    expect(r.estimatedMinutes).toBe(60);
     expect(r.clientName).toBe("Rossi");
   });
 
   it("token order does not matter", () => {
-    const a = parse("Task p1 #Proj @lbl 30min");
-    const b = parse("Task 30min @lbl #Proj p1");
+    const a = parse("Task p1 #Proj @lbl");
+    const b = parse("Task @lbl #Proj p1");
     expect(a.title).toBe(b.title);
     expect(a.priority).toBe(b.priority);
     expect(a.projectName).toBe(b.projectName);
     expect(a.labelNames).toEqual(b.labelNames);
-    expect(a.estimatedMinutes).toBe(b.estimatedMinutes);
   });
 
   it("supports unicode names (italian accents)", () => {

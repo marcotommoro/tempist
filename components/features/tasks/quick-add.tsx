@@ -9,7 +9,7 @@ import {
   type CSSProperties,
   type FormEvent,
 } from "react";
-import { Calendar, Hash, Plus, Repeat, Tag, Timer, User } from "lucide-react";
+import { Calendar, Hash, Plus, Repeat, Tag, User } from "lucide-react";
 import { format } from "date-fns";
 
 import { createTaskFromQuickAddAction } from "@/lib/actions/quick-add";
@@ -242,7 +242,7 @@ export function QuickAddForm({
             }
           }}
           disabled={pending}
-          placeholder='Aggiungi un task…  "Chiamare Mario domani 15:00 #Acme p1 60min"'
+          placeholder='Aggiungi un task…  "Chiamare Mario domani 15:00 #Acme p1"'
           segments={highlightSegments}
         />
         <button
@@ -262,7 +262,6 @@ export function QuickAddForm({
           projectName={parsed.projectName}
           matchedProject={autoMatch.project}
           labelNames={parsed.labelNames}
-          estimatedMinutes={parsed.estimatedMinutes}
           clientName={parsed.clientName}
           matchedClient={autoMatch.client}
           recurrenceRule={parsed.recurrenceRule}
@@ -532,7 +531,6 @@ export function ParsedPreview(props: {
   projectName: string | null;
   matchedProject?: PickItem | null;
   labelNames: string[];
-  estimatedMinutes: number | null;
   clientName: string | null;
   matchedClient?: PickItem | null;
   recurrenceRule: string | null;
@@ -544,7 +542,6 @@ export function ParsedPreview(props: {
     props.priority !== "P4" ||
     projectDisplay ||
     props.labelNames.length > 0 ||
-    props.estimatedMinutes ||
     clientDisplay ||
     props.recurrenceRule;
 
@@ -610,11 +607,6 @@ export function ParsedPreview(props: {
           }
         >
           {clientDisplay}
-        </Chip>
-      )}
-      {props.estimatedMinutes != null && (
-        <Chip icon={<Timer className="size-2.5" />} className="border-border bg-muted text-muted-foreground">
-          {props.estimatedMinutes}m
         </Chip>
       )}
       {props.recurrenceRule && (

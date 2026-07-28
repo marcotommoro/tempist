@@ -172,7 +172,6 @@ export async function createTaskFromQuickAddAction(
       descriptionMarkdown,
       priority: parsed.priority,
       scheduledAt,
-      estimatedMinutes: parsed.estimatedMinutes,
       projectId,
       // La sezione vale solo se c'è un progetto a cui appartiene.
       sectionId: projectId ? sectionId : null,

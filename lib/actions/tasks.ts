@@ -33,7 +33,6 @@ import {
   toggleTaskComplete,
   updateTaskClient,
   updateTaskDescription,
-  updateTaskEstimatedMinutes,
   updateTaskPriority,
   updateTaskProject,
   updateTaskSchedule,
@@ -116,7 +115,6 @@ export async function createTaskAction(
     let title = parsed.data.title;
     let scheduledAt = parsed.data.scheduledAt ?? null;
     let priority = parsed.data.priority;
-    let estimatedMinutes: number | null = null;
 
     if (!hasExplicitSchedule) {
       const resolved = resolveTaskFromTitle(parsed.data.title, {
@@ -126,7 +124,6 @@ export async function createTaskAction(
       title = resolved.title;
       if (resolved.scheduledAt) scheduledAt = resolved.scheduledAt;
       if (priority === "P4") priority = resolved.priority;
-      estimatedMinutes = resolved.estimatedMinutes;
     }
 
     scheduledAt = scheduledAt ?? defaultTaskScheduledAt(timezone);
@@ -138,7 +135,6 @@ export async function createTaskAction(
       descriptionMarkdown: normalizeDescriptionHtml(parsed.data.descriptionMarkdown),
       scheduledAt,
       priority,
-      estimatedMinutes,
       projectId: parsed.data.projectId ?? null,
       sectionId: parsed.data.sectionId ?? null,
       clientId: parsed.data.clientId ?? null,
@@ -366,23 +362,6 @@ export async function setTaskTitleAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Errore aggiornamento titolo",
-    };
-  }
-}
-
-export async function setTaskEstimatedMinutesAction(
-  taskId: string,
-  estimatedMinutes: number | null,
-): Promise<ActionResult> {
-  try {
-    const { organizationId } = await requireActiveOrganization();
-    await updateTaskEstimatedMinutes({ taskId, organizationId, estimatedMinutes });
-    revalidateTaskViews();
-    return { ok: true, data: undefined };
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Errore aggiornamento stima",
     };
   }
 }

@@ -149,3 +149,40 @@ test.describe("task CRUD su Today/Inbox", () => {
     await expect(page).toHaveURL(/\/today/);
   });
 });
+
+test.describe("tempo segnato nel dialog del task", () => {
+  test("mostra le voci del task e ne modifica la durata", async ({ page }) => {
+    const title = `Tracked ${uniqueSuffix()}`;
+    await page.goto("/inbox");
+    await createTaskViaQuickAdd(page, title);
+
+    const row = page.locator("li").filter({ hasText: title }).first();
+
+    // Timer dal task: start, un paio di secondi, stop dalla topbar.
+    await row.getByRole("button", { name: /avvia timer su questo task/i }).click();
+    const stopBtn = page.getByRole("button", { name: /ferma timer/i });
+    await expect(stopBtn).toBeVisible({ timeout: 5_000 });
+    await page.waitForTimeout(1500);
+    await stopBtn.click();
+    await expect(
+      page.getByRole("button", { name: /start timer/i }).first(),
+    ).toBeVisible({ timeout: 5_000 });
+
+    // Il dialog del task elenca la voce appena registrata (la descrizione
+    // della voce è il titolo del task, ereditato allo start).
+    await row.getByRole("button", { name: title }).click();
+    const taskDialog = page.getByRole("dialog").filter({ hasText: "Tempo segnato" });
+    const entry = taskDialog.locator("li").filter({ hasText: title }).first();
+    await expect(entry).toBeVisible({ timeout: 10_000 });
+
+    // Modifica la durata della voce: 45 minuti.
+    await entry.getByRole("button", { name: /modifica voce/i }).click();
+    const editDialog = page.getByRole("dialog").filter({ hasText: "Modifica voce" });
+    const duration = editDialog.getByLabel(/ore effettive/i);
+    await duration.fill("45m");
+    await duration.press("Tab");
+    await editDialog.getByRole("button", { name: /salva modifiche/i }).click();
+
+    await expect(entry.getByText("45:00")).toBeVisible({ timeout: 10_000 });
+  });
+});

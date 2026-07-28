@@ -345,6 +345,23 @@ export async function listTimeEntriesForUser(opts: {
 }
 
 /**
+ * Tutte le voci di un task (anche quella in corso), più recenti prima.
+ * Usata dal dialog del task per mostrare/modificare il tempo segnato.
+ */
+export async function listTimeEntriesForTask(opts: {
+  taskId: string;
+  organizationId: string;
+}): Promise<TimeEntry[]> {
+  return db.query.timeEntry.findMany({
+    where: and(
+      eq(schema.timeEntry.organizationId, opts.organizationId),
+      eq(schema.timeEntry.taskId, opts.taskId),
+    ),
+    orderBy: [desc(schema.timeEntry.startedAt)],
+  });
+}
+
+/**
  * Aggrega le ore tracciate per ogni taskId.
  * Include solo entries chiuse (durationSeconds non-null).
  * Ritorna una Map per O(1) lookup nelle viste.
