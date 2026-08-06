@@ -1,16 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { addDays, addWeeks, format, isSameDay, subWeeks } from "date-fns";
+import { addDays, format, isSameDay } from "date-fns";
 import { it } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import {
   upsertProjectQuickEntryAction,
   upsertQuickEntryAction,
 } from "@/lib/actions/timer";
+import type { ResolvedBillingRange } from "@/lib/utils/billing-period";
+import { formatBillingPeriodLabel } from "@/lib/utils/billing-period";
 import { cn } from "@/lib/utils";
+
+import { QuickEntryPeriodFilters } from "./quick-entry-period-filters";
 
 type Column = { id: string | null; name: string };
 
@@ -33,10 +36,12 @@ type ClientGridProps = {
   mode: "client";
   entityId: string;
   columns: Column[];
-  weekStart: Date;
+  days: Date[];
+  range: ResolvedBillingRange;
   cells: CellSeed[];
   basePath: string;
   preservedParams?: Record<string, string>;
+  exportHref?: string;
   noneColumnLabel?: string;
 };
 
@@ -44,10 +49,12 @@ type ProjectGridProps = {
   mode: "project";
   entityId: string;
   columns: Column[];
-  weekStart: Date;
+  days: Date[];
+  range: ResolvedBillingRange;
   cells: CellSeed[];
   basePath: string;
   preservedParams?: Record<string, string>;
+  exportHref?: string;
   noneColumnLabel?: string;
 };
 
@@ -122,29 +129,17 @@ function buildCellMap(seeds: CellSeed[]): Map<string, CellState> {
   return m;
 }
 
-function buildWeekHref(
-  basePath: string,
-  weekStart: Date | null,
-  preserved: Record<string, string> | undefined,
-): string {
-  const params = new URLSearchParams();
-  for (const [k, v] of Object.entries(preserved ?? {})) {
-    if (v) params.set(k, v);
-  }
-  if (weekStart) params.set("week", dayKeyOf(weekStart));
-  const qs = params.toString();
-  return qs ? `${basePath}?${qs}` : basePath;
-}
-
 export function WeeklyQuickEntryGrid(props: Props) {
   const {
     mode,
     entityId,
     columns: rawColumns,
-    weekStart,
+    days,
+    range,
     cells: initialCells,
     basePath,
     preservedParams,
+    exportHref,
     noneColumnLabel = mode === "client" ? "Senza progetto" : "Senza task",
   } = props;
 
@@ -160,8 +155,8 @@ export function WeeklyQuickEntryGrid(props: Props) {
     setCells(buildCellMap(initialCells));
   }, [initialCells]);
 
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const columns: Column[] = [...rawColumns, { id: null, name: noneColumnLabel }];
+  const periodLabel = formatBillingPeriodLabel(range);
 
   async function upsertCell(
     dayKey: string,
@@ -288,42 +283,26 @@ export function WeeklyQuickEntryGrid(props: Props) {
   }
 
   const today = new Date();
-  const prevWeekHref = buildWeekHref(basePath, subWeeks(weekStart, 1), preservedParams);
-  const nextWeekHref = buildWeekHref(basePath, addWeeks(weekStart, 1), preservedParams);
-  const thisWeekHref = buildWeekHref(basePath, null, preservedParams);
-  const weekLabel = `${format(weekStart, "d MMM", { locale: it })} – ${format(addDays(weekStart, 6), "d MMM yyyy", { locale: it })}`;
 
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-1.5">
-        <h2 className="section-heading text-muted-foreground">
-          Inserimento rapido settimanale
-        </h2>
-        <div className="inline-flex items-center gap-1">
-          <Link
-            href={prevWeekHref}
-            className="inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Settimana precedente"
-          >
-            <ChevronLeft className="size-3.5" />
-          </Link>
-          <span className="min-w-[10rem] px-2 text-center font-mono text-[0.6875em] uppercase tracking-wider text-foreground">
-            {weekLabel}
-          </span>
-          <Link
-            href={nextWeekHref}
-            className="inline-flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Settimana successiva"
-          >
-            <ChevronRight className="size-3.5" />
-          </Link>
-          <Link
-            href={thisWeekHref}
-            className="ml-2 font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground hover:text-foreground"
-          >
-            Questa settimana
-          </Link>
+        <div className="space-y-1">
+          <h2 className="section-heading text-muted-foreground">
+            Inserimento rapido
+          </h2>
+          <p className="font-mono text-[0.625em] uppercase tracking-wider text-muted-foreground">
+            {periodLabel}
+          </p>
         </div>
+        <QuickEntryPeriodFilters
+          basePath={basePath}
+          from={range.from}
+          to={range.toInclusive}
+          presetActive={range.active}
+          preservedParams={preservedParams}
+          exportHref={exportHref}
+        />
       </div>
 
       <div className="overflow-x-auto rounded-md border border-border bg-card">

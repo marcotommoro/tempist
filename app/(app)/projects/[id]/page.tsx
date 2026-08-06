@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { addDays, parseISO, startOfWeek } from "date-fns";
 import { LayoutGrid, List as ListIcon } from "lucide-react";
 
 import { requireProjectAccess } from "@/lib/auth/project-access";
@@ -27,14 +26,18 @@ import { PageHeader } from "@/components/features/page-header/page-header";
 import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { ProjectQuickEntryGrid } from "@/components/features/timer/project-quick-entry-grid";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
+import {
+  getGridDisplayDays,
+  resolveBillingRange,
+} from "@/lib/utils/billing-period";
 
 type Params = { id: string };
-type Search = { view?: string; week?: string };
-
-function safeParse(s: string): Date | null {
-  const d = parseISO(s);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
+type Search = {
+  view?: string;
+  from?: string;
+  to?: string;
+  preset?: "month" | "last-month" | "all";
+};
 
 export default async function ProjectDetailPage({
   params,
@@ -51,10 +54,10 @@ export default async function ProjectDetailPage({
   const canEdit = role === "editor";
   const canManageMembers = accessType === "workspace";
 
-  const weekStart = sp.week
-    ? (safeParse(sp.week) ?? startOfWeek(new Date(), { weekStartsOn: 1 }))
-    : startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = addDays(weekStart, 7);
+  const range = resolveBillingRange(sp);
+  const gridDays = getGridDisplayDays(range);
+  const preservedParams: Record<string, string> = {};
+  if (sp.view) preservedParams.view = sp.view;
 
   const [{ sections, tasksBySection }, clients, projectMembers, pendingInvitations, quickGrid] =
     await Promise.all([
@@ -66,8 +69,8 @@ export default async function ProjectDetailPage({
         organizationId,
         userId: user.id,
         projectId: id,
-        weekStart,
-        weekEnd,
+        weekStart: range.from,
+        weekEnd: range.queryToExclusive,
       }),
     ]);
 
@@ -110,9 +113,6 @@ export default async function ProjectDetailPage({
     totalSeconds: s.totalSeconds,
     managedSeconds: managedByCell.get(`${s.dayKey}::${s.taskId ?? ""}`) ?? 0,
   }));
-
-  const preservedWeekParams: Record<string, string> = {};
-  if (sp.view) preservedWeekParams.view = sp.view;
 
   return (
     <div className="space-y-6">
@@ -181,10 +181,11 @@ export default async function ProjectDetailPage({
       <ProjectQuickEntryGrid
         projectId={id}
         tasks={projectTasks}
-        weekStart={weekStart}
+        days={gridDays}
+        range={range}
         cells={gridCells}
         basePath={`/projects/${id}`}
-        preservedParams={preservedWeekParams}
+        preservedParams={preservedParams}
       />
 
       {isBoard ? (

@@ -1,15 +1,5 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
-import {
-  addDays,
-  endOfMonth,
-  endOfYear,
-  parseISO,
-  startOfMonth,
-  startOfWeek,
-  startOfYear,
-  subMonths,
-} from "date-fns";
 import { Mail, Receipt } from "lucide-react";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
@@ -26,7 +16,6 @@ import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { EditClientDialogHeaderButton } from "@/components/features/clients/edit-client-dialog";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
-import { ClientBillingFilters } from "@/components/features/timer/client-billing-filters";
 import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-entry-grid";
 import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { TaskList } from "@/components/features/tasks/task-list";
@@ -34,6 +23,11 @@ import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
+import {
+  getGridDisplayDays,
+  resolveBillingRange,
+  toDateParam,
+} from "@/lib/utils/billing-period";
 import { PageHeader } from "@/components/features/page-header/page-header";
 
 type Params = { id: string };
@@ -41,49 +35,7 @@ type Search = {
   from?: string;
   to?: string;
   preset?: "month" | "last-month" | "all";
-  week?: string;
 };
-
-type ResolvedRange = {
-  from: Date;
-  to: Date;
-  active: "month" | "last-month" | "all" | "custom";
-};
-
-function safeParse(s: string): Date | null {
-  const d = parseISO(s);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function resolveRange(s: Search): ResolvedRange {
-  const fromParam = s.from ? safeParse(s.from) : null;
-  const toParam = s.to ? safeParse(s.to) : null;
-  if (fromParam && toParam) {
-    return { from: fromParam, to: toParam, active: "custom" };
-  }
-  const now = new Date();
-  if (s.preset === "last-month") {
-    const lastMonth = subMonths(now, 1);
-    return {
-      from: startOfMonth(lastMonth),
-      to: endOfMonth(lastMonth),
-      active: "last-month",
-    };
-  }
-  if (s.preset === "all") {
-    // 5 anni indietro fino a fine anno corrente — sufficiente come "tutto"
-    return {
-      from: startOfYear(subMonths(now, 60)),
-      to: endOfYear(now),
-      active: "all",
-    };
-  }
-  return {
-    from: startOfMonth(now),
-    to: endOfMonth(now),
-    active: "month",
-  };
-}
 
 export default async function ClientDetailPage({
   params,
@@ -99,35 +51,36 @@ export default async function ClientDetailPage({
   const client = await getClient({ clientId: id, organizationId });
   if (!client) notFound();
 
-  const { from, to, active } = resolveRange(sp);
-
-  const weekStart = sp.week
-    ? (safeParse(sp.week) ?? startOfWeek(new Date(), { weekStartsOn: 1 }))
-    : startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = addDays(weekStart, 7);
+  const range = resolveBillingRange(sp);
+  const gridDays = getGridDisplayDays(range);
+  const exportHref = `/api/reports/time-entries.csv?${new URLSearchParams({
+    clientId: id,
+    from: toDateParam(range.from),
+    to: toDateParam(range.toInclusive),
+  }).toString()}`;
 
   const [entries, clients, projects, projectAggregates, quickGrid] =
     await Promise.all([
       listTimeEntriesForClient({
         clientId: id,
         organizationId,
-        from,
-        to,
+        from: range.from,
+        to: range.queryToExclusive,
       }),
       listClients({ organizationId }),
       listProjects({ organizationId }),
       getProjectAggregatesForClient({
         organizationId,
         clientId: id,
-        from,
-        to,
+        from: range.from,
+        to: range.queryToExclusive,
       }),
       listQuickGridDataForClient({
         organizationId,
         userId: user.id,
         clientId: id,
-        weekStart,
-        weekEnd,
+        weekStart: range.from,
+        weekEnd: range.queryToExclusive,
       }),
     ]);
 
@@ -253,26 +206,16 @@ export default async function ClientDetailPage({
             value={totals.billableAmount.toFixed(2)}
           />
         </section>
-
-        <ClientBillingFilters
-          clientId={id}
-          from={from}
-          to={to}
-          presetActive={active}
-        />
       </div>
 
       <ClientQuickEntryGrid
         clientId={id}
         projects={clientProjects}
-        weekStart={weekStart}
+        days={gridDays}
+        range={range}
         cells={gridCells}
         basePath={`/clients/${id}`}
-        preservedParams={{
-          ...(sp.from ? { from: sp.from } : {}),
-          ...(sp.to ? { to: sp.to } : {}),
-          ...(sp.preset ? { preset: sp.preset } : {}),
-        }}
+        exportHref={exportHref}
       />
 
       {aggregatesSorted.length > 0 && (

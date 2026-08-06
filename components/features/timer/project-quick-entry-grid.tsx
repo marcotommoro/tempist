@@ -1,3 +1,4 @@
+import type { ResolvedBillingRange } from "@/lib/utils/billing-period";
 import { WeeklyQuickEntryGrid } from "./weekly-quick-entry-grid";
 
 type Column = { id: string | null; name: string };
@@ -12,14 +13,16 @@ type CellSeed = {
 export function ProjectQuickEntryGrid({
   projectId,
   tasks,
-  weekStart,
+  days,
+  range,
   cells,
   basePath,
   preservedParams,
 }: {
   projectId: string;
   tasks: Column[];
-  weekStart: Date;
+  days: Date[];
+  range: ResolvedBillingRange;
   cells: CellSeed[];
   basePath: string;
   preservedParams?: Record<string, string>;
@@ -29,7 +32,8 @@ export function ProjectQuickEntryGrid({
       mode="project"
       entityId={projectId}
       columns={tasks}
-      weekStart={weekStart}
+      days={days}
+      range={range}
       cells={cells.map((c) => ({
         dayKey: c.dayKey,
         columnId: c.taskId,
