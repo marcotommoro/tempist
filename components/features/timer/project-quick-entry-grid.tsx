@@ -4,21 +4,21 @@ type Column = { id: string | null; name: string };
 
 type CellSeed = {
   dayKey: string;
-  projectId: string | null;
+  taskId: string | null;
   managedSeconds: number;
   totalSeconds: number;
 };
 
-export function ClientQuickEntryGrid({
-  clientId,
-  projects,
+export function ProjectQuickEntryGrid({
+  projectId,
+  tasks,
   weekStart,
   cells,
   basePath,
   preservedParams,
 }: {
-  clientId: string;
-  projects: Column[];
+  projectId: string;
+  tasks: Column[];
   weekStart: Date;
   cells: CellSeed[];
   basePath: string;
@@ -26,19 +26,19 @@ export function ClientQuickEntryGrid({
 }) {
   return (
     <WeeklyQuickEntryGrid
-      mode="client"
-      entityId={clientId}
-      columns={projects}
+      mode="project"
+      entityId={projectId}
+      columns={tasks}
       weekStart={weekStart}
       cells={cells.map((c) => ({
         dayKey: c.dayKey,
-        columnId: c.projectId,
+        columnId: c.taskId,
         managedSeconds: c.managedSeconds,
         totalSeconds: c.totalSeconds,
       }))}
       basePath={basePath}
       preservedParams={preservedParams}
-      noneColumnLabel="Senza progetto"
+      noneColumnLabel="Senza task"
     />
   );
 }

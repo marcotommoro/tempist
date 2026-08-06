@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  formatMonthLabel,
+  formatPeriodLabel,
   formatWeekLabel,
+  getMonthRange,
   getWeekRange,
   parseDateParam,
   parseWeekFromParam,
@@ -25,32 +28,32 @@ describe("parseDateParam", () => {
 });
 
 describe("resolveTimesheetRange", () => {
-  it("returns current week when both params missing (isCustom=false)", () => {
+  it("returns current month when both params missing (preset=month)", () => {
     const r = resolveTimesheetRange(undefined, undefined);
-    expect(r.isCustom).toBe(false);
-    // to is exclusive: endOfWeek(sunday 23:59:59.999) + 1 day → spans ~8d - 1ms
+    expect(r.preset).toBe("month");
+    const now = new Date();
+    expect(r.from.getMonth()).toBe(now.getMonth());
+    expect(r.from.getDate()).toBe(1);
     const diffDays = (r.to.getTime() - r.from.getTime()) / (1000 * 60 * 60 * 24);
-    expect(diffDays).toBeGreaterThan(7);
-    expect(diffDays).toBeLessThan(8);
+    expect(diffDays).toBeGreaterThan(28);
+    expect(diffDays).toBeLessThan(32);
   });
 
-  it("returns week containing 'from' when only from is provided", () => {
-    // 2026-05-15 = giovedì → settimana inizia lunedì 2026-05-11
-    const r = resolveTimesheetRange("2026-05-15", undefined);
-    expect(r.isCustom).toBe(false);
-    expect(r.from.getDay()).toBe(1); // monday in local TZ
+  it("returns week containing 'from' when preset=week", () => {
+    const r = resolveTimesheetRange("2026-05-15", undefined, "week");
+    expect(r.preset).toBe("week");
+    expect(r.from.getDay()).toBe(1);
   });
 
   it("returns custom range (exclusive end) when both params present", () => {
     const r = resolveTimesheetRange("2026-05-01", "2026-05-20");
-    expect(r.isCustom).toBe(true);
-    // 'to' è esclusivo: addDays(2026-05-20, 1) → 2026-05-21 local
+    expect(r.preset).toBe("custom");
     expect(r.to.getDate()).toBe(21);
   });
 
-  it("falls back to current week when 'to' parsing fails", () => {
+  it("falls back to month when 'to' parsing fails", () => {
     const r = resolveTimesheetRange("2026-05-15", "garbage");
-    expect(r.isCustom).toBe(false);
+    expect(r.preset).toBe("month");
   });
 });
 
@@ -63,28 +66,36 @@ describe("timesheetSearchParams", () => {
   it("formats dates as yyyy-MM-dd", () => {
     const from = new Date("2026-05-15T10:00:00Z");
     const q = timesheetSearchParams({ from });
-    // tz-safe per UTC dates (il format usa l'instance Date senza zone shifting in test)
     expect(q).toMatch(/^from=2026-05-/);
   });
 
-  it("includes projectId when provided", () => {
-    const q = timesheetSearchParams({ clientId: "c-1", projectId: "p-1" });
+  it("includes projectId and preset when provided", () => {
+    const q = timesheetSearchParams({ clientId: "c-1", projectId: "p-1", preset: "week" });
     expect(q).toContain("clientId=c-1");
     expect(q).toContain("projectId=p-1");
+    expect(q).toContain("preset=week");
   });
 });
 
-describe("getWeekRange + parseWeekFromParam", () => {
+describe("getWeekRange + getMonthRange + parseWeekFromParam", () => {
   it("getWeekRange uses Monday start and spans roughly 7 days", () => {
     const anchor = new Date("2026-05-15T12:00:00Z");
     const { from, to } = getWeekRange(anchor);
-    expect(from.getDay()).toBe(1); // Monday in local TZ
-    // 'to' è exclusive: endOfWeek (sunday 23:59:59.999) + 1 day → monday 23:59:59.999
+    expect(from.getDay()).toBe(1);
     expect(to.getDay()).toBe(1);
-    // span tra 7 e 8 giorni (anche se cosmeticamente è 8d - 1ms, è quel che il dominio aspetta come 'lt' bound)
     const days = (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
     expect(days).toBeGreaterThan(7);
     expect(days).toBeLessThan(8);
+  });
+
+  it("getMonthRange spans the full calendar month", () => {
+    const anchor = new Date("2026-05-15T12:00:00Z");
+    const { from, to } = getMonthRange(anchor);
+    expect(from.getDate()).toBe(1);
+    expect(from.getMonth()).toBe(4);
+    const days = (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24);
+    expect(days).toBeGreaterThan(31);
+    expect(days).toBeLessThan(32);
   });
 
   it("parseWeekFromParam returns now for invalid input", () => {
@@ -96,9 +107,22 @@ describe("getWeekRange + parseWeekFromParam", () => {
 
   it("formatWeekLabel uses Italian month abbreviation", () => {
     const from = new Date("2026-05-11T00:00:00Z");
-    const to = new Date("2026-05-18T00:00:00Z"); // exclusive
+    const to = new Date("2026-05-18T00:00:00Z");
     const label = formatWeekLabel(from, to);
     expect(label).toMatch(/mag/i);
     expect(label).toContain("2026");
+  });
+
+  it("formatPeriodLabel uses month label for month preset", () => {
+    const from = new Date("2026-05-01T00:00:00Z");
+    const to = new Date("2026-06-01T00:00:00Z");
+    const label = formatPeriodLabel(from, to, "month");
+    expect(label).toMatch(/maggio/i);
+    expect(label).toContain("2026");
+  });
+
+  it("formatMonthLabel uses Italian month name", () => {
+    const from = new Date("2026-05-01T00:00:00Z");
+    expect(formatMonthLabel(from)).toMatch(/maggio/i);
   });
 });

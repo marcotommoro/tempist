@@ -13,7 +13,7 @@ import { Stat } from "@/components/ui/stat";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
 import {
-  formatWeekLabel,
+  formatPeriodLabel,
   resolveTimesheetRange,
 } from "@/lib/utils/timesheet-week";
 import type { TimeEntry } from "@/lib/db/schema";
@@ -21,6 +21,7 @@ import type { TimeEntry } from "@/lib/db/schema";
 type Search = {
   from?: string;
   to?: string;
+  preset?: string;
   clientId?: string;
   projectId?: string;
 };
@@ -59,14 +60,15 @@ export default async function TimesheetPage({
   const {
     from: fromParam,
     to: toParam,
+    preset: presetParam,
     clientId,
     projectId,
   } = await searchParams;
   const { user, organizationId } = await requireActiveOrganization();
   const tz = userTimezone(user as { timezone?: string | null });
 
-  const { from, to, isCustom } = resolveTimesheetRange(fromParam, toParam);
-  const weekLabel = formatWeekLabel(from, to);
+  const { from, to, preset } = resolveTimesheetRange(fromParam, toParam, presetParam);
+  const periodLabel = formatPeriodLabel(from, to, preset);
 
   const [entries, clients, projects] = await Promise.all([
     listTimeEntriesForUser({
@@ -110,13 +112,13 @@ export default async function TimesheetPage({
         title="Timesheet"
         meta={
           <TimesheetFilters
-            weekFrom={from}
-            weekLabel={weekLabel}
+            periodFrom={from}
+            periodLabel={periodLabel}
+            preset={preset}
             clients={clientPicks}
             projects={projectPicks}
             clientId={clientId}
             projectId={projectId}
-            isCustomRange={isCustom}
           />
         }
       />

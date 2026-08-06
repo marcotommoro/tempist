@@ -148,6 +148,71 @@ export async function listQuickGridDataForClient(opts: {
   return { managed, summary: [...summaryMap.values()] };
 }
 
+export type QuickGridTaskEntry = {
+  id: string;
+  dayKey: string;
+  taskId: string | null;
+  durationSeconds: number;
+};
+
+export type QuickGridTaskSummaryCell = {
+  dayKey: string;
+  taskId: string | null;
+  totalSeconds: number;
+};
+
+export async function listQuickGridDataForProject(opts: {
+  organizationId: string;
+  userId: string;
+  projectId: string;
+  weekStart: Date;
+  weekEnd: Date;
+}): Promise<{ managed: QuickGridTaskEntry[]; summary: QuickGridTaskSummaryCell[] }> {
+  const rows = await db.query.timeEntry.findMany({
+    where: and(
+      eq(schema.timeEntry.organizationId, opts.organizationId),
+      eq(schema.timeEntry.userId, opts.userId),
+      eq(schema.timeEntry.projectId, opts.projectId),
+      gte(schema.timeEntry.startedAt, opts.weekStart),
+      lt(schema.timeEntry.startedAt, opts.weekEnd),
+    ),
+    columns: {
+      id: true,
+      startedAt: true,
+      taskId: true,
+      durationSeconds: true,
+      isRunning: true,
+    },
+  });
+
+  const summaryMap = new Map<string, QuickGridTaskSummaryCell>();
+  const managed: QuickGridTaskEntry[] = [];
+
+  for (const r of rows) {
+    if (r.isRunning) continue;
+    const dur = r.durationSeconds ?? 0;
+    const dayKey = formatDayKey(r.startedAt);
+    const sumKey = `${dayKey}::${r.taskId ?? ""}`;
+    const cell = summaryMap.get(sumKey) ?? {
+      dayKey,
+      taskId: r.taskId,
+      totalSeconds: 0,
+    };
+    cell.totalSeconds += dur;
+    summaryMap.set(sumKey, cell);
+    if (isAnchorDate(r.startedAt)) {
+      managed.push({
+        id: r.id,
+        dayKey,
+        taskId: r.taskId,
+        durationSeconds: dur,
+      });
+    }
+  }
+
+  return { managed, summary: [...summaryMap.values()] };
+}
+
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
@@ -266,6 +331,116 @@ export async function upsertQuickEntry(
       userId: input.userId,
       clientId: input.clientId,
       projectId: input.projectId,
+      startedAt: anchor,
+      endedAt,
+      durationSeconds,
+      isRunning: false,
+      isBillable: true,
+      hourlyRateSnapshot: rate,
+      currencySnapshot: currency,
+    })
+    .returning();
+  if (!created) throw new Error("Insert quick entry fallito");
+  await writeAudit({
+    timeEntryId: created.id,
+    actorId: input.userId,
+    action: "CREATE",
+    after: created,
+  });
+  return created;
+}
+
+export type UpsertQuickEntryForProjectInput = {
+  organizationId: string;
+  userId: string;
+  projectId: string;
+  clientId: string | null;
+  taskId: string | null;
+  dayKey: string;
+  hours: number;
+};
+
+export async function upsertQuickEntryForProject(
+  input: UpsertQuickEntryForProjectInput,
+): Promise<TimeEntry | null> {
+  if (!Number.isFinite(input.hours) || input.hours < 0) {
+    throw new Error("Ore non valide");
+  }
+  if (input.hours > 24) {
+    throw new Error("Massimo 24 ore al giorno");
+  }
+  const anchor = anchorDateForDayKey(input.dayKey);
+  const taskMatch = input.taskId
+    ? eq(schema.timeEntry.taskId, input.taskId)
+    : sql`${schema.timeEntry.taskId} IS NULL`;
+  const existing = await db.query.timeEntry.findFirst({
+    where: and(
+      eq(schema.timeEntry.organizationId, input.organizationId),
+      eq(schema.timeEntry.userId, input.userId),
+      eq(schema.timeEntry.projectId, input.projectId),
+      eq(schema.timeEntry.startedAt, anchor),
+      taskMatch,
+    ),
+  });
+
+  if (input.hours === 0) {
+    if (!existing) return null;
+    await writeAudit({
+      timeEntryId: existing.id,
+      actorId: input.userId,
+      action: "DELETE",
+      before: existing,
+    });
+    await db.delete(schema.timeEntry).where(eq(schema.timeEntry.id, existing.id));
+    return null;
+  }
+
+  const durationSeconds = Math.round(input.hours * 60) * 60;
+  if (durationSeconds === 0) {
+    if (!existing) return null;
+    await writeAudit({
+      timeEntryId: existing.id,
+      actorId: input.userId,
+      action: "DELETE",
+      before: existing,
+    });
+    await db.delete(schema.timeEntry).where(eq(schema.timeEntry.id, existing.id));
+    return null;
+  }
+  const endedAt = new Date(anchor.getTime() + durationSeconds * 1000);
+
+  if (existing) {
+    const [updated] = await db
+      .update(schema.timeEntry)
+      .set({ endedAt, durationSeconds, updatedAt: new Date() })
+      .where(eq(schema.timeEntry.id, existing.id))
+      .returning();
+    if (!updated) throw new Error("Aggiornamento quick entry fallito");
+    await writeAudit({
+      timeEntryId: updated.id,
+      actorId: input.userId,
+      action: "UPDATE",
+      before: existing,
+      after: updated,
+    });
+    return updated;
+  }
+
+  const { rate, currency } = await resolveRateSnapshot({
+    organizationId: input.organizationId,
+    taskId: input.taskId,
+    projectId: input.projectId,
+    clientId: input.clientId,
+    userId: input.userId,
+  });
+  const [created] = await db
+    .insert(schema.timeEntry)
+    .values({
+      organizationId: input.organizationId,
+      userId: input.userId,
+      clientId: input.clientId,
+      projectId: input.projectId,
+      taskId: input.taskId,
       startedAt: anchor,
       endedAt,
       durationSeconds,

@@ -60,6 +60,7 @@ export function TaskDetailDialog({
   const [projectId, setProjectId] = useState<string | null>(task.projectId);
   const [clientId, setClientId] = useState<string | null>(task.clientId);
   const [pending, startTransition] = useTransition();
+  const [trackedTotal, setTrackedTotal] = useState(trackedSeconds);
   const [error, setError] = useState<string | null>(null);
 
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
@@ -72,6 +73,10 @@ export function TaskDetailDialog({
   // Le sottoattività hanno un solo livello: nel dialog di una sottoattività
   // la sezione non esiste proprio.
   const isSubtask = task.parentId != null;
+
+  useEffect(() => {
+    setTrackedTotal(trackedSeconds);
+  }, [trackedSeconds, task.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -312,7 +317,13 @@ export function TaskDetailDialog({
 
             <hr className="border-border" />
 
-            <TaskTimeEntries taskId={task.id} open={open} />
+            <TaskTimeEntries
+              taskId={task.id}
+              projectId={task.projectId}
+              clientId={task.clientId}
+              open={open}
+              onTotalChange={setTrackedTotal}
+            />
 
             <hr className="border-border" />
 
@@ -405,7 +416,7 @@ export function TaskDetailDialog({
                   tracked
                 </span>
                 <span className="font-mono text-base tabular-nums text-foreground">
-                  {trackedSeconds > 0 ? formatDuration(trackedSeconds) : "—"}
+                  {trackedTotal > 0 ? formatDuration(trackedTotal) : "—"}
                 </span>
               </div>
             </Field>

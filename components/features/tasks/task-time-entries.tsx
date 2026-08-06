@@ -6,6 +6,7 @@ import { fetchTaskTimeEntriesAction } from "@/lib/actions/timer";
 import type { TimeEntry } from "@/lib/db/schema";
 import { formatDuration } from "@/lib/utils/format-duration";
 import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
+import { TaskManualTimeForm } from "./task-manual-time-form";
 
 // Il file dell'action è "use server": può esportare solo funzioni async,
 // quindi la forma del payload si ridichiara qui.
@@ -22,10 +23,16 @@ type Data = {
  */
 export function TaskTimeEntries({
   taskId,
+  projectId,
+  clientId,
   open,
+  onTotalChange,
 }: {
   taskId: string;
+  projectId: string | null;
+  clientId: string | null;
   open: boolean;
+  onTotalChange?: (totalSeconds: number) => void;
 }) {
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,13 +41,19 @@ export function TaskTimeEntries({
     let cancelled = false;
     fetchTaskTimeEntriesAction(taskId).then((res) => {
       if (cancelled) return;
-      if (res.ok) setData(res.data);
-      else setError(res.error);
+      if (res.ok) {
+        setData(res.data);
+        const total = res.data.entries.reduce(
+          (sum, e) => sum + (e.durationSeconds ?? 0),
+          0,
+        );
+        onTotalChange?.(total);
+      } else setError(res.error);
     });
     return () => {
       cancelled = true;
     };
-  }, [taskId]);
+  }, [taskId, onTotalChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,6 +76,12 @@ export function TaskTimeEntries({
         )}
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
+      <TaskManualTimeForm
+        taskId={taskId}
+        projectId={projectId}
+        clientId={clientId}
+        onAdded={load}
+      />
       {open && !data && !error ? (
         <p className="font-serif text-sm italic text-muted-foreground">
           Caricamento tempi...

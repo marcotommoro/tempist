@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
+import { requireProjectAccess } from "@/lib/auth/project-access";
 import { db, schema } from "@/lib/db";
 import { listClients } from "@/lib/domain/clients";
 import { listProjects } from "@/lib/domain/projects";
@@ -22,6 +23,7 @@ import {
   updateRunningTimer,
   updateTimeEntry,
   upsertQuickEntry,
+  upsertQuickEntryForProject,
 } from "@/lib/domain/time-entries";
 import type { TimeEntry } from "@/lib/db/schema";
 import { validateTimeEntryRange } from "@/lib/utils/compute-duration-seconds";
@@ -463,6 +465,43 @@ export async function upsertQuickEntryAction(input: {
       userId: user.id,
       clientId: input.clientId,
       projectId: input.projectId,
+      dayKey: input.dayKey,
+      hours: input.hours,
+    });
+    revalidateAll();
+    return {
+      ok: true,
+      data: {
+        id: result?.id ?? null,
+        durationSeconds: result?.durationSeconds ?? 0,
+      },
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Errore" };
+  }
+}
+
+export async function upsertProjectQuickEntryAction(input: {
+  projectId: string;
+  taskId: string | null;
+  dayKey: string;
+  hours: number;
+}): Promise<ActionResult<{ id: string | null; durationSeconds: number }>> {
+  try {
+    const access = await requireProjectAccess(input.projectId);
+    const { user, project } = access;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dayKey)) {
+      return { ok: false, error: "Giorno non valido" };
+    }
+    if (!Number.isFinite(input.hours) || input.hours < 0 || input.hours > 24) {
+      return { ok: false, error: "Ore non valide (0–24)" };
+    }
+    const result = await upsertQuickEntryForProject({
+      organizationId: project.organizationId,
+      userId: user.id,
+      projectId: input.projectId,
+      clientId: project.clientId,
+      taskId: input.taskId,
       dayKey: input.dayKey,
       hours: input.hours,
     });
