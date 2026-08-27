@@ -6,13 +6,14 @@
  * Filtri opzionali: clientId, projectId.
  */
 
-import { and, asc, eq, gte, lt } from "drizzle-orm";
+import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
 
 import { requireActiveOrganization } from "@/lib/auth/workspace";
 import { db, schema } from "@/lib/db";
 import { buildCsv } from "@/lib/utils/csv";
 import { computeReportRange, type Range } from "@/lib/utils/report-range";
 import { getClient } from "@/lib/domain/clients";
+import { belongsToClientSql, resolvedClientIdSql } from "@/lib/utils/resolved-client";
 
 export const dynamic = "force-dynamic";
 
@@ -61,8 +62,17 @@ export async function GET(req: Request): Promise<Response> {
     gte(schema.timeEntry.startedAt, from),
     lt(schema.timeEntry.startedAt, to),
   ];
-  if (clientId) conds.push(eq(schema.timeEntry.clientId, clientId));
+  if (clientId) {
+    conds.push(
+      belongsToClientSql(schema.project.clientId, schema.timeEntry.clientId, clientId),
+    );
+  }
   if (projectId) conds.push(eq(schema.timeEntry.projectId, projectId));
+
+  const resolvedClient = resolvedClientIdSql(
+    schema.project.clientId,
+    schema.timeEntry.clientId,
+  );
 
   const entries = await db
     .select({
@@ -74,7 +84,7 @@ export async function GET(req: Request): Promise<Response> {
       isBillable: schema.timeEntry.isBillable,
       hourlyRateSnapshot: schema.timeEntry.hourlyRateSnapshot,
       currencySnapshot: schema.timeEntry.currencySnapshot,
-      clientId: schema.timeEntry.clientId,
+      clientId: sql<string | null>`${resolvedClient}`,
       projectId: schema.timeEntry.projectId,
       taskId: schema.timeEntry.taskId,
       clientName: schema.client.name,
@@ -82,8 +92,11 @@ export async function GET(req: Request): Promise<Response> {
       taskTitle: schema.task.title,
     })
     .from(schema.timeEntry)
-    .leftJoin(schema.client, eq(schema.timeEntry.clientId, schema.client.id))
     .leftJoin(schema.project, eq(schema.timeEntry.projectId, schema.project.id))
+    .leftJoin(
+      schema.client,
+      sql`${schema.client.id} = ${resolvedClient}`,
+    )
     .leftJoin(schema.task, eq(schema.timeEntry.taskId, schema.task.id))
     .where(and(...conds))
     .orderBy(asc(schema.timeEntry.startedAt));

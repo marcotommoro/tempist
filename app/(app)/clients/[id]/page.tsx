@@ -18,7 +18,7 @@ import { TimeEntryRow } from "@/components/features/timer/time-entry-row";
 import { ManualEntryForm } from "@/components/features/timer/manual-entry-form";
 import { ClientQuickEntryGrid } from "@/components/features/timer/client-quick-entry-grid";
 import { QuickStartButton } from "@/components/features/timer/quick-start-button";
-import { TaskList } from "@/components/features/tasks/task-list";
+import { TaskListByGroup } from "@/components/features/tasks/task-list-by-group";
 import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/utils/format-duration";
@@ -111,7 +111,7 @@ export default async function ClientDetailPage({
     organizationId,
     clientId: id,
     includeCompleted: true,
-    limit: 50,
+    limit: 200,
   });
   const taskIds = tasks.map((t) => t.id);
   const [trackedByTask, remindersByTask] = await Promise.all([
@@ -284,8 +284,10 @@ export default async function ClientDetailPage({
           </span>
         </div>
         <CreateTaskDialog defaultClientId={id} timezone={tz} />
-        <TaskList
+        <TaskListByGroup
+          group="project"
           tasks={tasks}
+          projects={projects}
           trackedByTask={trackedByTask}
           remindersByTask={remindersByTask}
           emptyMessage="Nessun task legato a questo cliente."

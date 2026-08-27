@@ -94,3 +94,14 @@ export function groupByProject<T extends { projectId: string | null }>(
 
   return groups;
 }
+
+export function sumTrackedSeconds(
+  tasks: ReadonlyArray<{ id: string }>,
+  trackedByTask: ReadonlyMap<string, number>,
+): number {
+  let total = 0;
+  for (const task of tasks) {
+    total += trackedByTask.get(task.id) ?? 0;
+  }
+  return total;
+}

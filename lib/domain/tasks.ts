@@ -15,6 +15,10 @@ import { db, schema } from "@/lib/db";
 import type { Task } from "@/lib/db/schema";
 import { computeNextOccurrence } from "@/lib/parsers/recurrence";
 import { todayBoundsUtc } from "@/lib/utils/today-bounds";
+import {
+  belongsToClientSql,
+  resolvedClientIdSql,
+} from "@/lib/utils/resolved-client";
 
 export { todayBoundsUtc };
 
@@ -67,32 +71,30 @@ export async function getInboxTasks(ctx: ListContext): Promise<Task[]> {
   });
 }
 
-/**
- * Conteggio task completati per cliente in un range [from, to).
- * Conta solo i task con task.clientId valorizzato (esclude tasks via project).
- */
 export async function getCompletedTaskCountByClient(opts: {
   organizationId: string;
   from?: Date;
   to?: Date;
 }): Promise<Map<string, number>> {
+  const resolved = resolvedClientIdSql(schema.project.clientId, schema.task.clientId);
   const conds = [
     eq(schema.task.organizationId, opts.organizationId),
     isNotNull(schema.task.completedAt),
-    isNotNull(schema.task.clientId),
     isNull(schema.task.deletedAt),
+    sql`${resolved} is not null`,
   ];
   if (opts.from) conds.push(gte(schema.task.completedAt, opts.from));
   if (opts.to) conds.push(lt(schema.task.completedAt, opts.to));
 
   const rows = await db
     .select({
-      clientId: schema.task.clientId,
+      clientId: sql<string>`${resolved}`,
       count: sql<number>`COUNT(*)::int`,
     })
     .from(schema.task)
+    .leftJoin(schema.project, eq(schema.task.projectId, schema.project.id))
     .where(and(...conds))
-    .groupBy(schema.task.clientId);
+    .groupBy(resolved);
 
   const map = new Map<string, number>();
   for (const r of rows) {
@@ -101,25 +103,27 @@ export async function getCompletedTaskCountByClient(opts: {
   return map;
 }
 
-/**
- * Tasks linkati direttamente a un client (task.clientId = X).
- * Esclude i task collegati indirettamente via project — si vedono nella pagina project.
- * Open by default; passa `includeCompleted` per includere anche i completati.
- */
 export async function getTasksForClient(
   ctx: ListContext & { clientId: string; includeCompleted?: boolean; limit?: number },
 ): Promise<Task[]> {
   const conds = [
     eq(schema.task.organizationId, ctx.organizationId),
-    eq(schema.task.clientId, ctx.clientId),
     isNull(schema.task.deletedAt),
+    belongsToClientSql(schema.project.clientId, schema.task.clientId, ctx.clientId),
   ];
   if (!ctx.includeCompleted) conds.push(isNull(schema.task.completedAt));
-  return db.query.task.findMany({
-    where: and(...conds),
-    orderBy: [asc(schema.task.completedAt), asc(schema.task.scheduledAt), desc(schema.task.createdAt)],
-    limit: ctx.limit,
-  });
+  const rows = await db
+    .select({ task: schema.task })
+    .from(schema.task)
+    .leftJoin(schema.project, eq(schema.task.projectId, schema.project.id))
+    .where(and(...conds))
+    .orderBy(
+      asc(schema.task.completedAt),
+      asc(schema.task.scheduledAt),
+      desc(schema.task.createdAt),
+    )
+    .limit(ctx.limit ?? 50);
+  return rows.map((r) => r.task);
 }
 
 /**

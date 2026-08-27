@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import {
   groupByProject,
   parseTaskGroupMode,
+  sumTrackedSeconds,
 } from "@/lib/utils/group-by-project";
 
 type MiniTask = { id: string; projectId: string | null };
@@ -61,5 +62,18 @@ describe("groupByProject", () => {
     expect(groups).toHaveLength(1);
     expect(groups[0]?.projectId).toBe("p-unknown");
     expect(groups[0]?.meta?.name).toBe("Progetto");
+  });
+});
+
+describe("sumTrackedSeconds", () => {
+  it("somma le ore dei task del gruppo e ignora id sconosciuti", () => {
+    const tracked = new Map([
+      ["t1", 3600],
+      ["t2", 1800],
+      ["t-other", 99],
+    ]);
+    expect(
+      sumTrackedSeconds([{ id: "t1" }, { id: "t2" }, { id: "t3" }], tracked),
+    ).toBe(5400);
   });
 });

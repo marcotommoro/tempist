@@ -4,10 +4,14 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 import type { ProjectTaskGroup } from "@/lib/utils/group-by-project";
+import { sumTrackedSeconds } from "@/lib/utils/group-by-project";
+import { formatDuration } from "@/lib/utils/format-duration";
 import type { Task } from "@/lib/db/schema";
 import type { SubtaskCounts } from "@/lib/domain/tasks";
 import type { ClientMeta } from "@/lib/utils/client-by-task";
 import { TaskList, type ProjectMeta } from "./task-list";
+
+const EMPTY_TRACKED = new Map<string, number>();
 
 export function ProjectTaskSections({
   groups,
@@ -81,6 +85,7 @@ function ProjectTaskSection({
   const [open, setOpen] = useState(true);
   const meta = group.meta;
   const openCount = group.tasks.filter((t) => !t.completedAt).length;
+  const trackedSeconds = sumTrackedSeconds(group.tasks, trackedByTask ?? EMPTY_TRACKED);
 
   return (
     <section className="space-y-3">
@@ -108,6 +113,11 @@ function ProjectTaskSection({
             {String(openCount).padStart(2, "0")}
           </span>
         </button>
+        {trackedSeconds > 0 ? (
+          <span className="font-mono text-[0.625em] tabular-nums text-muted-foreground">
+            {formatDuration(trackedSeconds)}
+          </span>
+        ) : null}
       </div>
       {open ? (
         <TaskList

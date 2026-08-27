@@ -18,6 +18,11 @@ import {
   computeDurationSeconds,
   validateTimeEntryRange,
 } from "@/lib/utils/compute-duration-seconds";
+import {
+  belongsToClientSql,
+  resolvedClientId,
+  resolvedClientIdSql,
+} from "@/lib/utils/resolved-client";
 import { resolveRate } from "./billing";
 
 // ---------------------------------------------------------------------------
@@ -103,22 +108,29 @@ export async function listQuickGridDataForClient(opts: {
   weekStart: Date;
   weekEnd: Date;
 }): Promise<{ managed: QuickGridEntry[]; summary: QuickGridSummaryCell[] }> {
-  const rows = await db.query.timeEntry.findMany({
-    where: and(
-      eq(schema.timeEntry.organizationId, opts.organizationId),
-      eq(schema.timeEntry.userId, opts.userId),
-      eq(schema.timeEntry.clientId, opts.clientId),
-      gte(schema.timeEntry.startedAt, opts.weekStart),
-      lt(schema.timeEntry.startedAt, opts.weekEnd),
-    ),
-    columns: {
-      id: true,
-      startedAt: true,
-      projectId: true,
-      durationSeconds: true,
-      isRunning: true,
-    },
-  });
+  const rows = await db
+    .select({
+      id: schema.timeEntry.id,
+      startedAt: schema.timeEntry.startedAt,
+      projectId: schema.timeEntry.projectId,
+      durationSeconds: schema.timeEntry.durationSeconds,
+      isRunning: schema.timeEntry.isRunning,
+    })
+    .from(schema.timeEntry)
+    .leftJoin(schema.project, eq(schema.timeEntry.projectId, schema.project.id))
+    .where(
+      and(
+        eq(schema.timeEntry.organizationId, opts.organizationId),
+        eq(schema.timeEntry.userId, opts.userId),
+        belongsToClientSql(
+          schema.project.clientId,
+          schema.timeEntry.clientId,
+          opts.clientId,
+        ),
+        gte(schema.timeEntry.startedAt, opts.weekStart),
+        lt(schema.timeEntry.startedAt, opts.weekEnd),
+      ),
+    );
 
   const summaryMap = new Map<string, QuickGridSummaryCell>();
   const managed: QuickGridEntry[] = [];
@@ -469,16 +481,23 @@ export async function listTimeEntriesForClient(opts: {
 }): Promise<TimeEntry[]> {
   const conds = [
     eq(schema.timeEntry.organizationId, opts.organizationId),
-    eq(schema.timeEntry.clientId, opts.clientId),
+    belongsToClientSql(
+      schema.project.clientId,
+      schema.timeEntry.clientId,
+      opts.clientId,
+    ),
   ];
   if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
   if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
 
-  return db.query.timeEntry.findMany({
-    where: and(...conds),
-    orderBy: [desc(schema.timeEntry.startedAt)],
-    limit: opts.limit ?? 1000,
-  });
+  const rows = await db
+    .select({ entry: schema.timeEntry })
+    .from(schema.timeEntry)
+    .leftJoin(schema.project, eq(schema.timeEntry.projectId, schema.project.id))
+    .where(and(...conds))
+    .orderBy(desc(schema.timeEntry.startedAt))
+    .limit(opts.limit ?? 1000);
+  return rows.map((r) => r.entry);
 }
 
 export async function getTimeEntry(opts: {
@@ -509,8 +528,27 @@ export async function listTimeEntriesForUser(opts: {
   ];
   if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
   if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
-  if (opts.clientId) conds.push(eq(schema.timeEntry.clientId, opts.clientId));
   if (opts.projectId) conds.push(eq(schema.timeEntry.projectId, opts.projectId));
+
+  if (opts.clientId) {
+    const rows = await db
+      .select({ entry: schema.timeEntry })
+      .from(schema.timeEntry)
+      .leftJoin(schema.project, eq(schema.timeEntry.projectId, schema.project.id))
+      .where(
+        and(
+          ...conds,
+          belongsToClientSql(
+            schema.project.clientId,
+            schema.timeEntry.clientId,
+            opts.clientId,
+          ),
+        ),
+      )
+      .orderBy(desc(schema.timeEntry.startedAt))
+      .limit(opts.limit ?? 200);
+    return rows.map((r) => r.entry);
+  }
 
   return db.query.timeEntry.findMany({
     where: and(...conds),
@@ -583,16 +621,18 @@ export async function getClientAggregates(opts: {
     { totalSeconds: number; billableAmount: number; entryCount: number }
   >
 > {
+  const resolved = resolvedClientIdSql(schema.project.clientId, schema.timeEntry.clientId);
   const conds = [
     eq(schema.timeEntry.organizationId, opts.organizationId),
     eq(schema.timeEntry.isRunning, false),
+    sql`${resolved} is not null`,
   ];
   if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
   if (opts.to) conds.push(lt(schema.timeEntry.startedAt, opts.to));
 
   const rows = await db
     .select({
-      clientId: schema.timeEntry.clientId,
+      clientId: sql<string>`${resolved}`,
       totalSeconds: sql<number>`COALESCE(SUM(${schema.timeEntry.durationSeconds}), 0)::int`,
       billableAmount: sql<string>`COALESCE(SUM(
         CASE WHEN ${schema.timeEntry.isBillable} = true AND ${schema.timeEntry.hourlyRateSnapshot} IS NOT NULL
@@ -603,8 +643,9 @@ export async function getClientAggregates(opts: {
       entryCount: sql<number>`COUNT(*)::int`,
     })
     .from(schema.timeEntry)
+    .leftJoin(schema.project, eq(schema.timeEntry.projectId, schema.project.id))
     .where(and(...conds))
-    .groupBy(schema.timeEntry.clientId);
+    .groupBy(resolved);
 
   const out = new Map<
     string,
@@ -643,7 +684,11 @@ export async function getProjectAggregatesForClient(opts: {
 > {
   const conds = [
     eq(schema.timeEntry.organizationId, opts.organizationId),
-    eq(schema.timeEntry.clientId, opts.clientId),
+    belongsToClientSql(
+      schema.project.clientId,
+      schema.timeEntry.clientId,
+      opts.clientId,
+    ),
     eq(schema.timeEntry.isRunning, false),
   ];
   if (opts.from) conds.push(gte(schema.timeEntry.startedAt, opts.from));
@@ -662,6 +707,7 @@ export async function getProjectAggregatesForClient(opts: {
       entryCount: sql<number>`COUNT(*)::int`,
     })
     .from(schema.timeEntry)
+    .leftJoin(schema.project, eq(schema.timeEntry.projectId, schema.project.id))
     .where(and(...conds))
     .groupBy(schema.timeEntry.projectId);
 
@@ -847,9 +893,23 @@ export async function createManualEntry(input: CreateManualEntryInput): Promise<
   return created;
 }
 
-/**
- * Avvia un timer ereditando i campi da un Task: clientId, projectId, title come description.
- */
+export async function resolveClientForTask(
+  task: Pick<Task, "clientId" | "projectId">,
+): Promise<string | null> {
+  let projectClientId: string | null = null;
+  if (task.projectId) {
+    const project = await db.query.project.findFirst({
+      where: eq(schema.project.id, task.projectId),
+      columns: { clientId: true },
+    });
+    projectClientId = project?.clientId ?? null;
+  }
+  return resolvedClientId({
+    directClientId: task.clientId,
+    projectClientId,
+  });
+}
+
 export async function startTimerFromTask(opts: {
   organizationId: string;
   userId: string;
@@ -862,7 +922,7 @@ export async function startTimerFromTask(opts: {
     organizationId: opts.organizationId,
     userId: opts.userId,
     description: opts.task.title,
-    clientId: opts.task.clientId,
+    clientId: await resolveClientForTask(opts.task),
     projectId: opts.task.projectId,
     taskId: opts.task.id,
   });

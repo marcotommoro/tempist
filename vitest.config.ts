@@ -22,6 +22,7 @@ export default defineConfig({
     },
     include: ["tests/unit/**/*.{test,spec}.ts?(x)", "tests/integration/**/*.{test,spec}.ts?(x)"],
     exclude: ["tests/e2e/**", "node_modules", ".next"],
+    fileParallelism: false,
   },
   resolve: {
     alias: {

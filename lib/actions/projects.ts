@@ -33,7 +33,7 @@ import { findWorkspaceMemberByEmail } from "@/lib/domain/workspaces";
 import { normalizeDescriptionHtml } from "@/lib/utils/html";
 import { sendProjectInviteEmail } from "@/lib/email/send-invite";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { ActionResult } from "./tasks";
 
 function revalidateProjects(projectId?: string) {
@@ -78,6 +78,7 @@ export async function createProjectAction(
       clientId: parsed.data.clientId,
     });
     revalidateProjects(project.id);
+    if (parsed.data.clientId) revalidatePath(`/clients/${parsed.data.clientId}`);
     return { ok: true, data: { id: project.id } };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Errore" };
@@ -139,8 +140,17 @@ export async function setProjectClientAction(
 ): Promise<ActionResult> {
   try {
     const { organizationId } = await requireActiveOrganization();
+    const existing = await db.query.project.findFirst({
+      where: and(
+        eq(schema.project.id, projectId),
+        eq(schema.project.organizationId, organizationId),
+      ),
+      columns: { clientId: true },
+    });
     await setProjectClient({ projectId, organizationId, clientId });
     revalidateProjects(projectId);
+    if (existing?.clientId) revalidatePath(`/clients/${existing.clientId}`);
+    if (clientId) revalidatePath(`/clients/${clientId}`);
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Errore" };

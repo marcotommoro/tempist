@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import { uniqueSuffix } from "./helpers/utils";
+import { uniqueSuffix, createTaskViaQuickAdd } from "./helpers/utils";
 
 test.describe("clients + timer", () => {
   test("crea cliente e visita pagina detail", async ({ page }) => {
@@ -67,5 +67,42 @@ test.describe("clients + timer", () => {
 
     // L'entry compare nella lista
     await expect(page.getByText(description)).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("associare un progetto al cliente mostra task e ore raggruppati", async ({
+    page,
+  }) => {
+    const clientName = `Cliente ${uniqueSuffix()}`;
+    const projectName = `Progetto ${uniqueSuffix()}`;
+    const taskTitle = `Task cliente ${uniqueSuffix()}`;
+
+    await page.goto("/clients");
+    await page.getByLabel(/^Name \*/).fill(clientName);
+    await page.getByRole("button", { name: /create client/i }).click();
+    await expect(
+      page.locator("#main-content").getByRole("link", { name: new RegExp(clientName) }).first(),
+    ).toBeVisible({ timeout: 5_000 });
+
+    await page.goto("/projects");
+    await page.getByPlaceholder(/Nome nuovo progetto/i).fill(projectName);
+    await page.getByRole("button", { name: /^create$/i }).click();
+    await page
+      .locator("#main-content")
+      .getByRole("link", { name: new RegExp(projectName) })
+      .click();
+    await expect(page.locator("h1")).toContainText(projectName);
+
+    await createTaskViaQuickAdd(page, taskTitle);
+    await page.getByLabel(/^Cliente:/).selectOption({ label: clientName });
+
+    await page.goto("/clients");
+    await page
+      .locator("#main-content")
+      .getByRole("link", { name: new RegExp(clientName) })
+      .first()
+      .click();
+    await expect(page.getByRole("heading", { name: clientName })).toBeVisible();
+    await expect(page.getByText(projectName)).toBeVisible();
+    await expect(page.getByText(taskTitle)).toBeVisible();
   });
 });

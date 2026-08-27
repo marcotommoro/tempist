@@ -20,6 +20,7 @@ import {
   startTimerFromProject,
   startTimerFromTask,
   stopTimer,
+  resolveClientForTask,
   updateRunningTimer,
   updateTimeEntry,
   upsertQuickEntry,
@@ -271,7 +272,7 @@ export async function resolveTimerConflictAction(input: {
       });
       if (!task) return { ok: false, error: "Task non trovato" };
       ctx = {
-        clientId: task.clientId,
+        clientId: await resolveClientForTask(task),
         projectId: task.projectId,
         taskId: task.id,
         description: task.title,
