@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type KeyboardEvent } from "react";
 import {
+  Extension,
   useEditor,
   useEditorState,
   EditorContent,
@@ -47,6 +48,28 @@ const sharedProse = cn(
   "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:italic",
   "[&_hr]:my-3 [&_hr]:border-border",
 );
+
+/**
+ * Dentro una lista Tab/Shift-Tab appartengono all'editor, non alla navigazione:
+ * servono ad annidare o estrarre la voce. Le estensioni di TipTap però lasciano
+ * passare l'evento quando il comando non è applicabile (tipicamente sulla prima
+ * voce della lista, che non ha una voce sorella da cui dipendere) e il browser
+ * porta il focus al controllo successivo, interrompendo la scrittura.
+ *
+ * Con priorità sotto la default (100) questa estensione gira dopo listItem e
+ * taskItem: se hanno già annidato non viene nemmeno interrogata, altrimenti si
+ * limita a ingoiare il tasto. Fuori dalle liste Tab resta la via d'uscita
+ * dall'editor, come si aspetta chi naviga da tastiera.
+ */
+export const listTabGuard = Extension.create({
+  name: "listTabGuard",
+  priority: 50,
+  addKeyboardShortcuts() {
+    const inList = () =>
+      this.editor.isActive("listItem") || this.editor.isActive("taskItem");
+    return { Tab: inList, "Shift-Tab": inList };
+  },
+});
 
 const readonlyExtensions = [
   StarterKit.configure({
@@ -129,6 +152,7 @@ export function DescriptionEditor({
       }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      listTabGuard,
     ],
     content: value || "",
     autofocus: autoFocus ? "end" : false,

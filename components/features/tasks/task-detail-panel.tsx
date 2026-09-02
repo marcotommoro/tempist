@@ -5,10 +5,10 @@ import { format } from "date-fns";
 import { Hash, User } from "lucide-react";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
@@ -34,7 +34,7 @@ import { TaskPrioritySelect } from "./task-priority-select";
 import { TaskTimeEntries } from "./task-time-entries";
 import { Picker, type PickItem } from "./quick-add-panel";
 
-export function TaskDetailDialog({
+export function TaskDetailPanel({
   task,
   projectName,
   projectColor,
@@ -70,7 +70,7 @@ export function TaskDetailDialog({
     clients: PickItem[];
   } | null>(null);
 
-  // Le sottoattività hanno un solo livello: nel dialog di una sottoattività
+  // Le sottoattività hanno un solo livello: nel pannello di una sottoattività
   // la sezione non esiste proprio.
   const isSubtask = task.parentId != null;
 
@@ -197,15 +197,19 @@ export function TaskDetailDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
         data-content-scope
-        className="max-w-5xl gap-0 overflow-hidden p-0 sm:rounded-lg"
+        className="w-full gap-0 p-0 sm:max-w-[900px]"
       >
-        <DialogTitle className="sr-only">{title}</DialogTitle>
-        <div className="grid md:grid-cols-[1fr_280px]">
-          {/* Sinistra: contenuto principale */}
-          <div className="max-h-[85vh] space-y-5 overflow-y-auto p-6">
+        <SheetTitle className="sr-only">{title}</SheetTitle>
+        {/* Su mobile scorre tutto il pannello; da md le due colonne scorrono
+            in modo indipendente, così i metadati restano sempre a vista. */}
+        <div className="flex h-full min-h-0 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+          {/* Sinistra: contenuto principale. pr-12 lascia spazio alla X finché
+              non passa sopra la colonna dei metadati. */}
+          <div className="min-w-0 flex-1 space-y-5 p-6 pr-12 md:overflow-y-auto md:pr-6">
             <div className="flex items-start gap-3">
               <label className="relative mt-1.5 inline-flex shrink-0 cursor-pointer items-center justify-center">
                 <input
@@ -353,7 +357,7 @@ export function TaskDetailDialog({
           </div>
 
           {/* Destra: sidebar metadata */}
-          <aside className="max-h-[85vh] space-y-5 overflow-y-auto border-t border-border bg-muted/40 p-5 md:border-l md:border-t-0">
+          <aside className="space-y-5 border-t border-border bg-muted/40 p-5 md:w-[300px] md:shrink-0 md:overflow-y-auto md:border-l md:border-t-0 md:pt-12">
             <Field label="Project">
               <Picker
                 items={projectItems}
@@ -422,8 +426,8 @@ export function TaskDetailDialog({
             </Field>
           </aside>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 

@@ -12,7 +12,7 @@ import type { SubtaskCounts } from "@/lib/domain/tasks";
 import { TaskProgress } from "./task-progress";
 import { TaskReminderButton } from "./task-reminder-button";
 import { TaskSchedulePicker } from "./task-schedule-picker";
-import { TaskDetailDialog } from "./task-detail-dialog";
+import { TaskDetailPanel } from "./task-detail-panel";
 
 const PRIORITY_DOT: Record<Task["priority"], string> = {
   P1: "bg-p1",
@@ -287,7 +287,7 @@ export function TaskItem({
         </button>
       </div>
       {currentUserId && (
-        <TaskDetailDialog
+        <TaskDetailPanel
           task={task}
           projectName={projectName}
           projectColor={projectColor}
