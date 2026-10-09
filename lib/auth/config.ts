@@ -12,6 +12,7 @@
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
 import { admin, magicLink, organization } from "better-auth/plugins";
 import { Resend } from "resend";
 
@@ -122,6 +123,12 @@ export const auth = betterAuth({
   baseURL: AUTH_URL,
   trustedOrigins: [AUTH_URL],
 
+  // Sessione scorrevole: 30 giorni dall'ultimo rinnovo (default Better Auth: 7).
+  session: {
+    expiresIn: 60 * 60 * 24 * 30,
+    updateAge: 60 * 60 * 24,
+  },
+
   user: {
     additionalFields: {
       timezone: { type: "string", defaultValue: "Europe/Rome" },
@@ -219,6 +226,8 @@ export const auth = betterAuth({
         );
       },
     }),
+    // Deve restare l'ultimo plugin: riscrive il cookie (rinnovo sessione) dalle server action.
+    nextCookies(),
   ],
 
   databaseHooks: {
