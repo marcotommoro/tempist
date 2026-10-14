@@ -8,6 +8,7 @@ import {
   CheckSquare,
   FolderKanban,
   Inbox,
+  ListChecks,
   Search,
   Settings,
   Users,
@@ -31,7 +32,8 @@ import type { SearchResult } from "@/lib/domain/search";
 const QUICK_NAV = [
   { label: "Today", href: "/today", icon: Calendar },
   { label: "Inbox", href: "/inbox", icon: Inbox },
-  { label: "Attività", href: "/upcoming", icon: CalendarDays },
+  { label: "Upcoming", href: "/upcoming", icon: CalendarDays },
+  { label: "Attività", href: "/tasks", icon: ListChecks },
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Reports", href: "/reports", icon: CheckSquare },

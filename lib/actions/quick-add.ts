@@ -34,7 +34,7 @@ import {
 } from "@/lib/utils/default-task-scheduled-at";
 import type { ActionResult } from "./tasks";
 
-const VIEW_PATHS = ["/today", "/inbox", "/upcoming"];
+const VIEW_PATHS = ["/today", "/inbox", "/upcoming", "/tasks"];
 
 export async function createTaskFromQuickAddAction(
   formData: FormData,

@@ -7,6 +7,7 @@ import {
   Filter as FilterIcon,
   FolderKanban,
   Inbox,
+  ListChecks,
   Settings,
   Star,
   Users,
@@ -26,7 +27,8 @@ import { WorkspaceSwitcher } from "@/components/features/workspaces/workspace-sw
 const mainNav = [
   { href: "/today", label: "Today", icon: Calendar },
   { href: "/inbox", label: "Inbox", icon: Inbox },
-  { href: "/upcoming", label: "Attività", icon: CalendarDays },
+  { href: "/upcoming", label: "Upcoming", icon: CalendarDays },
+  { href: "/tasks", label: "Attività", icon: ListChecks },
 ];
 
 const bottomNav = [

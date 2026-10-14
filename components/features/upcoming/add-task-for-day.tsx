@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 
 /**
- * Bottone "Aggiungi attività" per un giorno della vista Attività.
+ * Bottone "Aggiungi attività" per un giorno della vista Upcoming.
  *
  * Wrapper client: il trigger viene creato DENTRO il boundary client invece di
  * passare un ReactNode dal server component. In dev (Turbopack, Next 16) i

@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 const LABELS: Record<string, string> = {
   today: "Today",
   inbox: "Inbox",
-  upcoming: "Attività",
+  upcoming: "Upcoming",
+  tasks: "Attività",
   projects: "Projects",
   clients: "Clients",
   filters: "Filters",

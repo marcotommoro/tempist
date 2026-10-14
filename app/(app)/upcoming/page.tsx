@@ -157,7 +157,7 @@ export default async function UpcomingPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Attività"
+        title="Upcoming"
         meta={
           <>
             <span>

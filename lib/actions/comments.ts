@@ -32,7 +32,7 @@ export async function fetchTaskCommentsAction(
   }
 }
 
-const TASK_VIEW_PATHS = ["/today", "/inbox", "/upcoming"];
+const TASK_VIEW_PATHS = ["/today", "/inbox", "/upcoming", "/tasks"];
 
 function revalidateTaskViews() {
   for (const p of TASK_VIEW_PATHS) revalidatePath(p);

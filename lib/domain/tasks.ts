@@ -71,6 +71,22 @@ export async function getInboxTasks(ctx: ListContext): Promise<Task[]> {
   });
 }
 
+/**
+ * Attività: tutti i task aperti (non completati, non cancellati), i più
+ * recenti prima. Esclude le sottoattività come l'Inbox.
+ */
+export async function getOpenTasks(ctx: ListContext): Promise<Task[]> {
+  return db.query.task.findMany({
+    where: and(
+      eq(schema.task.organizationId, ctx.organizationId),
+      isNull(schema.task.parentId),
+      isNull(schema.task.completedAt),
+      isNull(schema.task.deletedAt),
+    ),
+    orderBy: [desc(schema.task.createdAt)],
+  });
+}
+
 export async function getCompletedTaskCountByClient(opts: {
   organizationId: string;
   from?: Date;

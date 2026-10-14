@@ -138,13 +138,15 @@ test.describe("task CRUD su Today/Inbox", () => {
     ).toBeVisible({ timeout: 5_000 });
   });
 
-  test("naviga Today → Inbox → Attività via sidebar", async ({ page }) => {
+  test("naviga Today → Inbox → Upcoming → Attività via sidebar", async ({ page }) => {
     await page.goto("/today");
     await page.getByRole("link", { name: /inbox/i }).first().click();
     await expect(page).toHaveURL(/\/inbox/);
-    // La vista /upcoming si chiama "Attività" nella sidebar.
-    await page.getByRole("link", { name: /attività/i }).first().click();
+    await page.getByRole("link", { name: /upcoming/i }).first().click();
     await expect(page).toHaveURL(/\/upcoming/);
+    // La vista /tasks (tutti i task aperti) si chiama "Attività" nella sidebar.
+    await page.getByRole("link", { name: /attività/i }).first().click();
+    await expect(page).toHaveURL(/\/tasks/);
     await page.getByRole("link", { name: /today/i }).first().click();
     await expect(page).toHaveURL(/\/today/);
   });
