@@ -29,6 +29,13 @@
       "when": 1780654102547,
       "tag": "0003_blue_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792144297295,
+      "tag": "0004_chunky_anthem",
+      "breakpoints": true
     }
   ]
 }

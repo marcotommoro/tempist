@@ -12,6 +12,7 @@ import {
 } from "@/lib/domain/time-entries";
 import { getPendingReminderCountByTask } from "@/lib/domain/reminders";
 import { getCommentCountByTask } from "@/lib/domain/comments";
+import { ProjectAnnualFee } from "@/components/features/projects/project-annual-fee";
 import { ProjectClientSelect } from "@/components/features/projects/project-client-select";
 import { ProjectColorSelect } from "@/components/features/projects/project-color-select";
 import { ProjectDescription } from "@/components/features/projects/project-description";
@@ -26,6 +27,7 @@ import { PageHeader } from "@/components/features/page-header/page-header";
 import { QuickStartButton } from "@/components/features/timer/quick-start-button";
 import { ProjectQuickEntryGrid } from "@/components/features/timer/project-quick-entry-grid";
 import { userTimezone } from "@/lib/utils/default-task-scheduled-at";
+import { todayIso } from "@/lib/utils/annual-fee";
 import {
   getGridDisplayDays,
   resolveBillingRange,
@@ -166,6 +168,16 @@ export default async function ProjectDetailPage({
             projectId={id}
             currentClientId={project.clientId}
             clients={clients}
+          />
+        )}
+        {accessType === "workspace" && (
+          <ProjectAnnualFee
+            // Rimonta dopo "Segna pagato" così i campi ripartono dai valori salvati.
+            key={`${project.annualFeeAmount}:${project.annualFeeNextDueOn}`}
+            projectId={id}
+            amount={project.annualFeeAmount}
+            nextDueOn={project.annualFeeNextDueOn}
+            today={todayIso(userTimezone(user))}
           />
         )}
         <ProjectMembersButton

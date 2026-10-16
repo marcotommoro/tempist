@@ -11,6 +11,7 @@ import {
   Settings,
   Star,
   Users,
+  Wallet,
 } from "lucide-react";
 
 import type { Client } from "@/lib/db/schema";
@@ -25,15 +26,16 @@ import { SidebarAccount } from "@/components/features/sidebar/sidebar-account";
 import { WorkspaceSwitcher } from "@/components/features/workspaces/workspace-switcher";
 
 const mainNav = [
+  { href: "/tasks", label: "Attività", icon: ListChecks },
   { href: "/today", label: "Today", icon: Calendar },
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/upcoming", label: "Upcoming", icon: CalendarDays },
-  { href: "/tasks", label: "Attività", icon: ListChecks },
 ];
 
 const bottomNav = [
   { href: "/filters", label: "Filters", icon: FilterIcon },
   { href: "/timesheet", label: "Timesheet", icon: Clock },
+  { href: "/payments", label: "Pagamenti", icon: Wallet },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

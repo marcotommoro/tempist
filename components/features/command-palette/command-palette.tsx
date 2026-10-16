@@ -12,6 +12,7 @@ import {
   Search,
   Settings,
   Users,
+  Wallet,
 } from "lucide-react";
 
 import {
@@ -30,12 +31,13 @@ import { searchAction } from "@/lib/actions/search";
 import type { SearchResult } from "@/lib/domain/search";
 
 const QUICK_NAV = [
+  { label: "Attività", href: "/tasks", icon: ListChecks },
   { label: "Today", href: "/today", icon: Calendar },
   { label: "Inbox", href: "/inbox", icon: Inbox },
   { label: "Upcoming", href: "/upcoming", icon: CalendarDays },
-  { label: "Attività", href: "/tasks", icon: ListChecks },
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Clients", href: "/clients", icon: Users },
+  { label: "Pagamenti", href: "/payments", icon: Wallet },
   { label: "Reports", href: "/reports", icon: CheckSquare },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

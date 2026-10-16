@@ -246,6 +246,9 @@ export const project = pgTable(
     }),
     isFavorite: boolean("is_favorite").default(false).notNull(),
     order: integer("order").default(0).notNull(),
+    // Canone annuo: importo + prossimo rinnovo (YYYY-MM-DD). Null = nessun canone.
+    annualFeeAmount: numeric("annual_fee_amount", { precision: 12, scale: 2 }),
+    annualFeeNextDueOn: date("annual_fee_next_due_on", { mode: "string" }),
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
     deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "date" }),
     createdAt: createdAt(),
@@ -726,8 +729,33 @@ export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Organization = typeof organization.$inferSelect;
 export type NewOrganization = typeof organization.$inferInsert;
+/**
+ * Storico incassi dei canoni annui: una riga per ogni rinnovo segnato come pagato.
+ */
+export const projectFeePayment = pgTable(
+  "project_fee_payment",
+  {
+    id: id(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    dueOn: date("due_on", { mode: "string" }).notNull(),
+    amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true, mode: "date" }).defaultNow().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("project_fee_payment_org_paid_idx").on(t.organizationId, t.paidAt),
+    index("project_fee_payment_project_idx").on(t.projectId),
+  ],
+);
+
 export type Project = typeof project.$inferSelect;
 export type NewProject = typeof project.$inferInsert;
+export type ProjectFeePayment = typeof projectFeePayment.$inferSelect;
 export type Section = typeof section.$inferSelect;
 export type NewSection = typeof section.$inferInsert;
 export type ProjectMember = typeof projectMember.$inferSelect;

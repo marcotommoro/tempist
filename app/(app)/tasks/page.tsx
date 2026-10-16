@@ -8,6 +8,8 @@ import { listClients } from "@/lib/domain/clients";
 import { TaskList, type ProjectMeta } from "@/components/features/tasks/task-list";
 import { CreateTaskDialog } from "@/components/features/tasks/create-task-dialog";
 import { PageHeader } from "@/components/features/page-header/page-header";
+import { FeeReminderBanner } from "@/components/features/payments/fee-reminder-banner";
+import { todayIso } from "@/lib/utils/annual-fee";
 import {
   defaultTaskScheduledAt,
   userTimezone,
@@ -53,6 +55,8 @@ export default async function TasksPage() {
         }
         description="Tutti i task aperti, i più recenti prima."
       />
+
+      <FeeReminderBanner organizationId={organizationId} today={todayIso(timezone)} />
 
       <CreateTaskDialog
         defaultScheduledAt={defaultScheduledAt}
