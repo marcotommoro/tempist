@@ -9,14 +9,22 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { SESSION_MAX_AGE } from "@/lib/auth/constants";
+
+const SESSION_COOKIE_NAMES = ["__Secure-better-auth.session_token", "better-auth.session_token"];
+
 const PROTECTED_PREFIXES = [
   "/today",
+  "/tasks",
   "/inbox",
   "/upcoming",
   "/projects",
   "/clients",
   "/reports",
   "/settings",
+  "/timesheet",
+  "/filters",
+  "/payments",
   "/admin",
 ];
 
@@ -33,7 +41,21 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  // Better Auth rinnova la scadenza in DB ma dai Server Component non può riscrivere il cookie:
+  // lo facciamo scorrere qui, stesso valore. La validità resta verificata da requireSession().
+  for (const name of SESSION_COOKIE_NAMES) {
+    const value = req.cookies.get(name)?.value;
+    if (!value) continue;
+    res.cookies.set(name, value, {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: name.startsWith("__Secure-"),
+      maxAge: SESSION_MAX_AGE,
+    });
+  }
+  return res;
 }
 
 export const config = {

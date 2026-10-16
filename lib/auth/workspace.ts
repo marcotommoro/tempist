@@ -70,7 +70,7 @@ export async function requireActiveOrganization() {
 export async function requireMemberRole(allowed: Array<"owner" | "admin" | "member">) {
   const ctx = await requireActiveOrganization();
   if (!allowed.includes(ctx.role)) {
-    redirect("/today");
+    redirect("/tasks");
   }
   return ctx;
 }

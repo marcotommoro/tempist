@@ -103,7 +103,7 @@ export default async function AcceptProjectInvitationPage({
           invito a {session.user.email}.
         </p>
         <Link
-          href="/today"
+          href="/tasks"
           className="inline-flex w-fit items-center rounded-md border border-input bg-background px-4 py-2 font-mono text-[0.6875em] uppercase tracking-wider hover:bg-card"
         >
           Vai alla home

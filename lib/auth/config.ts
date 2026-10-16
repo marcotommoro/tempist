@@ -17,6 +17,7 @@ import { admin, magicLink, organization } from "better-auth/plugins";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db";
+import { SESSION_MAX_AGE } from "./constants";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -125,7 +126,7 @@ export const auth = betterAuth({
 
   // Sessione scorrevole: 30 giorni dall'ultimo rinnovo (default Better Auth: 7).
   session: {
-    expiresIn: 60 * 60 * 24 * 30,
+    expiresIn: SESSION_MAX_AGE,
     updateAge: 60 * 60 * 24,
   },
 

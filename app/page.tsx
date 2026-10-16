@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, Check, Pause, Plus, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { getSession } from "@/lib/auth/workspace";
 
 const GITHUB_REPO = "https://github.com/marcotommoro/tempist";
 const SELF_HOST_DOC = `${GITHUB_REPO}/blob/main/docs/deployment/coolify.md`;
@@ -102,7 +104,10 @@ function BrandMark({ className = "" }: { className?: string }) {
   );
 }
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getSession();
+  if (session?.user) redirect("/tasks");
+
   return (
     <div className="flex-1 bg-background text-foreground">
       <nav className="flex items-center gap-4 border-b border-line-soft px-6 py-5 md:px-12">

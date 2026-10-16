@@ -32,7 +32,7 @@ export default async function PlatformAdminLayout({
             </nav>
           </div>
           <Link
-            href="/today"
+            href="/tasks"
             className="font-mono text-[0.6875em] uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground"
           >
             Torna all&apos;app

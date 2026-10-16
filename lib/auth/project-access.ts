@@ -78,6 +78,6 @@ export async function requireProjectAccess(projectId: string): Promise<ProjectAc
 /** Hard-enforce un role specifico (per mutation). */
 export function assertProjectRole(role: ProjectRole, allowed: readonly ProjectRole[]): void {
   if (!allowed.includes(role)) {
-    redirect("/today");
+    redirect("/tasks");
   }
 }

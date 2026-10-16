@@ -44,7 +44,7 @@ export function DeleteWorkspaceDialog({
       }
       setOpen(false);
       setConfirm("");
-      router.replace("/today");
+      router.replace("/tasks");
       router.refresh();
     });
   }

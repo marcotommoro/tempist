@@ -7,7 +7,7 @@ import { authClient } from "@/lib/auth/client";
 function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const callbackURL = params.get("redirectTo") ?? "/today";
+  const callbackURL = params.get("redirectTo") ?? "/tasks";
 
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);

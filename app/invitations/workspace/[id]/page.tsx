@@ -104,7 +104,7 @@ export default async function AcceptWorkspaceInvitationPage({
     where: eq(schema.member.userId, session.user.id),
   });
   if (existing && existing.organizationId === invitation.organizationId) {
-    redirect("/today");
+    redirect("/tasks");
   }
 
   return (

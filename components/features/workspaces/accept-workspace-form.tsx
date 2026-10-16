@@ -24,7 +24,7 @@ export function AcceptWorkspaceInvitationForm({
         setError(res.error);
         return;
       }
-      router.replace("/today");
+      router.replace("/tasks");
       router.refresh();
     });
   }
