@@ -98,6 +98,7 @@ export function ProjectAnnualFee({
               onChange={setDraftDate}
               disabled={pending}
               allowClear={false}
+              yearDropdown
               className="w-full"
             />
           </div>

@@ -18,6 +18,8 @@ interface DatePickerProps {
   className?: string;
   /** date-fns format per l'etichetta del trigger. Default: "EEE d MMM yyyy". */
   displayFormat?: string;
+  /** Menu a tendina mese/anno nell'intestazione, per saltare rapidamente tra anni. */
+  yearDropdown?: boolean;
 }
 
 export function DatePicker({
@@ -29,6 +31,7 @@ export function DatePicker({
   align = "start",
   className,
   displayFormat = "EEE d MMM yyyy",
+  yearDropdown = false,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
 
@@ -56,6 +59,15 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={value ?? undefined}
+          defaultMonth={value ?? undefined}
+          // Sempre 6 settimane: l'altezza non cambia tra i mesi e le frecce restano ferme.
+          fixedWeeks
+          {...(yearDropdown && {
+            captionLayout: "dropdown" as const,
+            // Senza endMonth DayPicker si ferma all'anno corrente.
+            startMonth: new Date(new Date().getFullYear() - 5, 0),
+            endMonth: new Date(new Date().getFullYear() + 15, 11),
+          })}
           onSelect={(d) => {
             if (d) {
               onChange(d);
